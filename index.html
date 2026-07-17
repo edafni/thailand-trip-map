@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="theme-color" content="#0f172a" />
 <meta name="apple-mobile-web-app-title" content="תאילנד 2026" />
-<title>מסלול תאילנד 2026 · דפני</title>
+<title>מסלול תאילנד 2026</title>
 <style>
 /* required styles */
 
@@ -684,58 +684,62 @@ svg.leaflet-image-layer.leaflet-interactive path {
   html,body{margin:0;height:100%;font-family:-apple-system,"Segoe UI",Rubik,Arial,sans-serif;background:var(--bg);color:var(--text);overscroll-behavior:none}
   #map{position:fixed;inset:0;height:100%;width:100%;z-index:1}
 
-  #topbar{
-    position:fixed;top:0;inset-inline:0;z-index:1000;
+  #topbar{position:fixed;top:0;inset-inline:0;z-index:1000;
     padding:calc(env(safe-area-inset-top) + 8px) 14px 8px;
     background:linear-gradient(180deg,rgba(9,15,30,.94),rgba(9,15,30,.55) 78%,transparent);
-    display:flex;align-items:center;gap:10px;pointer-events:none;
-  }
+    display:flex;align-items:center;gap:10px;pointer-events:none}
   #topbar .flag{font-size:22px}
   #topbar h1{font-size:16px;margin:0;font-weight:700}
   #topbar .sub{font-size:11px;color:var(--muted);margin-top:1px}
+  .adminBadge{display:none;pointer-events:auto;margin-inline-start:auto;background:#123e57;border:1px solid #1d5f83;
+    color:#cfeaff;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700}
+  body.admin .adminBadge{display:inline-block}
 
-  /* Bottom sheet */
-  #sheet{
-    position:fixed;inset-inline:0;bottom:0;z-index:1000;
+  #sheet{position:fixed;inset-inline:0;bottom:0;z-index:1000;
     background:linear-gradient(180deg,#0d1730 0%,#0f1b36 100%);
     border-top:1px solid var(--line);border-radius:18px 18px 0 0;
-    box-shadow:0 -10px 40px #0009;max-height:84vh;display:flex;flex-direction:column;
-    transition:transform .32s cubic-bezier(.22,.61,.36,1);
-    padding-bottom:env(safe-area-inset-bottom);
-  }
-  #sheet.collapsed{transform:translateY(calc(100% - 190px))}
+    box-shadow:0 -10px 40px #0009;max-height:86vh;display:flex;flex-direction:column;
+    transition:transform .32s cubic-bezier(.22,.61,.36,1);padding-bottom:env(safe-area-inset-bottom)}
+  #sheet.collapsed{transform:translateY(calc(100% - 205px))}
   .handle-wrap{padding:8px 0 4px;cursor:pointer;flex:0 0 auto}
   .handle{width:44px;height:5px;border-radius:3px;background:#3a4c72;margin:0 auto}
   .sheet-head{padding:2px 14px 8px;flex:0 0 auto}
 
   .toolbar{display:flex;gap:8px;margin:2px 0 8px}
+  body:not(.admin) .admin-only{display:none !important}
   .btn{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--text);
     border-radius:11px;padding:9px 8px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
   .btn:active{transform:scale(.98)}
   .btn.primary{background:#123e57;border-color:#1d5f83}
+  .btn.small{flex:0 0 auto;padding:8px 12px}
+
+  .seg{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
+  .seg::-webkit-scrollbar{display:none}
+  .seg .sbtn{flex:0 0 auto;font-size:12.5px;background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:6px 13px;cursor:pointer;color:var(--muted);white-space:nowrap;font-weight:600}
+  .seg .sbtn.on{color:#fff;background:#1d3556;border-color:#3a5680}
+
+  .nearbar{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .rsel{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:8px 10px;font-size:13px;font-family:inherit}
 
   .chips{display:flex;gap:7px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
   .chip{flex:0 0 auto;display:flex;align-items:center;gap:5px;font-size:12px;
     background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 10px;cursor:pointer;color:var(--muted);white-space:nowrap}
   .chip.on{color:#fff;border-color:#3a5680;background:var(--panel2)}
+  .chip.off{opacity:.4}
   .chip .cdot{width:9px;height:9px;border-radius:50%}
-  .chip.off{opacity:.45}
 
   .sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 14px calc(env(safe-area-inset-bottom) + 22px)}
   .section-title{font-size:12px;color:var(--muted);margin:12px 6px 8px;font-weight:700;letter-spacing:.3px}
 
   .leg{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;margin:0 6px 10px;padding-inline-start:4px}
   .leg .ic{font-size:16px}
-
-  .card{position:relative;background:var(--panel);border:1px solid var(--line);
-    border-radius:14px;padding:13px 14px;margin-bottom:12px;cursor:pointer;
-    transition:transform .15s ease,background .15s ease;border-inline-start:5px solid var(--line)}
+  .card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-bottom:12px;cursor:pointer;transition:transform .15s ease;border-inline-start:5px solid var(--line)}
   .card:active{transform:scale(.99)}
   .card.s{border-inline-start-color:var(--samui)} .card.p{border-inline-start-color:var(--phangan)} .card.b{border-inline-start-color:var(--bangkok)}
   .card.active{outline:2px solid #ffffff33}
-  .card .idx{position:absolute;top:-9px;inset-inline-end:-6px;width:26px;height:26px;border-radius:50%;
-    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;box-shadow:0 2px 8px #0006}
+  .card .idx{position:absolute;top:-9px;inset-inline-end:-6px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;box-shadow:0 2px 8px #0006}
   .card.s .idx{background:var(--samui)} .card.p .idx{background:var(--phangan)} .card.b .idx{background:var(--bangkok)}
   .card h3{margin:0 0 5px;font-size:15px}
   .card .region{font-size:12px;color:var(--muted);margin-bottom:9px}
@@ -743,19 +747,17 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .pill{background:#1e2c4d;border:1px solid var(--line);border-radius:8px;padding:2px 9px;font-size:12px}
   .card .meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
 
-  .poi{display:flex;align-items:center;gap:11px;background:var(--panel);border:1px solid var(--line);
-    border-radius:12px;padding:10px 12px;margin-bottom:9px;cursor:pointer}
+  .poi{display:flex;align-items:center;gap:11px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:9px;cursor:pointer}
   .poi:active{transform:scale(.99)}
   .poi .pemoji{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto;border:1px solid #ffffff22}
   .poi .pinfo{flex:1;min-width:0}
   .poi .pinfo h4{margin:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .poi .pinfo small{color:var(--muted);font-size:11px}
+  .poi .dist{font-size:11px;color:#7dd3fc;font-weight:700;flex:0 0 auto}
   .poi .del{background:transparent;border:none;color:#8892ab;font-size:16px;cursor:pointer;padding:4px}
-  .empty{color:var(--muted);font-size:12px;text-align:center;padding:10px;border:1px dashed var(--line);border-radius:12px}
-
+  .empty{color:var(--muted);font-size:12px;text-align:center;padding:12px;border:1px dashed var(--line);border-radius:12px}
   footer{color:#5f6f8c;font-size:10.5px;margin:14px 6px 0;line-height:1.6}
 
-  /* Leaflet theming */
   .leaflet-popup-content-wrapper{background:#0f1b36;color:var(--text);border-radius:12px;border:1px solid var(--line)}
   .leaflet-popup-content{margin:12px 14px}
   .leaflet-popup-tip{background:#0f1b36;border:1px solid var(--line)}
@@ -768,46 +770,47 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .pop a{color:#7dd3fc;font-size:12px;display:inline-block;margin-top:6px}
   .pop .delbtn{margin-top:8px;background:#3a1620;border:1px solid #7f2233;color:#ffb4c0;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer}
 
-  .num-marker{display:flex;align-items:center;justify-content:center;width:32px;height:32px;
-    border-radius:50% 50% 50% 0;transform:rotate(-45deg);color:#fff;font-weight:700;font-size:14px;border:2px solid #fff;box-shadow:0 3px 10px #0008}
-  .num-marker span{transform:rotate(45deg)}
-  .poi-pin{position:relative;width:32px;height:32px;background:var(--pc);border:2px solid #fff;
-    border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 9px #0008}
+  .poi-pin{position:relative;width:32px;height:32px;background:var(--pc);border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 9px #0008}
   .poi-pin .emoji{transform:rotate(45deg);font-size:15px;line-height:1}
   .trans-marker{font-size:17px;filter:drop-shadow(0 1px 2px #000a)}
-
   .leaflet-control-zoom{margin-top:calc(env(safe-area-inset-top) + 56px) !important}
   .leaflet-control-attribution{font-size:9px;background:rgba(15,27,54,.7);color:#7f8db0}
   .leaflet-control-attribution a{color:#9fb0cc}
 
-  #fitBtn{position:fixed;z-index:1000;inset-inline-end:12px;bottom:210px;width:44px;height:44px;border-radius:50%;
-    border:1px solid var(--line);background:#0f1b36ee;color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px #0007;cursor:pointer}
+  #fitBtn{position:fixed;z-index:1000;inset-inline-end:12px;bottom:225px;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:#0f1b36ee;color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px #0007;cursor:pointer}
 
-  /* Add-place banner */
   #banner{position:fixed;z-index:1200;top:calc(env(safe-area-inset-top) + 54px);inset-inline:12px;
     background:#123e57;border:1px solid #1d5f83;border-radius:12px;padding:10px 14px;font-size:13px;
     display:none;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 6px 20px #0008}
   #banner.show{display:flex}
   #banner button{background:#0b2233;border:1px solid #1d5f83;color:#fff;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer}
 
-  /* Modal form */
-  #modal{position:fixed;inset:0;z-index:1500;background:#0008;display:none;align-items:center;justify-content:center;padding:18px}
+  #modal{position:fixed;inset:0;z-index:1500;background:#0009;display:none;align-items:center;justify-content:center;padding:16px}
   #modal.show{display:flex}
-  .modal-card{background:#0f1b36;border:1px solid var(--line);border-radius:16px;padding:16px;width:100%;max-width:360px}
+  .modal-card{background:#0f1b36;border:1px solid var(--line);border-radius:16px;padding:16px;width:100%;max-width:380px;max-height:88vh;overflow-y:auto}
   .modal-card h3{margin:0 0 12px;font-size:16px}
   .field{margin-bottom:11px}
   .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
-  .field input,.field select,.field textarea{width:100%;background:#0b1428;border:1px solid var(--line);color:var(--text);
-    border-radius:10px;padding:9px 11px;font-size:14px;font-family:inherit}
-  .field textarea{resize:vertical;min-height:52px}
-  .modal-actions{display:flex;gap:8px;margin-top:6px}
+  .field input,.field select,.field textarea{width:100%;background:#0b1428;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 11px;font-size:14px;font-family:inherit}
+  .field textarea{resize:vertical;min-height:48px}
+  .subtabs{display:flex;gap:6px;margin-bottom:8px}
+  .subtab{flex:1;text-align:center;font-size:12px;padding:8px 4px;border:1px solid var(--line);border-radius:9px;cursor:pointer;color:var(--muted);background:#0b1428}
+  .subtab.on{color:#fff;background:#1d3556;border-color:#3a5680}
+  .pane{display:none} .pane.on{display:block}
+  .row{display:flex;gap:8px}
+  .results{margin-top:8px;max-height:180px;overflow-y:auto}
+  .res{padding:8px 10px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;cursor:pointer;font-size:13px;background:#0b1428}
+  .res:active{background:#16233f}
+  .res b{display:block;font-size:13px} .res small{color:var(--muted);font-size:11px}
+  .coordsBox{font-size:12px;color:#7dd3fc;margin-top:6px;min-height:16px}
+  .status{font-size:11px;color:var(--muted);margin-top:6px;min-height:14px}
+  .modal-actions{display:flex;gap:8px;margin-top:8px}
   .modal-actions .btn.cancel{background:transparent}
 
   @media (min-width:821px){
     #map{inset-inline-start:400px;width:auto}
     #topbar{inset-inline-start:400px;inset-inline-end:0;padding-top:14px}
-    #sheet{top:0;bottom:0;inset-inline:auto;inline-size:400px;width:400px;max-height:none;height:100%;
-      border-radius:0;border-top:none;border-inline-end:1px solid var(--line);transform:none !important;box-shadow:none}
+    #sheet{top:0;bottom:0;inset-inline:auto;inline-size:400px;width:400px;max-height:none;height:100%;border-radius:0;border-top:none;border-inline-end:1px solid var(--line);transform:none !important;box-shadow:none}
     #sheet.collapsed{transform:none !important}
     .handle-wrap{display:none}
     .sheet-head{padding-top:16px}
@@ -822,48 +825,79 @@ svg.leaflet-image-layer.leaflet-interactive path {
   <span class="flag">🇹🇭</span>
   <div>
     <h1>מסלול תאילנד 2026</h1>
-    <div class="sub">דפני · 6 באוגוסט – 1 בספטמבר · 26 לילות</div>
+    <div class="sub">6 באוגוסט – 1 בספטמבר · 26 לילות</div>
   </div>
+  <span class="adminBadge" id="adminBadge">מצב מנהל 🔓</span>
 </div>
 
 <button id="fitBtn" title="הצג הכל">🧭</button>
 
 <div id="banner">
-  <span>לחצו על המפה כדי לסמן מיקום למקום החדש 📍</span>
+  <span>לחצו על המפה כדי לסמן מיקום 📍</span>
   <button id="bannerCancel">ביטול</button>
 </div>
 
 <div id="sheet">
   <div class="handle-wrap" id="handle"><div class="handle"></div></div>
   <div class="sheet-head">
-    <div class="toolbar">
+    <div class="toolbar admin-only">
       <button class="btn primary" id="addBtn">➕ הוסף מקום</button>
       <button class="btn" id="shareBtn">🔗 שתף</button>
-      <button class="btn" id="locBtn">📍 מיקומי</button>
+      <button class="btn small" id="lockBtn" title="יציאה ממצב מנהל">🔒</button>
+    </div>
+    <div class="seg" id="locSeg"></div>
+    <div class="nearbar">
+      <button class="btn" id="nearBtn">📍 קרוב אליי</button>
+      <select id="radiusSel" class="rsel" style="display:none">
+        <option value="1">1 ק״מ</option>
+        <option value="3">3 ק״מ</option>
+        <option value="5" selected>5 ק״מ</option>
+        <option value="10">10 ק״מ</option>
+        <option value="25">25 ק״מ</option>
+      </select>
     </div>
     <div class="chips" id="chips"></div>
   </div>
   <div class="sheet-body">
     <div class="section-title">🧭 מסלול המלונות</div>
     <div id="list"></div>
-    <div class="section-title">⭐ מקומות מומלצים ושמורים</div>
+    <div class="section-title" id="poiTitle">⭐ מקומות מומלצים</div>
     <div id="poiList"></div>
-    <footer>
-      טפו על ➕ כדי להוסיף מסעדה / אטרקציה / חוף ועוד · המקומות שתוסיפו נשמרים במכשיר.<br/>
-      לחצו 🔗 כדי לשתף קישור שכולל את המקומות שהוספתם. מיקומי מלונות מקורבים לפי כתובת.
-    </footer>
+    <footer id="footerText"></footer>
   </div>
 </div>
 
-<!-- Add/Edit modal -->
+<!-- Add place modal -->
 <div id="modal">
   <div class="modal-card">
     <h3 id="modalTitle">הוספת מקום</h3>
     <div class="field"><label>שם המקום</label><input id="fName" type="text" placeholder="לדוגמה: מסעדת פיש מרקט" /></div>
     <div class="field"><label>קטגוריה</label><select id="fCat"></select></div>
     <div class="field"><label>הערה (לא חובה)</label><textarea id="fNote" placeholder="שעות פתיחה, המלצה, מחיר..."></textarea></div>
+
+    <div class="field">
+      <label>מיקום</label>
+      <div class="subtabs">
+        <div class="subtab on" data-pane="search">🔎 חיפוש</div>
+        <div class="subtab" data-pane="link">🔗 קישור</div>
+        <div class="subtab" data-pane="map">🗺️ במפה</div>
+      </div>
+      <div class="pane on" id="paneSearch">
+        <div class="row"><input id="fSearch" type="text" placeholder="שם מקום / כתובת (למשל: Big Buddha Samui)" /><button class="btn small primary" id="fSearchBtn">חפש</button></div>
+        <div class="results" id="fResults"></div>
+      </div>
+      <div class="pane" id="paneLink">
+        <div class="row"><input id="fLink" type="text" placeholder="הדביקו קישור Google Maps או קואורדינטות" /><button class="btn small primary" id="fLinkBtn">המר</button></div>
+        <div class="status" id="fLinkStatus"></div>
+      </div>
+      <div class="pane" id="paneMap">
+        <button class="btn primary" id="fMapPick">בחרו נקודה על המפה</button>
+      </div>
+      <div class="coordsBox" id="fCoords"></div>
+    </div>
+
     <div class="modal-actions">
-      <button class="btn primary" id="fSave">שמור</button>
+      <button class="btn primary" id="fSave">שמור מקום</button>
       <button class="btn cancel" id="fCancel">ביטול</button>
     </div>
   </div>
@@ -878,22 +912,42 @@ svg.leaflet-image-layer.leaflet-interactive path {
 //# sourceMappingURL=leaflet.js.map
 </script>
 <script>
-/* ---------- Categories ---------- */
-const CATEGORIES = {
-  hotel:      {he:'מלונות',      emoji:'🏨', color:'#0ea5a4'},
-  restaurant: {he:'מסעדות',      emoji:'🍽️', color:'#ef4444'},
-  cafe:       {he:'בתי קפה',     emoji:'☕', color:'#b45309'},
-  beach:      {he:'חופים',       emoji:'🏖️', color:'#06b6d4'},
-  attraction: {he:'אטרקציות',    emoji:'📸', color:'#8b5cf6'},
-  bar:        {he:'ברים',        emoji:'🍸', color:'#ec4899'},
-  shopping:   {he:'קניות',       emoji:'🛍️', color:'#eab308'},
-  viewpoint:  {he:'תצפיות',      emoji:'🌄', color:'#22c55e'},
-  activity:   {he:'פעילויות',    emoji:'🤿', color:'#3b82f6'},
-  temple:     {he:'מקדשים',      emoji:'🛕', color:'#f59e0b'},
-  other:      {he:'אחר',         emoji:'📍', color:'#94a3b8'},
-};
+/* ================= Config ================= */
+const ADMIN_HASH="6f19a63124e2790558f5aa75a27ff5efea4438ed5eedf8d4ec4a8d73c3f63334";
+const LS_PLACES='thai_places_v2';
+const LS_ADMIN='thai_admin';
 
-/* ---------- Itinerary hotels ---------- */
+const CATEGORIES = {
+  hotel:      {he:'מלונות',   emoji:'🏨', color:'#0ea5a4'},
+  restaurant: {he:'מסעדות',   emoji:'🍽️', color:'#ef4444'},
+  cafe:       {he:'בתי קפה',  emoji:'☕', color:'#b45309'},
+  beach:      {he:'חופים',    emoji:'🏖️', color:'#06b6d4'},
+  attraction: {he:'אטרקציות', emoji:'📸', color:'#8b5cf6'},
+  bar:        {he:'ברים',     emoji:'🍸', color:'#ec4899'},
+  shopping:   {he:'קניות',    emoji:'🛍️', color:'#eab308'},
+  viewpoint:  {he:'תצפיות',   emoji:'🌄', color:'#22c55e'},
+  activity:   {he:'פעילויות', emoji:'🤿', color:'#3b82f6'},
+  temple:     {he:'מקדשים',   emoji:'🛕', color:'#f59e0b'},
+  other:      {he:'אחר',      emoji:'📍', color:'#94a3b8'},
+};
+const REGIONS = {
+  all:     {he:'כל היעדים', eng:''},
+  samui:   {he:'קוסמוי',    eng:'Koh Samui',  center:[9.512,100.013]},
+  phangan: {he:'קופאנגן',   eng:'Koh Phangan',center:[9.735,100.020]},
+  bangkok: {he:'בנגקוק',    eng:'Bangkok',    center:[13.740,100.530]},
+};
+function regionOf(lat,lng){
+  let best='other',bd=1e9;
+  for(const k of ['samui','phangan','bangkok']){
+    const c=REGIONS[k].center, d=Math.hypot(lat-c[0],lng-c[1]);
+    if(d<bd){bd=d;best=k;}
+  }
+  if(best==='bangkok') return bd<1.3?'bangkok':'other';
+  return bd<0.24?best:'other';
+}
+const areaToRegion={s:'samui',p:'phangan',b:'bangkok'};
+
+/* ================= Itinerary ================= */
 const hotels = [
   { id:1, name:"Bandara Resort Koh Samui", region:"קוסמוי · Bophut Beach", area:"s",
     from:"2026-08-06", to:"2026-08-11", nights:5, thb:59544, lat:9.56107, lng:100.02343,
@@ -911,7 +965,6 @@ const hotels = [
     from:"2026-08-29", to:"2026-09-01", nights:3, thb:17465, lat:13.72462, lng:100.54762,
     leg:{ic:"✈️", txt:"טיסה מקוסמוי לבנגקוק"} },
 ];
-
 const segs = [
   { from:1, to:2, type:"ferry",  ic:"⛴️" },
   { from:2, to:3, type:"car",    ic:"🚗" },
@@ -919,8 +972,8 @@ const segs = [
   { from:4, to:5, type:"flight", ic:"✈️" },
 ];
 
-/* ---------- Example recommended places (editable / deletable) ---------- */
-const recommended = [
+/* ================= Default recommended places ================= */
+const DEFAULT_PLACES = [
   {id:"r1", name:"Fisherman's Village Bophut", cat:"shopping",   lat:9.57155, lng:100.06680, note:"שוק ליל שישי, מסעדות ובוטיקים"},
   {id:"r2", name:"Big Buddha (Wat Phra Yai)",  cat:"temple",     lat:9.57300, lng:100.06400, note:"פסל בודהה ענק, נקודת ציון בקוסמוי"},
   {id:"r3", name:"Haad Rin / Full Moon Beach", cat:"beach",      lat:9.67460, lng:100.06800, note:"מסיבת הירח המלא בקופאנגן"},
@@ -931,59 +984,79 @@ const recommended = [
   {id:"r8", name:"Lumphini Park",              cat:"attraction", lat:13.73070,lng:100.54180, note:"פארק ירוק ליד המלון בבנגקוק"},
 ];
 
-/* ---------- Storage for user places ---------- */
-const LS_KEY = 'thai_places_v1';
-function loadCustom(){ try{return JSON.parse(localStorage.getItem(LS_KEY)||'[]')}catch(e){return[]} }
-function saveCustom(a){ localStorage.setItem(LS_KEY, JSON.stringify(a)); }
-let custom = loadCustom();
-
-/* import places shared via URL hash (#places=base64) */
-(function importFromHash(){
-  const m = location.hash.match(/places=([^&]+)/);
-  if(!m) return;
-  try{
-    const arr = JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(m[1])))));
-    const ids = new Set(custom.map(p=>p.id));
-    let added=0;
-    arr.forEach(p=>{ if(p&&p.id&&!ids.has(p.id)){ custom.push(p); ids.add(p.id); added++; } });
-    if(added){ saveCustom(custom); }
-  }catch(e){ console.warn('bad hash',e); }
-})();
-
-/* ---------- Helpers ---------- */
+/* ================= Helpers ================= */
 function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
 const segColor = t => t==="ferry"?css("--ferry"):t==="flight"?css("--flight"):css("--car");
 const areaColor = a => a==="s"?css("--samui"):a==="p"?css("--phangan"):css("--bangkok");
 function fmtLong(d){const[y,m,day]=d.split("-");const M=["ינו","פבר","מרץ","אפר","מאי","יוני","יולי","אוג","ספט","אוק","נוב","דצמ"];return `${+day} ${M[+m-1]}`;}
 const byId = id => hotels.find(h=>h.id===id);
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function haversine(a,b){const R=6371,dLat=(b[0]-a[0])*Math.PI/180,dLng=(b[1]-a[1])*Math.PI/180,
+  la1=a[0]*Math.PI/180,la2=b[0]*Math.PI/180;
+  const x=Math.sin(dLat/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(x));}
+async function sha256hex(str){const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');}
+function getHashParams(){const h=location.hash.replace(/^#/,'');const o={};h.split('&').forEach(kv=>{const i=kv.indexOf('=');if(i>0)o[kv.slice(0,i)]=kv.slice(i+1);});return o;}
 
-/* ---------- Map ---------- */
-const map = L.map('map',{zoomControl:true,scrollWheelZoom:true,tap:true});
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
-  attribution:'&copy; OpenStreetMap &copy; CARTO', maxZoom:19
-}).addTo(map);
-
-/* Layer group per category for filtering */
-const layers = {};
-Object.keys(CATEGORIES).forEach(k=> layers[k]=L.layerGroup().addTo(map));
-const routeLayer = L.layerGroup().addTo(map);
-
-function poiIcon(cat){
-  const c = CATEGORIES[cat]||CATEGORIES.other;
-  return L.divIcon({className:'', html:`<div class="poi-pin" style="--pc:${c.color}"><span class="emoji">${c.emoji}</span></div>`,
-    iconSize:[32,32], iconAnchor:[16,32], popupAnchor:[0,-30]});
+/* Google Maps link that resolves to the exact named venue */
+function gmapsLink(name, regionKey, lat, lng){
+  if(name){
+    const eng=(REGIONS[regionKey]&&REGIONS[regionKey].eng)||'';
+    let q=name;
+    if(eng && !name.toLowerCase().includes(eng.toLowerCase())) q+=' '+eng;
+    if(!/thailand/i.test(q)) q+=' Thailand';
+    return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);
+  }
+  return 'https://www.google.com/maps/search/?api=1&query='+lat+','+lng;
 }
 
-/* ---------- Render hotels (as 'hotel' category + numbered list) ---------- */
-const listEl = document.getElementById('list');
-const hotelMarkers = {};
+/* ================= State ================= */
+let isAdmin=false;
+let places=[];
+let locFilter='all';
+let nearbyOn=false, nearCenter=null, radiusKm=5, nearCircle=null, meMarker=null;
+const active={}; Object.keys(CATEGORIES).forEach(k=>active[k]=true);
+
+function loadPlaces(){
+  const hp=getHashParams();
+  let hashPlaces=null;
+  if(hp.places){ try{ hashPlaces=JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(hp.places))))); }catch(e){} }
+  if(isAdmin){
+    let stored=null; try{ stored=JSON.parse(localStorage.getItem(LS_PLACES)); }catch(e){}
+    places = Array.isArray(stored)? stored : DEFAULT_PLACES.map(p=>({...p}));
+    if(Array.isArray(hashPlaces)){
+      const ids=new Set(places.map(p=>p.id));
+      hashPlaces.forEach(p=>{ if(p&&p.id&&!ids.has(p.id)){ places.push(p); ids.add(p.id);} });
+    }
+    savePlaces();
+  } else {
+    places = Array.isArray(hashPlaces)? hashPlaces : DEFAULT_PLACES.map(p=>({...p}));
+  }
+  places.forEach(p=>{ if(!p.region) p.region=regionOf(p.lat,p.lng); });
+}
+function savePlaces(){ if(isAdmin) localStorage.setItem(LS_PLACES, JSON.stringify(places)); }
+
+/* ================= Map ================= */
+const map = L.map('map',{zoomControl:true,scrollWheelZoom:true,tap:true});
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+  attribution:'&copy; OpenStreetMap &copy; CARTO', maxZoom:19}).addTo(map);
+const routeLayer=L.layerGroup().addTo(map);
+
+function poiIcon(cat){
+  const c=CATEGORIES[cat]||CATEGORIES.other;
+  return L.divIcon({className:'',html:`<div class="poi-pin" style="--pc:${c.color}"><span class="emoji">${c.emoji}</span></div>`,
+    iconSize:[32,32],iconAnchor:[16,32],popupAnchor:[0,-30]});
+}
+
+/* ---- Hotels (static markers + itinerary list) ---- */
+const hotelMeta=[];
+const listEl=document.getElementById('list');
 hotels.forEach(h=>{
   const legRow=document.createElement('div');
   legRow.className='leg';
   legRow.innerHTML=`<span class="ic">${h.leg.ic}</span><span>${h.leg.txt}</span>`;
   listEl.appendChild(legRow);
-
   const card=document.createElement('div');
   card.className=`card ${h.area}`;
   card.innerHTML=`
@@ -992,13 +1065,12 @@ hotels.forEach(h=>{
     <div class="region">${esc(h.region)}</div>
     <div class="dates"><span class="pill">${fmtLong(h.from)}</span><span>←</span><span class="pill">${fmtLong(h.to)}</span></div>
     <div class="meta"><span>🌙 ${h.nights} לילות</span><span>฿ ${h.thb.toLocaleString()}</span></div>`;
-  card.addEventListener('click',()=>focusHotel(h.id));
+  card.addEventListener('click',()=>focusLatLng([h.lat,h.lng], h.id===5?12:14, hotelMeta.find(m=>m.hid===h.id).marker));
   listEl.appendChild(card);
   h._card=card;
 
-  const icon=L.divIcon({className:'',
-    html:`<div class="poi-pin" style="--pc:${areaColor(h.area)}"><span class="emoji">🏨</span></div>`,
-    iconSize:[32,32],iconAnchor:[16,32],popupAnchor:[0,-30]});
+  const rkey=areaToRegion[h.area];
+  const icon=L.divIcon({className:'',html:`<div class="poi-pin" style="--pc:${areaColor(h.area)}"><span class="emoji">🏨</span></div>`,iconSize:[32,32],iconAnchor:[16,32],popupAnchor:[0,-30]});
   const m=L.marker([h.lat,h.lng],{icon});
   m.bindPopup(`
     <div class="pop">
@@ -1010,13 +1082,12 @@ hotels.forEach(h=>{
         <tr><td>לילות</td><td><b>${h.nights}</b></td></tr>
         <tr><td>עלות</td><td><b>฿ ${h.thb.toLocaleString()}</b></td></tr>
       </table>
-      <a href="https://www.google.com/maps/search/?api=1&query=${h.lat},${h.lng}" target="_blank">פתח ב-Google Maps ↗</a>
+      <a href="${gmapsLink(h.name, rkey, h.lat, h.lng)}" target="_blank" rel="noopener">פתח ב-Google Maps ↗</a>
     </div>`);
-  m.addTo(layers.hotel);
-  hotelMarkers[h.id]=m;
+  hotelMeta.push({hid:h.id, marker:m, cat:'hotel', region:rkey, latlng:[h.lat,h.lng], dist:Infinity});
 });
 
-/* ---------- Route segments ---------- */
+/* ---- Route segments ---- */
 segs.forEach(s=>{
   const a=byId(s.from), b=byId(s.to);
   const pts=[[a.lat,a.lng],[b.lat,b.lng]];
@@ -1025,57 +1096,71 @@ segs.forEach(s=>{
   L.marker(mid,{interactive:false,icon:L.divIcon({className:'',html:`<div class="trans-marker">${s.ic}</div>`,iconSize:[20,20],iconAnchor:[10,10]})}).addTo(routeLayer);
 });
 
-/* ---------- Render POIs (recommended + custom) ---------- */
-const poiListEl=document.getElementById('poiList');
-let poiMarkers={};
-function renderPois(){
-  Object.values(layers).forEach(l=>{});
-  // clear non-hotel layers
-  Object.keys(layers).forEach(k=>{ if(k!=='hotel') layers[k].clearLayers(); });
-  poiListEl.innerHTML='';
-  poiMarkers={};
-  const all=[...recommended.map(p=>({...p,_custom:false})), ...custom.map(p=>({...p,_custom:true}))];
-  if(all.length===0){ poiListEl.innerHTML='<div class="empty">אין עדיין מקומות. הוסיפו עם ➕</div>'; }
-  all.forEach(p=>{
+/* ---- POI markers ---- */
+let poiMeta=[];
+function buildPoiMarkers(){
+  poiMeta.forEach(o=>{ if(map.hasLayer(o.marker)) map.removeLayer(o.marker); });
+  poiMeta=[];
+  places.forEach(p=>{
     const c=CATEGORIES[p.cat]||CATEGORIES.other;
+    const rkey=p.region||regionOf(p.lat,p.lng);
     const m=L.marker([p.lat,p.lng],{icon:poiIcon(p.cat)});
     m.bindPopup(`
       <div class="pop">
         <h3>${c.emoji} ${esc(p.name)}</h3>
-        <div class="r">${esc(c.he)}</div>
+        <div class="r">${esc(c.he)}${REGIONS[rkey]&&REGIONS[rkey].eng?' · '+REGIONS[rkey].eng:''}</div>
         ${p.note?`<div class="note">${esc(p.note)}</div>`:''}
-        <a href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}" target="_blank">פתח ב-Google Maps ↗</a>
-        ${p._custom?`<div><button class="delbtn" onclick="deletePlace('${p.id}')">🗑️ מחק מקום</button></div>`:''}
+        <a href="${gmapsLink(p.name, rkey, p.lat, p.lng)}" target="_blank" rel="noopener">פתח ב-Google Maps ↗</a>
+        ${isAdmin?`<div><button class="delbtn" onclick="deletePlace('${p.id}')">🗑️ מחק מקום</button></div>`:''}
       </div>`);
-    m.addTo(layers[p.cat]||layers.other);
-    poiMarkers[p.id]=m;
-
-    const row=document.createElement('div');
-    row.className='poi';
-    row.innerHTML=`
-      <div class="pemoji" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</div>
-      <div class="pinfo"><h4>${esc(p.name)}</h4><small>${esc(c.he)}${p.note?' · '+esc(p.note):''}</small></div>
-      ${p._custom?`<button class="del" title="מחק" data-del="${p.id}">🗑️</button>`:''}`;
-    row.addEventListener('click',e=>{ if(e.target.closest('[data-del]')) return; focusPoi(p.id); });
-    poiListEl.appendChild(row);
+    poiMeta.push({pid:p.id, marker:m, cat:p.cat, region:rkey, latlng:[p.lat,p.lng], name:p.name, note:p.note, dist:Infinity});
   });
-  poiListEl.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>deletePlace(b.dataset.del)));
-  applyFilters();
-}
-
-function focusPoi(id){
-  const m=poiMarkers[id]; if(!m) return;
-  const ll=m.getLatLng();
-  if(isMobile()) sheet.classList.add('collapsed');
-  setTimeout(()=>{ map.flyTo(ll,14,{duration:.8}); m.openPopup(); }, isMobile()?260:0);
 }
 window.deletePlace=function(id){
-  custom=custom.filter(p=>p.id!==id); saveCustom(custom); map.closePopup(); renderPois();
+  if(!isAdmin) return;
+  places=places.filter(p=>p.id!==id); savePlaces(); map.closePopup();
+  buildPoiMarkers(); applyFilters();
 };
 
-/* ---------- Filters (chips) ---------- */
+/* ================= Filters ================= */
+function withinFilters(o){
+  if(!active[o.cat]) return false;
+  if(nearbyOn){ return o.dist<=radiusKm; }
+  return locFilter==='all' || o.region===locFilter;
+}
+function applyFilters(){
+  [...hotelMeta,...poiMeta].forEach(o=>{
+    const show=withinFilters(o);
+    if(show){ if(!map.hasLayer(o.marker)) o.marker.addTo(map); }
+    else { if(map.hasLayer(o.marker)) map.removeLayer(o.marker); }
+  });
+  const showRoute = locFilter==='all' && !nearbyOn;
+  if(showRoute){ if(!map.hasLayer(routeLayer)) routeLayer.addTo(map); }
+  else { if(map.hasLayer(routeLayer)) map.removeLayer(routeLayer); }
+  renderPoiList();
+}
+
+/* location segmented */
+const locSeg=document.getElementById('locSeg');
+function buildLocSeg(){
+  locSeg.innerHTML='';
+  Object.entries(REGIONS).forEach(([k,r])=>{
+    const b=document.createElement('div');
+    b.className='sbtn'+(k===locFilter?' on':'');
+    b.textContent=r.he;
+    b.addEventListener('click',()=>{
+      locFilter=k;
+      if(nearbyOn){ nearbyOn=false; toggleNearUI(false); }
+      [...locSeg.children].forEach(c=>c.classList.remove('on')); b.classList.add('on');
+      applyFilters();
+      if(k!=='all'){ const c=REGIONS[k].center; map.flyTo(c, k==='bangkok'?12:11,{duration:.7}); }
+      else fitAll();
+    });
+    locSeg.appendChild(b);
+  });
+}
+/* category chips */
 const chipsEl=document.getElementById('chips');
-const active={}; Object.keys(CATEGORIES).forEach(k=>active[k]=true);
 function buildChips(){
   chipsEl.innerHTML='';
   Object.entries(CATEGORIES).forEach(([k,c])=>{
@@ -1086,99 +1171,245 @@ function buildChips(){
     chipsEl.appendChild(chip);
   });
 }
-function applyFilters(){
-  Object.keys(layers).forEach(k=>{
-    if(active[k]){ if(!map.hasLayer(layers[k])) map.addLayer(layers[k]); }
-    else { if(map.hasLayer(layers[k])) map.removeLayer(layers[k]); }
+
+/* ================= POI list ================= */
+const poiListEl=document.getElementById('poiList');
+const poiTitle=document.getElementById('poiTitle');
+function renderPoiList(){
+  let items=poiMeta.filter(withinFilters);
+  if(nearbyOn) items=items.slice().sort((a,b)=>a.dist-b.dist);
+  poiTitle.textContent = nearbyOn?'⭐ מקומות סביבי':'⭐ מקומות מומלצים';
+  poiListEl.innerHTML='';
+  if(items.length===0){ poiListEl.innerHTML='<div class="empty">אין מקומות בסינון הנוכחי'+(isAdmin?' · הוסיפו עם ➕':'')+'</div>'; return; }
+  items.forEach(o=>{
+    const p=places.find(x=>x.id===o.pid); if(!p) return;
+    const c=CATEGORIES[p.cat]||CATEGORIES.other;
+    const row=document.createElement('div');
+    row.className='poi';
+    row.innerHTML=`
+      <div class="pemoji" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</div>
+      <div class="pinfo"><h4>${esc(p.name)}</h4><small>${esc(c.he)}${p.note?' · '+esc(p.note):''}</small></div>
+      ${nearbyOn?`<span class="dist">${o.dist<1?Math.round(o.dist*1000)+' מ׳':o.dist.toFixed(1)+' ק״מ'}</span>`:''}
+      ${isAdmin?`<button class="del" title="מחק" data-del="${p.id}">🗑️</button>`:''}`;
+    row.addEventListener('click',e=>{ if(e.target.closest('[data-del]')) return; focusLatLng(o.latlng,15,o.marker); });
+    poiListEl.appendChild(row);
   });
+  poiListEl.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>deletePlace(b.dataset.del)));
 }
 
-/* ---------- Add place flow ---------- */
+/* ================= Focus / sheet ================= */
+const sheet=document.getElementById('sheet');
+const isMobile=()=>window.matchMedia('(max-width:820px)').matches;
+function focusLatLng(ll, z, marker){
+  if(isMobile()) sheet.classList.add('collapsed');
+  setTimeout(()=>{ map.flyTo(ll,z,{duration:.8}); if(marker){ if(!map.hasLayer(marker)) marker.addTo(map); marker.openPopup(); } }, isMobile()?260:0);
+}
+const allPts=hotels.map(h=>[h.lat,h.lng]);
+function fitAll(){ map.fitBounds(L.latLngBounds(allPts).pad(0.18)); }
+
+/* ================= Nearby ================= */
+const nearBtn=document.getElementById('nearBtn');
+const radiusSel=document.getElementById('radiusSel');
+function toggleNearUI(on){
+  nearBtn.classList.toggle('primary',on);
+  nearBtn.textContent = on?'✖ בטל קרוב אליי':'📍 קרוב אליי';
+  radiusSel.style.display = on?'block':'none';
+}
+function computeDistances(){
+  [...hotelMeta,...poiMeta].forEach(o=>{ o.dist = nearCenter? haversine(nearCenter,o.latlng): Infinity; });
+}
+function drawNearCircle(){
+  if(nearCircle){ map.removeLayer(nearCircle); nearCircle=null; }
+  if(nearCenter){ nearCircle=L.circle(nearCenter,{radius:radiusKm*1000,color:'#38bdf8',weight:1.5,fillColor:'#38bdf8',fillOpacity:.08}).addTo(map); }
+}
+nearBtn.addEventListener('click',()=>{
+  if(nearbyOn){ nearbyOn=false; toggleNearUI(false); if(nearCircle){map.removeLayer(nearCircle);nearCircle=null;} applyFilters(); return; }
+  if(!navigator.geolocation){ alert('אין תמיכה במיקום במכשיר'); return; }
+  nearBtn.textContent='⏳ מאתר...';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    nearCenter=[pos.coords.latitude,pos.coords.longitude];
+    if(meMarker) map.removeLayer(meMarker);
+    meMarker=L.marker(nearCenter,{icon:L.divIcon({className:'',html:'<div class="poi-pin" style="--pc:#2563eb"><span class="emoji">🧍</span></div>',iconSize:[32,32],iconAnchor:[16,32]})}).addTo(map);
+    nearbyOn=true; toggleNearUI(true);
+    computeDistances(); drawNearCircle(); applyFilters();
+    if(isMobile()) sheet.classList.add('collapsed');
+    map.flyTo(nearCenter,13,{duration:.8});
+  },err=>{ nearBtn.textContent='📍 קרוב אליי'; alert('לא ניתן לאתר מיקום. ודאו שאישרתם הרשאת מיקום.'); },{enableHighAccuracy:true,timeout:9000});
+});
+radiusSel.addEventListener('change',()=>{ radiusKm=+radiusSel.value; if(nearbyOn){ drawNearCircle(); applyFilters(); } });
+
+/* ================= Add place (admin) ================= */
 const banner=document.getElementById('banner');
 const modal=document.getElementById('modal');
 const fCat=document.getElementById('fCat');
-Object.entries(CATEGORIES).forEach(([k,c])=>{ if(k==='hotel')return; const o=document.createElement('option'); o.value=k; o.textContent=`${c.emoji} ${c.he.replace(/ים$/,'')}`; fCat.appendChild(o); });
-let placing=false, pending=null;
+Object.entries(CATEGORIES).forEach(([k,c])=>{ if(k==='hotel')return; const o=document.createElement('option'); o.value=k; o.textContent=`${c.emoji} ${c.he}`; fCat.appendChild(o); });
+let pending=null; // {lat,lng}
+let placing=false;
 
-document.getElementById('addBtn').addEventListener('click',()=>{
-  placing=true; banner.classList.add('show'); if(isMobile()) sheet.classList.add('collapsed');
+function openModal(){ modal.classList.add('show'); }
+function closeModal(){ modal.classList.remove('show'); }
+function setCoords(lat,lng){ pending={lat:+(+lat).toFixed(6),lng:+(+lng).toFixed(6)}; document.getElementById('fCoords').textContent=`📍 נבחר: ${pending.lat}, ${pending.lng}`; }
+function resetForm(){ pending=null; document.getElementById('fName').value=''; document.getElementById('fNote').value=''; fCat.value='restaurant';
+  document.getElementById('fSearch').value=''; document.getElementById('fResults').innerHTML=''; document.getElementById('fLink').value=''; document.getElementById('fLinkStatus').textContent=''; document.getElementById('fCoords').textContent=''; switchPane('search'); }
+
+document.getElementById('addBtn').addEventListener('click',()=>{ resetForm(); openModal(); });
+document.getElementById('fCancel').addEventListener('click',()=>{ closeModal(); pending=null; });
+
+/* subtabs */
+document.querySelectorAll('.subtab').forEach(t=>t.addEventListener('click',()=>switchPane(t.dataset.pane)));
+function switchPane(name){
+  document.querySelectorAll('.subtab').forEach(t=>t.classList.toggle('on',t.dataset.pane===name));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  document.getElementById('pane'+name.charAt(0).toUpperCase()+name.slice(1)).classList.add('on');
+}
+
+/* search via Nominatim */
+async function nomSearch(q){
+  const url='https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=he&q='+encodeURIComponent(q);
+  const r=await fetch(url,{headers:{'Accept':'application/json'}}); return await r.json();
+}
+const fResults=document.getElementById('fResults');
+async function doSearch(){
+  const q=document.getElementById('fSearch').value.trim(); if(!q) return;
+  fResults.innerHTML='<div class="status">מחפש...</div>';
+  try{
+    const res=await nomSearch(q);
+    if(!res.length){ fResults.innerHTML='<div class="status">לא נמצאו תוצאות. נסו שם באנגלית.</div>'; return; }
+    fResults.innerHTML='';
+    res.forEach(r=>{
+      const div=document.createElement('div'); div.className='res';
+      const main=r.display_name.split(',')[0];
+      div.innerHTML=`<b>${esc(main)}</b><small>${esc(r.display_name)}</small>`;
+      div.addEventListener('click',()=>{
+        setCoords(r.lat,r.lon);
+        if(!document.getElementById('fName').value.trim()) document.getElementById('fName').value=main;
+        fResults.innerHTML=`<div class="status">✓ נבחר: ${esc(main)}</div>`;
+      });
+      fResults.appendChild(div);
+    });
+  }catch(e){ fResults.innerHTML='<div class="status">שגיאת חיפוש. בדקו חיבור אינטרנט.</div>'; }
+}
+document.getElementById('fSearchBtn').addEventListener('click',doSearch);
+document.getElementById('fSearch').addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();doSearch();} });
+
+/* parse coords from text/URL */
+function parseCoords(str){
+  if(!str) return null;
+  let m;
+  if((m=str.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/))) return {lat:+m[1],lng:+m[2]};
+  if((m=str.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/))) return {lat:+m[1],lng:+m[2]};
+  if((m=str.match(/[?&](?:q|query|destination|ll)=(-?\d+\.\d+),(-?\d+\.\d+)/))) return {lat:+m[1],lng:+m[2]};
+  if((m=str.match(/(-?\d{1,2}\.\d{4,}),\s*(-?\d{1,3}\.\d{4,})/))) return {lat:+m[1],lng:+m[2]};
+  return null;
+}
+function parseName(str){ const m=str.match(/maps\/place\/([^\/@]+)/); if(m){ try{return decodeURIComponent(m[1].replace(/\+/g,' '));}catch(e){return m[1].replace(/\+/g,' ');} } return null; }
+async function resolveLink(text){
+  let c=parseCoords(text); let nm=parseName(text);
+  if(c) return {...c,name:nm};
+  const um=text.match(/https?:\/\/\S+/); if(!um) return null;
+  const url=um[0];
+  for(const prox of ['https://api.allorigins.win/raw?url=','https://corsproxy.io/?url=']){
+    try{
+      const r=await fetch(prox+encodeURIComponent(url)); const t=await r.text();
+      c=parseCoords(t); nm=nm||parseName(t);
+      if(c) return {...c,name:nm};
+    }catch(e){}
+  }
+  return null;
+}
+const fLinkStatus=document.getElementById('fLinkStatus');
+document.getElementById('fLinkBtn').addEventListener('click',async()=>{
+  const v=document.getElementById('fLink').value.trim(); if(!v) return;
+  fLinkStatus.textContent='ממיר...';
+  const r=await resolveLink(v);
+  if(r){ setCoords(r.lat,r.lng); if(r.name && !document.getElementById('fName').value.trim()) document.getElementById('fName').value=r.name;
+    fLinkStatus.textContent='✓ מיקום זוהה'+(r.name?': '+r.name:''); }
+  else { fLinkStatus.innerHTML='לא הצלחתי לחלץ מיקום מהקישור המקוצר. אפשרויות:<br>1) פתחו את הקישור ב-Google Maps והדביקו כאן את הכתובת המלאה (זו שמתחילה ב-google.com/maps ומכילה @…).<br>2) הדביקו קואורדינטות בפורמט 9.79041, 99.98695.<br>3) השתמשו בלשונית 🔎 חיפוש לפי שם המקום.'; }
 });
-document.getElementById('bannerCancel').addEventListener('click',()=>{ placing=false; banner.classList.remove('show'); });
+
+/* map pick */
+document.getElementById('fMapPick').addEventListener('click',()=>{
+  placing=true; closeModal(); banner.classList.add('show'); if(isMobile()) sheet.classList.add('collapsed');
+});
+document.getElementById('bannerCancel').addEventListener('click',()=>{ placing=false; banner.classList.remove('show'); openModal(); });
 map.on('click',e=>{
-  if(!placing) return;
-  placing=false; banner.classList.remove('show');
-  pending={lat:+e.latlng.lat.toFixed(5), lng:+e.latlng.lng.toFixed(5)};
-  document.getElementById('fName').value='';
-  document.getElementById('fNote').value='';
-  fCat.value='restaurant';
-  modal.classList.add('show');
-  setTimeout(()=>document.getElementById('fName').focus(),50);
+  if(!placing) return; placing=false; banner.classList.remove('show');
+  setCoords(e.latlng.lat,e.latlng.lng); switchPane('map'); openModal();
 });
-document.getElementById('fCancel').addEventListener('click',()=>{ modal.classList.remove('show'); pending=null; });
+
+/* save */
 document.getElementById('fSave').addEventListener('click',()=>{
   const name=document.getElementById('fName').value.trim();
-  if(!name){ document.getElementById('fName').focus(); return; }
+  if(!name){ alert('הזינו שם למקום'); document.getElementById('fName').focus(); return; }
+  if(!pending){ alert('בחרו מיקום (חיפוש / קישור / מפה)'); return; }
   const place={ id:'u'+Date.now().toString(36), name, cat:fCat.value,
-    note:document.getElementById('fNote').value.trim(), lat:pending.lat, lng:pending.lng };
-  custom.push(place); saveCustom(custom); modal.classList.remove('show'); pending=null;
-  renderPois();
-  setTimeout(()=>focusPoi(place.id),100);
+    note:document.getElementById('fNote').value.trim(), lat:pending.lat, lng:pending.lng, region:regionOf(pending.lat,pending.lng) };
+  places.push(place); savePlaces(); closeModal();
+  buildPoiMarkers(); applyFilters();
+  setTimeout(()=>{ const o=poiMeta.find(x=>x.pid===place.id); focusLatLng([place.lat,place.lng],15,o&&o.marker); },100);
 });
 
-/* ---------- Share ---------- */
+/* ================= Share ================= */
 document.getElementById('shareBtn').addEventListener('click',async()=>{
   let url=location.origin+location.pathname;
-  if(custom.length){
-    const b64=btoa(unescape(encodeURIComponent(JSON.stringify(custom))));
+  if(places.length){
+    const b64=btoa(unescape(encodeURIComponent(JSON.stringify(places))));
     url+='#places='+encodeURIComponent(b64);
   }
-  const txt='מסלול תאילנד 2026 🇹🇭 '+url;
   try{
     if(navigator.share){ await navigator.share({title:'מסלול תאילנד 2026',url}); return; }
     await navigator.clipboard.writeText(url);
-    alert('הקישור הועתק! אפשר להדביק בוואטסאפ.\n\n'+url);
-  }catch(e){ prompt('העתיקו את הקישור לשיתוף:', url); }
+    alert('הקישור הועתק! אפשר להדביק בוואטסאפ.\nהצופים יראו את המקומות שלך אך לא יוכלו לערוך.');
+  }catch(e){ prompt('העתיקו את הקישור לשיתוף:',url); }
 });
 
-/* ---------- My location ---------- */
-let meMarker=null;
-document.getElementById('locBtn').addEventListener('click',()=>{
-  if(!navigator.geolocation){ alert('אין תמיכה במיקום'); return; }
-  navigator.geolocation.getCurrentPosition(pos=>{
-    const ll=[pos.coords.latitude,pos.coords.longitude];
-    if(meMarker) map.removeLayer(meMarker);
-    meMarker=L.marker(ll,{icon:L.divIcon({className:'',html:'<div class="poi-pin" style="--pc:#2563eb"><span class="emoji">🧍</span></div>',iconSize:[32,32],iconAnchor:[16,32]})}).addTo(map);
-    map.flyTo(ll,13,{duration:.8});
-    if(isMobile()) sheet.classList.add('collapsed');
-  },()=>alert('לא ניתן לאתר מיקום'),{enableHighAccuracy:true,timeout:8000});
+/* ================= Admin ================= */
+const lockBtn=document.getElementById('lockBtn');
+lockBtn.addEventListener('click',()=>{
+  if(confirm('לצאת ממצב מנהל במכשיר זה?')){ localStorage.removeItem(LS_ADMIN); location.reload(); }
 });
-
-/* ---------- Sheet + fit ---------- */
-const allPts=hotels.map(h=>[h.lat,h.lng]);
-function fitAll(){ map.fitBounds(L.latLngBounds(allPts).pad(0.18)); }
-const sheet=document.getElementById('sheet');
-const isMobile=()=>window.matchMedia('(max-width:820px)').matches;
-function focusHotel(id){
-  const h=byId(id);
-  document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
-  h._card.classList.add('active');
-  if(isMobile()) sheet.classList.add('collapsed');
-  setTimeout(()=>{ map.flyTo([h.lat,h.lng], id===5?12:14,{duration:.9}); hotelMarkers[id].openPopup(); }, isMobile()?260:0);
+async function initAdmin(){
+  const hp=getHashParams();
+  if(hp.admin){
+    try{ const h=await sha256hex(decodeURIComponent(hp.admin)); if(h===ADMIN_HASH){ localStorage.setItem(LS_ADMIN,'1'); } }catch(e){}
+    // strip admin from hash (keep places if present)
+    const keep=hp.places?('#places='+hp.places):'';
+    history.replaceState(null,'',location.pathname+location.search+keep);
+  }
+  isAdmin = localStorage.getItem(LS_ADMIN)==='1';
+  document.body.classList.toggle('admin',isAdmin);
 }
+async function tryUnlockFromHash(){
+  if(localStorage.getItem(LS_ADMIN)==='1') return;
+  const hp=getHashParams();
+  if(hp.admin){ try{ const h=await sha256hex(decodeURIComponent(hp.admin)); if(h===ADMIN_HASH){ localStorage.setItem(LS_ADMIN,'1'); location.reload(); } }catch(e){} }
+}
+window.addEventListener('load',tryUnlockFromHash);
+window.addEventListener('hashchange',tryUnlockFromHash);
+
+/* ================= Sheet interactions ================= */
 document.getElementById('handle').addEventListener('click',()=>sheet.classList.toggle('collapsed'));
 let startY=null;
 sheet.addEventListener('touchstart',e=>{ if(e.target.closest('.sheet-body')) return; startY=e.touches[0].clientY; },{passive:true});
 sheet.addEventListener('touchend',e=>{ if(startY===null)return; const dy=e.changedTouches[0].clientY-startY;
   if(dy>40) sheet.classList.add('collapsed'); else if(dy<-40) sheet.classList.remove('collapsed'); startY=null; });
-document.getElementById('fitBtn').addEventListener('click',()=>{ fitAll(); map.closePopup(); if(isMobile()) sheet.classList.add('collapsed'); });
+document.getElementById('fitBtn').addEventListener('click',()=>{ locFilter='all'; buildLocSeg(); if(nearbyOn){nearbyOn=false;toggleNearUI(false);if(nearCircle){map.removeLayer(nearCircle);nearCircle=null;}} applyFilters(); fitAll(); map.closePopup(); if(isMobile()) sheet.classList.add('collapsed'); });
 
-/* ---------- Init ---------- */
-buildChips();
-renderPois();
-fitAll();
-if(isMobile()) sheet.classList.add('collapsed');
-setTimeout(()=>map.invalidateSize(),300);
-window.addEventListener('resize',()=>map.invalidateSize());
+document.getElementById('footerText').innerHTML = 'טפו על מקום לראותו במפה · הכפתור 🧭 מציג הכל.';
+
+/* ================= Init ================= */
+(async function init(){
+  await initAdmin();
+  loadPlaces();
+  buildLocSeg();
+  buildChips();
+  buildPoiMarkers();
+  applyFilters();
+  fitAll();
+  if(isMobile()) sheet.classList.add('collapsed');
+  setTimeout(()=>map.invalidateSize(),300);
+  window.addEventListener('resize',()=>map.invalidateSize());
+})();
 </script>
 </body>
 </html>
