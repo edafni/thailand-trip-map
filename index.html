@@ -914,7 +914,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 <script>
 /* ================= Config ================= */
 const ADMIN_HASH="6f19a63124e2790558f5aa75a27ff5efea4438ed5eedf8d4ec4a8d73c3f63334";
-const LS_PLACES='thai_places_v2';
+const LS_PLACES='thai_places_v3';
 const LS_ADMIN='thai_admin';
 
 const CATEGORIES = {
@@ -928,6 +928,7 @@ const CATEGORIES = {
   viewpoint:  {he:'תצפיות',   emoji:'🌄', color:'#22c55e'},
   activity:   {he:'פעילויות', emoji:'🤿', color:'#3b82f6'},
   temple:     {he:'מקדשים',   emoji:'🛕', color:'#f59e0b'},
+  spa:        {he:'ספא ועיסוי', emoji:'💆', color:'#d946ef'},
   other:      {he:'אחר',      emoji:'📍', color:'#94a3b8'},
 };
 const REGIONS = {
@@ -974,14 +975,67 @@ const segs = [
 
 /* ================= Default recommended places ================= */
 const DEFAULT_PLACES = [
-  {id:"r1", name:"Fisherman's Village Bophut", cat:"shopping",   lat:9.57155, lng:100.06680, note:"שוק ליל שישי, מסעדות ובוטיקים"},
-  {id:"r2", name:"Big Buddha (Wat Phra Yai)",  cat:"temple",     lat:9.57300, lng:100.06400, note:"פסל בודהה ענק, נקודת ציון בקוסמוי"},
-  {id:"r3", name:"Haad Rin / Full Moon Beach", cat:"beach",      lat:9.67460, lng:100.06800, note:"מסיבת הירח המלא בקופאנגן"},
-  {id:"r4", name:"Bottle Beach (Haad Khuat)",  cat:"beach",      lat:9.78900, lng:100.03500, note:"חוף מבודד יפהפה בצפון קופאנגן"},
-  {id:"r5", name:"Ang Thong Marine Park",      cat:"activity",   lat:9.60600, lng:99.66300,  note:"שמורת הים הלאומית - שיט וסנורקל"},
-  {id:"r6", name:"Wat Arun",                   cat:"temple",     lat:13.74370,lng:100.48890, note:"מקדש השחר על גדות הנהר בבנגקוק"},
-  {id:"r7", name:"ICONSIAM",                   cat:"shopping",   lat:13.72630,lng:100.51000, note:"קניון יוקרה על הנהר בבנגקוק"},
-  {id:"r8", name:"Lumphini Park",              cat:"attraction", lat:13.73070,lng:100.54180, note:"פארק ירוק ליד המלון בבנגקוק"},
+  {id:"s1", name:"Pichet Restaurant", cat:"restaurant", lat:9.556176, lng:100.030279},
+  {id:"s2", name:"Ran Khang Non", cat:"restaurant", lat:9.556297, lng:100.030913},
+  {id:"s3", name:"German Bakery by Achim", cat:"cafe", lat:9.708267, lng:99.995218},
+  {id:"s4", name:"Fatboy Izakaya", cat:"bar", lat:13.723424, lng:100.58496},
+  {id:"s5", name:"Realpork Korean BBQ & Pub (Groove at centralwOrld)", cat:"bar", lat:13.745365, lng:100.538318},
+  {id:"s6", name:"KATSU MIDORI THAILAND CentralwOrld", cat:"restaurant", lat:13.747441, lng:100.539406},
+  {id:"s7", name:"Baan Sawan Massage", cat:"spa", lat:9.530028, lng:100.061116},
+  {id:"s8", name:"Galanga", cat:"restaurant", lat:9.531853, lng:100.062655},
+  {id:"s9", name:"MENSHO TOKYO", cat:"restaurant", lat:13.733075, lng:100.566384},
+  {id:"s10", name:"The Local", cat:"restaurant", lat:13.740641, lng:100.563603},
+  {id:"s11", name:"Niku Sho", cat:"restaurant", lat:13.734587, lng:100.566522},
+  {id:"s12", name:"Si Khao Night Market", cat:"shopping", lat:9.533996, lng:100.044875},
+  {id:"s13", name:"ICONSIAM", cat:"shopping", lat:13.726217, lng:100.510629},
+  {id:"s14", name:"Mama Noi. Mango Sticky Rice", cat:"restaurant", lat:9.754607, lng:99.96608},
+  {id:"s15", name:"My Cafe & Restaurant", cat:"cafe", lat:9.554253, lng:100.031006},
+  {id:"s16", name:"Phangan Elephant Sanctuary", cat:"activity", lat:9.732965, lng:100.008747},
+  {id:"s17", name:"Saturday Walking Street Market", cat:"shopping", lat:9.709256, lng:99.987238},
+  {id:"s18", name:"Ocean Vibes", cat:"restaurant", lat:9.725767, lng:99.976243},
+  {id:"s19", name:"ถึงพะงัน Dear Phangan", cat:"restaurant", lat:9.734379, lng:99.987542},
+  {id:"s20", name:"Space & Time Cube+", cat:"other", lat:13.712141, lng:100.435225},
+  {id:"s21", name:"Umami Ramen & Sushi Japanese", cat:"restaurant", lat:9.758132, lng:99.967885},
+  {id:"s22", name:"Happiness Restaurant (ทะเลถัง)", cat:"restaurant", lat:9.743463, lng:99.976768},
+  {id:"s23", name:"LEO Thai Food ลีโอ อาหารไทย", cat:"restaurant", lat:9.787003, lng:100.007677},
+  {id:"s24", name:"The Wave Sunset restaurant and bar", cat:"bar", lat:9.769167, lng:99.961513},
+  {id:"s25", name:"เมี่ยงปลาเผาครับผม Grilled fish miang", cat:"restaurant", lat:9.718086, lng:99.999751},
+  {id:"s26", name:"Grilled Fish Miang King - Thai Restaurant", cat:"restaurant", lat:13.752298, lng:100.638489},
+  {id:"s27", name:"Capybara Coffee Phangan", cat:"cafe", lat:9.738325, lng:100.001245},
+  {id:"s28", name:"Khua Lung Teum / Uncle Teum's Duck Noodle & Crispy Pork", cat:"restaurant", lat:9.725817, lng:100.000478},
+  {id:"s29", name:"Satipot Persian Experience", cat:"restaurant", lat:9.749366, lng:99.976229},
+  {id:"s30", name:"Pork leg restaurant", cat:"restaurant", lat:9.709083, lng:99.992434},
+  {id:"s31", name:"Thong Nai Pan Beach", cat:"beach", lat:9.777698, lng:100.055923},
+  {id:"s32", name:"NENA Locanda Italiana", cat:"restaurant", lat:9.73314, lng:99.981177},
+  {id:"s33", name:"Nong Taa Ped Palo", cat:"restaurant", lat:9.733227, lng:99.981139},
+  {id:"s34", name:"Mr. Kai Kitchen", cat:"restaurant", lat:9.561049, lng:100.021909},
+  {id:"s35", name:"Din Tai Fung", cat:"restaurant", lat:13.746073, lng:100.539689},
+  {id:"s36", name:"Sushi Mori", cat:"restaurant", lat:13.746132, lng:100.541006},
+  {id:"s37", name:"SUSHI SEKI (Siam Paragon)", cat:"restaurant", lat:13.745736, lng:100.534712},
+  {id:"s38", name:"Phensiri", cat:"restaurant", lat:9.511733, lng:100.054977},
+  {id:"s39", name:"Da Lha health massage by Phairin", cat:"spa", lat:9.568841, lng:100.08294},
+  {id:"s40", name:"Ploy Thaifood Seafood", cat:"restaurant", lat:9.534449, lng:100.065965},
+  {id:"s41", name:"หนานหยวน เชิงมน Nanyuan Noodle ( Choengmon beach)", cat:"beach", lat:9.569224, lng:100.082555},
+  {id:"s42", name:"Mr. Eung Seafood", cat:"restaurant", lat:9.573446, lng:100.077946},
+  {id:"s43", name:"Big Blue Specialty Coffee", cat:"cafe", lat:9.554725, lng:100.032502},
+  {id:"s44", name:"Akbar", cat:"bar", lat:9.571241, lng:100.079722},
+  {id:"s45", name:"Phangan Food Court", cat:"restaurant", lat:9.709314, lng:99.991227},
+  {id:"s46", name:"Pum Pui Restaurant", cat:"restaurant", lat:9.756548, lng:99.971114},
+  {id:"s47", name:"Japan Cafe Restaurant", cat:"cafe", lat:9.713601, lng:99.990982},
+  {id:"s48", name:"Pure Relax", cat:"spa", lat:9.716956, lng:99.985931},
+  {id:"s49", name:"Messy House", cat:"restaurant", lat:9.710222, lng:99.987096},
+  {id:"s50", name:"Bubba's Roastery", cat:"cafe", lat:9.774509, lng:99.967495},
+  {id:"s51", name:"Indigo Specialty Coffee & Bakery", cat:"cafe", lat:9.749094, lng:99.975336},
+  {id:"s52", name:"Secret Beach", cat:"beach", lat:9.770502, lng:99.96227},
+  {id:"s53", name:"Mae Haad Beach", cat:"beach", lat:9.794645, lng:99.979419},
+  {id:"s54", name:"Malibu Beach", cat:"beach", lat:9.789811, lng:100.000988},
+  {id:"s55", name:"ชาอีเค็น BY EVA", cat:"cafe", lat:9.778499, lng:100.054808},
+  {id:"s56", name:"Luna Restaurant", cat:"restaurant", lat:9.776768, lng:100.053695},
+  {id:"s57", name:"Banana Cafe'", cat:"cafe", lat:9.777254, lng:100.053592},
+  {id:"s58", name:"Moonsoon’s Restaurant", cat:"restaurant", lat:9.777432, lng:100.053748},
+  {id:"s59", name:"Coco Loco ice-cream bar & restaurant", cat:"cafe", lat:9.778125, lng:100.054516},
+  {id:"s60", name:"Krua Thai Restaurant", cat:"restaurant", lat:9.777976, lng:100.054266},
+  {id:"s61", name:"Ocean Lane - Handcraft Coffee @ SOL", cat:"cafe", lat:9.570005, lng:100.081817},
 ];
 
 /* ================= Helpers ================= */
