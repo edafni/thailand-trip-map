@@ -1439,6 +1439,11 @@ function buildPoiMarkers(){
   });
 }
 window.deletePlace=function(id){
+  const p=places.find(x=>x.id===id);
+  const nm=p?p.name:'';
+  const ans=prompt('האם למחוק את "'+nm+'"?\nלאישור, הקלידו 123 ולחצו אישור:');
+  if(ans===null) return;                 /* ביטול */
+  if(ans.trim()!=='123'){ alert('המחיקה בוטלה — לא הוקלד 123.'); return; }
   removePlaceOp(id); map.closePopup();
   buildPoiMarkers(); applyFilters();
 };
