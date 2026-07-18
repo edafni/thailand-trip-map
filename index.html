@@ -777,6 +777,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .hbtn.unpaid{background:#3a2a10;border-color:#7a5a1e;color:#f3d08a}
   .hbtn.view{background:#123e57;border-color:#1d5f83;color:#bfe6ff}
   .hbtn.ghost{background:transparent}
+  .bkrow{display:flex;gap:6px;align-items:center;margin-bottom:5px}
+  .bkrow .hbtn.view{flex:1;text-align:start;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .hbadges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
   .paidbadge{font-size:11px;font-weight:700;border-radius:999px;padding:3px 9px;border:1px solid var(--line)}
   .paidbadge.ok{background:#0f3d2e;border-color:#1c6b4f;color:#8ef0c4}
@@ -830,8 +832,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
   #banner.show{display:flex}
   #banner button{background:#0b2233;border:1px solid #1d5f83;color:#fff;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer}
 
-  #modal{position:fixed;inset:0;z-index:1500;background:#0009;display:none;align-items:center;justify-content:center;padding:16px}
-  #modal.show{display:flex}
+  #modal,#bookingModal{position:fixed;inset:0;z-index:1500;background:#0009;display:none;align-items:center;justify-content:center;padding:16px}
+  #modal.show,#bookingModal.show{display:flex}
+  body.light #bookingModal{background:#0006}
   .modal-card{background:#0f1b36;border:1px solid var(--line);border-radius:16px;padding:16px;width:100%;max-width:380px;max-height:88vh;overflow-y:auto}
   .modal-card h3{margin:0 0 12px;font-size:16px}
   .field{margin-bottom:11px}
@@ -930,6 +933,15 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .catcounts{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
   .catcount{display:flex;align-items:center;gap:5px;font-size:12px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px 9px}
   .dest-card .btn{margin-top:4px}
+  .bkcard{display:flex;align-items:center;gap:11px;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:11px 13px;margin-bottom:10px}
+  .bkcard .bkic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto;background:var(--panel2);border:1px solid var(--line)}
+  .bkcard .bkinfo{flex:1;min-width:0}
+  .bkcard .bkinfo h4{margin:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bkcard .bkinfo small{color:var(--muted);font-size:11.5px}
+  .bkbtn{flex:0 0 auto;background:#123e57;border:1px solid #1d5f83;color:#bfe6ff;border-radius:9px;padding:7px 10px;font-size:12.5px;cursor:pointer;font-family:inherit}
+  .bkbtn.del{background:#3a1620;border-color:#7f2233;color:#ffb4c0;padding:7px 9px}
+  body.light .bkbtn{background:#e0f2fe;border-color:#7dd3fc;color:#0b3a52}
+  body.light .bkbtn.del{background:#fee2e2;border-color:#fca5a5;color:#b91c1c}
   .about-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;line-height:1.8;font-size:13.5px}
   .about-card h3{margin:0 0 8px;font-size:15px}
   .stat-grid{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
@@ -966,6 +978,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   <div class="tabs" id="tabs">
     <button class="tab on" data-view="map">🗺️ מפה</button>
     <button class="tab" data-view="attractions">⭐ אטרקציות</button>
+    <button class="tab" data-view="bookings">🧾 הזמנות</button>
     <button class="tab" data-view="destinations">📍 יעדים</button>
     <button class="tab" data-view="about">ℹ️ אודות</button>
   </div>
@@ -1015,6 +1028,12 @@ svg.leaflet-image-layer.leaflet-interactive path {
   <input id="attrSearch" class="vsearch" placeholder="🔎 חיפוש לפי שם..." />
   <div id="attrList"></div>
 </div>
+<div class="view" id="view-bookings">
+  <h2>🧾 ההזמנות שלי</h2>
+  <div class="lead">כל אישורי ההזמנה (מלונות וטיסות), מסודרים לפי תאריך. הוסיפו שם לכל הזמנה כדי לדעת של מי היא.</div>
+  <button class="btn primary" id="bkAddBtn" style="margin-bottom:14px">➕ הוסף הזמנה</button>
+  <div id="bookingsList"></div>
+</div>
 <div class="view" id="view-destinations">
   <h2>📍 יעדים</h2>
   <div class="lead">שלושת היעדים בטיול. טפו על "הצג במפה" כדי למקד את המפה על היעד.</div>
@@ -1059,8 +1078,20 @@ svg.leaflet-image-layer.leaflet-interactive path {
   </div>
 </div>
 
-<!-- Hidden input for booking confirmation upload -->
-<input id="bookingInput" type="file" accept="image/*,application/pdf" style="display:none" />
+<!-- Add-booking modal (hotel/flight + name + file) -->
+<div id="bookingModal">
+  <div class="modal-card">
+    <h3>🧾 הוספת אישור הזמנה</h3>
+    <div class="field"><label>שיוך (מלון / טיסה)</label><select id="bkEntity"></select></div>
+    <div class="field"><label>שם ההזמנה / של מי (לא חובה)</label><input id="bkLabel" type="text" placeholder="למשל: משפחת דפני" /></div>
+    <div class="field"><label>קובץ אישור (תמונה או PDF)</label><input id="bkFile" type="file" accept="image/*,application/pdf" /></div>
+    <div class="status" id="bkStatus"></div>
+    <div class="modal-actions">
+      <button class="btn primary" id="bkSave">שמור הזמנה</button>
+      <button class="btn cancel" id="bkCancel">ביטול</button>
+    </div>
+  </div>
+</div>
 
 <!-- Delete confirmation (requires typing 123) -->
 <div id="confirmModal">
@@ -1103,6 +1134,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 const ADMIN_HASH="6f19a63124e2790558f5aa75a27ff5efea4438ed5eedf8d4ec4a8d73c3f63334";
 const LS_PLACES='thai_places_v3';
 const LS_HOTELS='thai_hotels_v1';
+const LS_BOOKINGS='thai_bookings_v1';
 const LS_ADMIN='thai_admin';
 const FILE_LIMIT=900*1024; /* מגבלת גודל קובץ אישור הזמנה (שומר על נפח קטן בענן ובמכשיר) */
 
@@ -1192,6 +1224,14 @@ const segs = [
   { from:3, to:4, type:"ferry",  ic:"⛴️" },
   { from:4, to:5, type:"flight", ic:"✈️" },
 ];
+/* ================= Flights (for booking uploads) ================= */
+const flights = [
+  { id:"fl1", title:"טיסה בינלאומית · ישראל → בנגקוק", route:"TLV → BKK", date:"2026-08-05", ic:"🛫" },
+  { id:"fl2", title:"טיסה פנימית · בנגקוק → קוסמוי",   route:"BKK → USM", date:"2026-08-06", ic:"✈️" },
+  { id:"fl3", title:"טיסה פנימית · קוסמוי → בנגקוק",   route:"USM → BKK", date:"2026-08-29", ic:"✈️" },
+  { id:"fl4", title:"טיסה בינלאומית · בנגקוק → ישראל", route:"BKK → TLV", date:"2026-09-01", ic:"🛬" },
+];
+const flightById = id => flights.find(f=>f.id===id);
 
 /* ================= Default recommended places ================= */
 const DEFAULT_PLACES = [
@@ -1294,7 +1334,8 @@ function gmapsLink(name, regionKey, lat, lng){
 /* ================= State ================= */
 let isAdmin=false;
 let places=[];
-let hotelState={};          /* { [hotelId]: { paid:bool, booking:{name,type,dataUrl}|null } } */
+let hotelState={};          /* { [hotelId]: { paid:bool } } */
+let bookings=[];            /* [{ id, kind:'hotel'|'flight', refId, label, name, type, dataUrl, date, createdAt }] */
 let cloud={enabled:false};  /* cloud sync handle (populated in init) */
 let locFilter='all';
 let nearbyOn=false, nearCenter=null, radiusKm=5, nearCircle=null, meMarker=null;
@@ -1322,10 +1363,43 @@ function savePlaces(){ try{ localStorage.setItem(LS_PLACES, JSON.stringify(place
 function loadHotelState(){
   let stored=null; try{ stored=JSON.parse(localStorage.getItem(LS_HOTELS)); }catch(e){}
   hotelState = (stored&&typeof stored==='object')? stored : {};
-  hotels.forEach(h=>{ if(!hotelState[h.id]) hotelState[h.id]={paid:false, booking:null}; });
+  hotels.forEach(h=>{ if(!hotelState[h.id]) hotelState[h.id]={paid:false}; });
 }
 function saveHotelState(){ try{ localStorage.setItem(LS_HOTELS, JSON.stringify(hotelState)); }catch(e){} }
-function hs(id){ if(!hotelState[id]) hotelState[id]={paid:false, booking:null}; return hotelState[id]; }
+function hs(id){ if(!hotelState[id]) hotelState[id]={paid:false}; return hotelState[id]; }
+
+function loadBookings(){
+  let stored=null; try{ stored=JSON.parse(localStorage.getItem(LS_BOOKINGS)); }catch(e){}
+  bookings = Array.isArray(stored)? stored : [];
+  /* migrate a legacy single hotel booking (old model: hotelState[id].booking) into the list */
+  hotels.forEach(h=>{
+    const st=hotelState[h.id];
+    if(st && st.booking){
+      const mid='mig_'+h.id;
+      if(!bookings.some(b=>b.id===mid)){
+        bookings.push({ id:mid, kind:'hotel', refId:h.id, label:st.booking.label||'הזמנה',
+          name:st.booking.name, type:st.booking.type, dataUrl:st.booking.dataUrl,
+          date:h.from, createdAt:Date.now() });
+      }
+      delete st.booking;
+    }
+  });
+  saveHotelState(); saveBookings();
+}
+function saveBookings(){ try{ localStorage.setItem(LS_BOOKINGS, JSON.stringify(bookings)); }catch(e){} }
+
+/* entity helpers (a booking belongs to a hotel or a flight) */
+function entityName(kind, refId){
+  if(kind==='flight'){ const f=flightById(refId); return f?f.title:'טיסה'; }
+  const h=byId(+refId); return h?('🏨 '+h.name):'מלון';
+}
+function entityDate(kind, refId){
+  if(kind==='flight'){ const f=flightById(refId); return f?f.date:''; }
+  const h=byId(+refId); return h?h.from:'';
+}
+function bookingsFor(kind, refId){
+  return bookings.filter(b=>b.kind===kind && String(b.refId)===String(refId));
+}
 
 /* ---- Edit operations (local + cloud) ---- */
 function addPlace(p){
@@ -1341,10 +1415,19 @@ function setHotelPaid(id, paid){
   if(cloud.enabled){ cloud.setHotel(id,{paid:!!paid}).catch(e=>console.error('cloud hotel',e)); }
   refreshHotels();
 }
-function setHotelBooking(id, booking){
-  hs(id).booking=booking; saveHotelState();
-  if(cloud.enabled){ cloud.setHotel(id,{booking:booking||null}).catch(e=>console.error('cloud booking',e)); }
+function addBookingItem(b){
+  bookings.push(b); saveBookings();
+  if(cloud.enabled){ cloud.upsertBooking(b).catch(e=>console.error('cloud booking',e)); }
+  refreshBookingsUI();
+}
+function removeBookingItem(id){
+  bookings=bookings.filter(b=>b.id!==id); saveBookings();
+  if(cloud.enabled){ cloud.removeBooking(id).catch(e=>console.error('cloud booking del',e)); }
+  refreshBookingsUI();
+}
+function refreshBookingsUI(){
   refreshHotels();
+  if(document.body.dataset.view==='bookings') renderBookings();
 }
 
 /* ================= Map ================= */
@@ -1369,11 +1452,14 @@ function hotelPopupHtml(h, rkey){
   const paidBtn = st.paid
     ? `<button class="hbtn paid" onclick="toggleHotelPaid(${h.id})">✓ שולם · לחצו לביטול</button>`
     : `<button class="hbtn unpaid" onclick="toggleHotelPaid(${h.id})">💳 סמן כשולם</button>`;
-  const bookingRow = st.booking
-    ? `<button class="hbtn view" onclick="viewBooking(${h.id})">📄 הצג אישור הזמנה</button>
-       <button class="hbtn ghost" onclick="uploadBooking(${h.id})">↻ החלף</button>
-       <button class="hbtn ghost" onclick="removeBooking(${h.id})">🗑️</button>`
-    : `<button class="hbtn" onclick="uploadBooking(${h.id})">📎 העלה אישור הזמנה</button>`;
+  const hb=bookingsFor('hotel', h.id);
+  const bookingList = hb.map(b=>
+    `<div class="bkrow">
+       <button class="hbtn view" onclick="viewBooking('${b.id}')">📄 ${esc(b.label||b.name||'הזמנה')}</button>
+       <button class="hbtn ghost" onclick="deleteBooking('${b.id}')">🗑️</button>
+     </div>`).join('');
+  const bookingRow = `${bookingList}
+       <button class="hbtn" onclick="addBookingFor('hotel',${h.id})">📎 הוסף אישור הזמנה</button>`;
   return `
     <div class="pop">
       <h3>🏨 ${h.id}. ${esc(h.name)}</h3>
@@ -1395,7 +1481,8 @@ function hotelPopupHtml(h, rkey){
 function hotelCardHtml(h){
   const st=hs(h.id);
   const badge = st.paid ? `<span class="paidbadge ok">שולם ✓</span>` : `<span class="paidbadge no">טרם שולם</span>`;
-  const doc = st.booking ? `<span class="paidbadge doc">📄 אישור</span>` : '';
+  const nb=bookingsFor('hotel', h.id).length;
+  const doc = nb ? `<span class="paidbadge doc">📄 ${nb} ${nb===1?'אישור':'אישורים'}</span>` : '';
   return `
     <div class="idx">${h.id}</div>
     <h3>${esc(h.name)}</h3>
@@ -1490,18 +1577,19 @@ document.getElementById('confirmCancelBtn').addEventListener('click',()=>{ pendi
 document.getElementById('confirmCode').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); doConfirmDelete(); } });
 document.getElementById('confirmModal').addEventListener('click',e=>{ if(e.target.id==='confirmModal'){ pendingDeleteId=null; closeConfirm(); } });
 
-/* ---- Hotel paid / booking actions ---- */
+/* ---- Hotel paid toggle ---- */
 window.toggleHotelPaid=function(id){ setHotelPaid(id, !hs(id).paid); };
 
-let bookingTargetHotel=null;
-window.uploadBooking=function(id){ bookingTargetHotel=id; bookingInput.value=''; bookingInput.click(); };
-window.removeBooking=function(id){
-  if(confirm('להסיר את אישור ההזמנה?')){ setHotelBooking(id, null); }
-};
+/* ---- Bookings (multiple per hotel/flight, each with a name/label) ---- */
 window.viewBooking=function(id){
-  const b=hs(id).booking; if(!b) return;
+  const b=bookings.find(x=>x.id===id); if(!b) return;
   openFileViewer(b);
 };
+window.deleteBooking=function(id){
+  const b=bookings.find(x=>x.id===id); if(!b) return;
+  if(confirm('להסיר את ההזמנה "'+(b.label||b.name||'')+'"?')) removeBookingItem(id);
+};
+window.addBookingFor=function(kind, refId){ openBookingModal(kind, String(refId)); };
 
 /* compress images to stay under FILE_LIMIT; PDFs must already be small enough */
 function readBookingFile(file){
@@ -1532,22 +1620,56 @@ function readBookingFile(file){
   });
 }
 
-const bookingInput=document.getElementById('bookingInput');
-bookingInput.addEventListener('change',async()=>{
-  const file=bookingInput.files&&bookingInput.files[0];
-  const id=bookingTargetHotel; bookingTargetHotel=null;
-  if(!file || id==null) return;
-  try{
-    const booking=await readBookingFile(file);
-    setHotelBooking(id, booking);
-    const meta=hotelMeta.find(m=>m.hid===id);
-    if(meta&&meta.marker&&meta.marker.isPopupOpen&&meta.marker.isPopupOpen()) meta.marker.openPopup();
-    alert('אישור ההזמנה נשמר ✓');
-  }catch(err){
-    alert(err==='גדול מדי'
-      ? 'הקובץ גדול מדי (מעל ~900KB). העלו צילום מסך של האישור או קובץ קטן יותר.'
-      : 'לא ניתן לטעון את הקובץ. נסו קובץ תמונה או PDF.');
-  }
+/* ---- Add-booking modal ---- */
+const bookingModal=document.getElementById('bookingModal');
+const bkEntity=document.getElementById('bkEntity');
+const bkLabel=document.getElementById('bkLabel');
+const bkFile=document.getElementById('bkFile');
+const bkStatus=document.getElementById('bkStatus');
+let bkPendingFile=null;
+
+function fillEntitySelect(){
+  bkEntity.innerHTML='';
+  const gh=document.createElement('optgroup'); gh.label='🏨 מלונות';
+  hotels.forEach(h=>{ const o=document.createElement('option'); o.value='hotel:'+h.id; o.textContent=h.name+' ('+fmtLong(h.from)+')'; gh.appendChild(o); });
+  bkEntity.appendChild(gh);
+  const gf=document.createElement('optgroup'); gf.label='✈️ טיסות';
+  flights.forEach(f=>{ const o=document.createElement('option'); o.value='flight:'+f.id; o.textContent=f.title+' ('+fmtLong(f.date)+')'; gf.appendChild(o); });
+  bkEntity.appendChild(gf);
+}
+function openBookingModal(kind, refId){
+  fillEntitySelect();
+  if(kind&&refId!=null) bkEntity.value=kind+':'+refId;
+  bkLabel.value=''; bkFile.value=''; bkPendingFile=null; bkStatus.textContent='';
+  bookingModal.classList.add('show');
+  setTimeout(()=>{ try{ bkLabel.focus(); }catch(e){} },60);
+}
+function closeBookingModal(){ bookingModal.classList.remove('show'); }
+document.getElementById('bkAddBtn').addEventListener('click',()=>openBookingModal());
+document.getElementById('bkCancel').addEventListener('click',closeBookingModal);
+bookingModal.addEventListener('click',e=>{ if(e.target===bookingModal) closeBookingModal(); });
+bkFile.addEventListener('change',async()=>{
+  const file=bkFile.files&&bkFile.files[0];
+  if(!file){ bkPendingFile=null; bkStatus.textContent=''; return; }
+  bkStatus.textContent='טוען קובץ…';
+  try{ bkPendingFile=await readBookingFile(file); bkStatus.textContent='✓ הקובץ מוכן'; }
+  catch(err){ bkPendingFile=null; bkFile.value='';
+    bkStatus.textContent = (err==='גדול מדי')
+      ? '⚠ הקובץ גדול מדי (מעל ~900KB). העלו צילום מסך או קובץ קטן יותר.'
+      : '⚠ לא ניתן לטעון את הקובץ. נסו תמונה או PDF.'; }
+});
+document.getElementById('bkSave').addEventListener('click',()=>{
+  if(!bkPendingFile){ bkStatus.textContent='⚠ בחרו קובץ אישור הזמנה'; return; }
+  const [kind, refId]=(bkEntity.value||'').split(':');
+  if(!kind||!refId){ bkStatus.textContent='⚠ בחרו מלון או טיסה'; return; }
+  const b={ id:'bk'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    kind, refId, label:bkLabel.value.trim()||bkPendingFile.name,
+    name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl,
+    date:entityDate(kind, refId), createdAt:Date.now() };
+  addBookingItem(b);
+  closeBookingModal();
+  const meta=hotelMeta.find(m=>m.hid===+refId);
+  if(kind==='hotel' && meta&&meta.marker&&meta.marker.isPopupOpen&&meta.marker.isPopupOpen()) meta.marker.openPopup();
 });
 
 /* ---- Booking file viewer ---- */
@@ -1918,6 +2040,7 @@ function switchView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on', v.id==='view-'+name));
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.view===name));
   if(name==='attractions') renderAttractions();
+  else if(name==='bookings') renderBookings();
   else if(name==='destinations') renderDestinations();
   else if(name==='about') renderAbout();
   else if(name==='map') setTimeout(()=>map.invalidateSize(),60);
@@ -1951,6 +2074,33 @@ function renderAttractions(){
   if(total===0) host.innerHTML='<div class="empty">לא נמצאו מקומות</div>';
 }
 document.getElementById('attrSearch').addEventListener('input',renderAttractions);
+
+function renderBookings(){
+  const host=document.getElementById('bookingsList'); host.innerHTML='';
+  const items=bookings.slice().sort((a,b)=>{
+    const da=a.date||'', db=b.date||'';
+    if(da!==db) return da<db?-1:1;
+    return (a.createdAt||0)-(b.createdAt||0);
+  });
+  if(!items.length){ host.innerHTML='<div class="empty">אין עדיין הזמנות. לחצו על ➕ כדי להוסיף אישור הזמנה של מלון או טיסה.</div>'; return; }
+  items.forEach(b=>{
+    const isFlight=b.kind==='flight';
+    const ic=isFlight?(flightById(b.refId)&&flightById(b.refId).ic||'✈️'):'🏨';
+    const dateTxt=b.date?fmtLong(b.date):'';
+    const row=document.createElement('div'); row.className='bkcard';
+    row.innerHTML=`
+      <div class="bkic">${ic}</div>
+      <div class="bkinfo">
+        <h4>${esc(b.label||b.name||'הזמנה')}</h4>
+        <small>${esc(entityName(b.kind, b.refId))}${dateTxt?' · '+dateTxt:''}</small>
+      </div>
+      <button class="bkbtn view" data-view="${esc(b.id)}">📄 הצג</button>
+      <button class="bkbtn del" data-del="${esc(b.id)}">🗑️</button>`;
+    host.appendChild(row);
+  });
+  host.querySelectorAll('[data-view]').forEach(x=>x.addEventListener('click',()=>viewBooking(x.dataset.view)));
+  host.querySelectorAll('[data-del]').forEach(x=>x.addEventListener('click',()=>deleteBooking(x.dataset.del)));
+}
 
 function renderDestinations(){
   const host=document.getElementById('destList'); host.innerHTML='';
@@ -2011,7 +2161,8 @@ function renderAbout(){
       <h3>מה חדש ✨</h3>
       • <b>אטרקציות מאינסטגרם</b> — בהוספת מקום (➕) הדביקו קישור אינסטגרם. הוא יופיע במפה ובלשונית האטרקציות עם כפתור 📸.<br>
       • <b>סטטוס תשלום למלון</b> — טפו על מלון במפה וסמנו "שולם / טרם שולם". הסטטוס מוצג גם בכרטיס המלון.<br>
-      • <b>אישור הזמנה</b> — אפשר להעלות קובץ/צילום של אישור ההזמנה לכל מלון, וללחוץ עליו כדי לצפות בו.<br>
+      • <b>אישורי הזמנה</b> — אפשר להעלות כמה אישורי הזמנה לכל מלון וגם לטיסות, ולתת שם לכל אחד (למשל שם המשפחה) כדי לדעת של מי הוא.<br>
+      • <b>לשונית הזמנות 🧾</b> — כל ההזמנות (מלונות וטיסות) במקום אחד, מסודרות לפי תאריך.<br>
       • <b>עריכה לכולם</b> — כל מי שמקבל את הקישור יכול להוסיף, לערוך ולסמן.
     </div>
     <div class="about-card">
@@ -2030,6 +2181,7 @@ function renderAbout(){
   await initAdmin();
   loadPlaces();
   loadHotelState();
+  loadBookings();
   buildLocSeg();
   buildChips();
   buildPoiMarkers();
@@ -2068,9 +2220,30 @@ function renderAbout(){
       else if(v==='about') renderAbout();
     });
     cloud.onHotels(obj=>{
-      Object.keys(obj||{}).forEach(id=>{ const d=obj[id]||{}; hotelState[id]={paid:!!d.paid, booking:d.booking||null}; });
+      Object.keys(obj||{}).forEach(id=>{
+        const d=obj[id]||{};
+        hotelState[id]={paid:!!d.paid};
+        /* migrate a legacy single booking stored on the hotel doc into the bookings collection */
+        if(d.booking){
+          const mid='mig_'+id;
+          if(!bookings.some(b=>b.id===mid)){
+            const b={ id:mid, kind:'hotel', refId:+id, label:d.booking.label||'הזמנה',
+              name:d.booking.name, type:d.booking.type, dataUrl:d.booking.dataUrl,
+              date:(byId(+id)||{}).from||'', createdAt:Date.now() };
+            bookings.push(b); saveBookings();
+            cloud.upsertBooking(b).catch(()=>{});
+          }
+          cloud.setHotel(id,{booking:null}).catch(()=>{});
+        }
+      });
       saveHotelState(); refreshHotels();
       if(document.body.dataset.view==='about') renderAbout();
+    });
+    cloud.onBookings(list=>{
+      bookings = list.map(b=>({...b}));
+      saveBookings(); refreshHotels();
+      const v=document.body.dataset.view;
+      if(v==='bookings') renderBookings();
     });
   }
 })();
@@ -2094,15 +2267,20 @@ function renderAbout(){
       const TRIP = window.TRIP_ID || 'thailand-2026';
       const placesCol = ()=>collection(db,'trips',TRIP,'places');
       const hotelsCol = ()=>collection(db,'trips',TRIP,'hotels');
+      const bookingsCol = ()=>collection(db,'trips',TRIP,'bookings');
       resolve({
         enabled:true,
         onPlaces(cb){ return onSnapshot(placesCol(), snap=>cb(snap.docs.map(d=>d.data())),
           err=>console.error('places sync',err)); },
         onHotels(cb){ return onSnapshot(hotelsCol(), snap=>{ const o={}; snap.docs.forEach(d=>o[d.id]=d.data()); cb(o); },
           err=>console.error('hotels sync',err)); },
+        onBookings(cb){ return onSnapshot(bookingsCol(), snap=>cb(snap.docs.map(d=>d.data())),
+          err=>console.error('bookings sync',err)); },
         upsertPlace(p){ return setDoc(doc(placesCol(), String(p.id)), p); },
         removePlace(id){ return deleteDoc(doc(placesCol(), String(id))); },
         setHotel(id,data){ return setDoc(doc(hotelsCol(), String(id)), data, {merge:true}); },
+        upsertBooking(b){ return setDoc(doc(bookingsCol(), String(b.id)), b); },
+        removeBooking(id){ return deleteDoc(doc(bookingsCol(), String(id))); },
         getMeta(){ return getDoc(doc(db,'trips',TRIP,'meta','info')).then(s=>s.exists()?s.data():null); },
         setMeta(d){ return setDoc(doc(db,'trips',TRIP,'meta','info'), d, {merge:true}); },
       });
