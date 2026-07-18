@@ -1998,14 +1998,19 @@ function renderAbout(){
   /* ---- Optional cloud sync (live shared editing) ---- */
   try{ cloud = await window.CloudSyncReady; }catch(e){ cloud={enabled:false}; }
   if(cloud && cloud.enabled){
-    document.body.classList.add('cloud');
+    /* verify Firestore is actually reachable (database created + rules allow access);
+       otherwise fall back to local mode so we don't falsely claim live sync is on */
+    let connected=false;
     try{
       const meta = await cloud.getMeta();
+      connected=true;
       if(!meta || !meta.seeded){
         for(const p of DEFAULT_PLACES){ await cloud.upsertPlace({...p, insta:p.insta||'', region:regionOf(p.lat,p.lng)}); }
         await cloud.setMeta({seeded:true, seededAt:Date.now()});
       }
-    }catch(e){ console.error('cloud seed failed',e); }
+    }catch(e){ console.warn('Cloud not reachable — running locally. Enable Firestore + publish rules to turn on live sync.', e); }
+    if(!connected){ cloud={enabled:false}; if(document.body.dataset.view==='about') renderAbout(); return; }
+    document.body.classList.add('cloud');
     cloud.onPlaces(list=>{
       places = list.map(p=>({...p, insta:p.insta||'', region:p.region||regionOf(p.lat,p.lng)}));
       savePlaces();
