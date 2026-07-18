@@ -755,6 +755,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .poi .pinfo small{color:var(--muted);font-size:11px}
   .poi .dist{font-size:11px;color:#7dd3fc;font-weight:700;flex:0 0 auto}
   .poi .del{background:transparent;border:none;color:#8892ab;font-size:16px;cursor:pointer;padding:4px}
+  .poi .editbtn{background:transparent;border:none;color:#8892ab;font-size:15px;cursor:pointer;padding:4px;flex:0 0 auto}
   .poi .iglink{flex:0 0 auto;font-size:16px;text-decoration:none;padding:4px;margin-top:0}
   .empty{color:var(--muted);font-size:12px;text-align:center;padding:12px;border:1px dashed var(--line);border-radius:12px}
   footer{color:#5f6f8c;font-size:10.5px;margin:14px 6px 0;line-height:1.6}
@@ -1115,10 +1116,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
   </div>
 </div>
 
-<!-- Delete confirmation (requires typing 123) -->
+<!-- Confirmation (requires typing 123) — used for delete and edit-unlock -->
 <div id="confirmModal">
   <div class="confirm-card">
-    <h3>🗑️ מחיקת מקום</h3>
+    <h3 id="confirmTitle">🗑️ מחיקת מקום</h3>
     <div class="confirm-msg" id="confirmMsg"></div>
     <input id="confirmCode" type="text" inputmode="numeric" autocomplete="off" placeholder="הקלידו 123" />
     <div class="confirm-actions">
@@ -1433,6 +1434,12 @@ function removePlaceOp(id){
   places=places.filter(p=>p.id!==id); savePlaces();
   if(cloud.enabled){ cloud.removePlace(id).catch(e=>console.error('cloud remove',e)); }
 }
+function updatePlaceOp(updated){
+  const i=places.findIndex(p=>p.id===updated.id);
+  if(i<0) return;
+  places[i]=updated; savePlaces();
+  if(cloud.enabled){ cloud.upsertPlace(updated).catch(e=>console.error('cloud update',e)); }
+}
 function setHotelPaid(id, paid){
   hs(id).paid=!!paid; saveHotelState();
   if(cloud.enabled){ cloud.setHotel(id,{paid:!!paid}).catch(e=>console.error('cloud hotel',e)); }
@@ -1570,7 +1577,7 @@ function buildPoiMarkers(){
         ${p.note?`<div class="note">${esc(p.note)}</div>`:''}
         ${instaHtml(p)}
         <a href="${gmapsLink(p.name, rkey, p.lat, p.lng)}" target="_blank" rel="noopener">פתח ב-Google Maps ↗</a>
-        ${isAdmin?`<div><button class="delbtn" onclick="deletePlace('${p.id}')">🗑️ מחק מקום</button></div>`:''}
+        ${isAdmin?`<div class="hactions"><button class="hbtn" onclick="editPlace('${p.id}')">✏️ ערוך</button><button class="delbtn" onclick="deletePlace('${p.id}')">🗑️ מחק</button></div>`:''}
       </div>`);
     poiMeta.push({pid:p.id, marker:m, cat:p.cat, region:rkey, latlng:[p.lat,p.lng], name:p.name, note:p.note, dist:Infinity});
   });
@@ -1601,31 +1608,49 @@ function buildBookingMarkers(){
     bookingMeta.push({bid:b.id, marker:m, type:'booking', region:rkey, latlng:[b.lat,b.lng], dist:Infinity});
   });
 }
-/* In-app delete confirmation (reliable on mobile / standalone, unlike window.prompt). */
-let pendingDeleteId=null;
-window.deletePlace=function(id){
-  const p=places.find(x=>x.id===id);
-  pendingDeleteId=id;
-  const cm=document.getElementById('confirmModal');
-  document.getElementById('confirmMsg').innerHTML='למחיקת <b>"'+esc(p?p.name:'')+'"</b> הקלידו <b>123</b> ואשרו.<br>המחיקה תתבצע אצל כל מי שמשתמש בקישור.';
+/* In-app confirmation (reliable on mobile / standalone, unlike window.prompt). */
+/* Generic 123-gated confirmation, reused for delete and edit-unlock */
+let pendingConfirm=null;   // function to run when the correct code is typed
+function openConfirm({title, msgHtml, okLabel, danger, onOk}){
+  pendingConfirm=onOk||null;
+  document.getElementById('confirmTitle').textContent=title||'אישור';
+  document.getElementById('confirmMsg').innerHTML=msgHtml||'';
+  const ok=document.getElementById('confirmDelBtn');
+  ok.textContent=okLabel||'אישור';
+  ok.classList.toggle('danger', danger!==false);
+  ok.classList.toggle('primary', danger===false);
   const inp=document.getElementById('confirmCode'); inp.value=''; inp.style.borderColor='';
-  cm.classList.add('show');
+  document.getElementById('confirmModal').classList.add('show');
   setTimeout(()=>{ try{ inp.focus(); }catch(e){} },60);
-};
-function doConfirmDelete(){
+}
+function doConfirm(){
   const inp=document.getElementById('confirmCode');
   if(inp.value.trim()!=='123'){ inp.style.borderColor='#ef4444'; inp.focus(); return; }
-  const id=pendingDeleteId; pendingDeleteId=null;
+  const fn=pendingConfirm; pendingConfirm=null;
   closeConfirm();
-  if(id==null) return;
-  removePlaceOp(id); map.closePopup();
-  buildPoiMarkers(); applyFilters();
+  if(typeof fn==='function') fn();
 }
-function closeConfirm(){ document.getElementById('confirmModal').classList.remove('show'); }
-document.getElementById('confirmDelBtn').addEventListener('click',doConfirmDelete);
-document.getElementById('confirmCancelBtn').addEventListener('click',()=>{ pendingDeleteId=null; closeConfirm(); });
-document.getElementById('confirmCode').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); doConfirmDelete(); } });
-document.getElementById('confirmModal').addEventListener('click',e=>{ if(e.target.id==='confirmModal'){ pendingDeleteId=null; closeConfirm(); } });
+function closeConfirm(){ pendingConfirm=null; document.getElementById('confirmModal').classList.remove('show'); }
+window.deletePlace=function(id){
+  const p=places.find(x=>x.id===id);
+  openConfirm({
+    title:'🗑️ מחיקת מקום', okLabel:'מחק', danger:true,
+    msgHtml:'למחיקת <b>"'+esc(p?p.name:'')+'"</b> הקלידו <b>123</b> ואשרו.<br>המחיקה תתבצע אצל כל מי שמשתמש בקישור.',
+    onOk:()=>{ removePlaceOp(id); map.closePopup(); buildPoiMarkers(); applyFilters(); if(document.body.dataset.view==='attractions') renderAttractions(); }
+  });
+};
+window.editPlace=function(id){
+  const p=places.find(x=>x.id===id); if(!p) return;
+  openConfirm({
+    title:'✏️ עריכת מקום', okLabel:'המשך', danger:false,
+    msgHtml:'לעריכת <b>"'+esc(p.name)+'"</b> הקלידו <b>123</b> ואשרו.',
+    onOk:()=>openEditModal(id)
+  });
+};
+document.getElementById('confirmDelBtn').addEventListener('click',doConfirm);
+document.getElementById('confirmCancelBtn').addEventListener('click',closeConfirm);
+document.getElementById('confirmCode').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); doConfirm(); } });
+document.getElementById('confirmModal').addEventListener('click',e=>{ if(e.target.id==='confirmModal') closeConfirm(); });
 
 /* ---- Hotel paid toggle ---- */
 window.toggleHotelPaid=function(id){ setHotelPaid(id, !hs(id).paid); };
@@ -1966,12 +1991,28 @@ const fCat=document.getElementById('fCat');
 Object.entries(CATEGORIES).forEach(([k,c])=>{ if(k==='hotel')return; const o=document.createElement('option'); o.value=k; o.textContent=`${c.emoji} ${c.he}`; fCat.appendChild(o); });
 let pending=null; // {lat,lng}
 let placing=false;
+let editingPlaceId=null; // set while editing an existing place
 
 function openModal(){ modal.classList.add('show'); }
 function closeModal(){ modal.classList.remove('show'); }
 function setCoords(lat,lng){ pending={lat:+(+lat).toFixed(6),lng:+(+lng).toFixed(6)}; document.getElementById('fCoords').textContent=`📍 נבחר: ${pending.lat}, ${pending.lng}`; }
-function resetForm(){ pending=null; document.getElementById('fName').value=''; document.getElementById('fNote').value=''; document.getElementById('fInsta').value=''; fCat.value='restaurant';
+function resetForm(){ editingPlaceId=null; pending=null; document.getElementById('fName').value=''; document.getElementById('fNote').value=''; document.getElementById('fInsta').value=''; fCat.value='restaurant';
+  document.getElementById('modalTitle').textContent='הוספת מקום';
+  document.getElementById('fSave').textContent='שמור מקום';
   document.getElementById('fSearch').value=''; document.getElementById('fResults').innerHTML=''; document.getElementById('fLink').value=''; document.getElementById('fLinkStatus').textContent=''; document.getElementById('fCoords').textContent=''; switchPane('search'); }
+function openEditModal(id){
+  const p=places.find(x=>x.id===id); if(!p) return;
+  resetForm();
+  editingPlaceId=id;
+  document.getElementById('modalTitle').textContent='עריכת מקום';
+  document.getElementById('fSave').textContent='שמור שינויים';
+  document.getElementById('fName').value=p.name||'';
+  fCat.value=p.cat||'other';
+  document.getElementById('fNote').value=p.note||'';
+  document.getElementById('fInsta').value=p.insta||'';
+  setCoords(p.lat,p.lng);   // pre-fill location so it's preserved unless changed
+  openModal();
+}
 
 document.getElementById('addBtn').addEventListener('click',()=>{ resetForm(); openModal(); });
 document.getElementById('fCancel').addEventListener('click',()=>{ closeModal(); pending=null; });
@@ -2101,7 +2142,9 @@ document.getElementById('fLinkBtn').addEventListener('click',async()=>{
 /* map pick (shared by the place modal and the "other" booking modal) */
 let placeTarget='place';
 document.getElementById('fMapPick').addEventListener('click',()=>{
-  placeTarget='place'; placing=true; closeModal(); banner.classList.add('show'); if(isMobile()) sheet.classList.add('collapsed');
+  placeTarget='place'; placing=true; closeModal();
+  switchView('map');                 // in case the form was opened over a non-map tab (e.g. editing from Attractions)
+  banner.classList.add('show'); if(isMobile()) sheet.classList.add('collapsed');
 });
 document.getElementById('bannerCancel').addEventListener('click',()=>{
   placing=false; banner.classList.remove('show');
@@ -2119,8 +2162,19 @@ document.getElementById('fSave').addEventListener('click',()=>{
   if(!name){ alert('הזינו שם למקום'); document.getElementById('fName').focus(); return; }
   if(!pending){ alert('בחרו מיקום (חיפוש / קישור / מפה)'); return; }
   const insta=normInsta(document.getElementById('fInsta').value);
+  const note=document.getElementById('fNote').value.trim();
+  if(editingPlaceId){
+    const prev=places.find(p=>p.id===editingPlaceId)||{};
+    const place={ ...prev, id:editingPlaceId, name, cat:fCat.value, note, insta:insta||'',
+      lat:pending.lat, lng:pending.lng, region:regionOf(pending.lat,pending.lng) };
+    updatePlaceOp(place); closeModal(); editingPlaceId=null;
+    buildPoiMarkers(); applyFilters();
+    if(document.body.dataset.view==='attractions') renderAttractions();
+    setTimeout(()=>{ const o=poiMeta.find(x=>x.pid===place.id); focusLatLng([place.lat,place.lng],15,o&&o.marker); },100);
+    return;
+  }
   const place={ id:'u'+Date.now().toString(36), name, cat:fCat.value,
-    note:document.getElementById('fNote').value.trim(), insta:insta||'', lat:pending.lat, lng:pending.lng, region:regionOf(pending.lat,pending.lng) };
+    note, insta:insta||'', lat:pending.lat, lng:pending.lng, region:regionOf(pending.lat,pending.lng) };
   addPlace(place); closeModal();
   buildPoiMarkers(); applyFilters();
   setTimeout(()=>{ const o=poiMeta.find(x=>x.pid===place.id); focusLatLng([place.lat,place.lng],15,o&&o.marker); },100);
@@ -2225,8 +2279,9 @@ function renderAttractions(){
       const row=document.createElement('div'); row.className='poi';
       row.innerHTML=`<div class="pemoji" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</div>
         <div class="pinfo"><h4>${esc(p.name)}</h4><small>${REGIONS[rkey]?esc(REGIONS[rkey].he):''}${p.note?' · '+esc(p.note):''}</small></div>
-        ${u?`<a class="insta iglink" href="${esc(u)}" target="_blank" rel="noopener" title="אינסטגרם">📸</a>`:''}`;
-      row.addEventListener('click',e=>{ if(e.target.closest('.iglink')) return; const o=poiMeta.find(x=>x.pid===p.id); switchView('map'); if(o) focusLatLng(o.latlng,15,o.marker); });
+        ${u?`<a class="insta iglink" href="${esc(u)}" target="_blank" rel="noopener" title="אינסטגרם">📸</a>`:''}
+        ${isAdmin?`<button class="editbtn" title="ערוך" onclick="editPlace('${p.id}')">✏️</button>`:''}`;
+      row.addEventListener('click',e=>{ if(e.target.closest('.iglink')||e.target.closest('.editbtn')) return; const o=poiMeta.find(x=>x.pid===p.id); switchView('map'); if(o) focusLatLng(o.latlng,15,o.marker); });
       host.appendChild(row);
     });
   });
