@@ -799,10 +799,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .file-head .fspace{flex:1}
   .fbtn{background:#12243f;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer;text-decoration:none}
   body.light .fbtn{background:#eef2f7}
-  .file-body{flex:1;overflow:auto;background:#0b1428;display:flex;align-items:center;justify-content:center}
+  .file-body{flex:1;overflow:auto;background:#0b1428;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start}
   body.light .file-body{background:#f4f7fb}
-  .file-body img{max-width:100%;max-height:100%;display:block}
-  .file-body iframe,.file-body embed{width:100%;height:100%;border:0}
+  .file-body img{max-width:100%;max-height:100%;display:block;margin:auto}
+  .file-body iframe,.file-body embed{flex:1;width:100%;min-height:60vh;border:0}
+  .file-hint{flex:0 0 auto;padding:9px 12px;font-size:12px;color:var(--muted);text-align:center;border-top:1px solid var(--line)}
 
   #confirmModal{position:fixed;inset:0;z-index:1700;background:#0009;display:none;align-items:center;justify-content:center;padding:16px}
   #confirmModal.show{display:flex}
@@ -1087,8 +1088,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <div class="field"><label>קובץ אישור (תמונה או PDF)</label><input id="bkFile" type="file" accept="image/*,application/pdf" /></div>
     <div class="status" id="bkStatus"></div>
     <div class="modal-actions">
-      <button class="btn primary" id="bkSave">שמור הזמנה</button>
-      <button class="btn cancel" id="bkCancel">ביטול</button>
+      <button type="button" class="btn primary" id="bkSave">שמור הזמנה</button>
+      <button type="button" class="btn cancel" id="bkCancel">ביטול</button>
     </div>
   </div>
 </div>
@@ -1112,6 +1113,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <div class="file-head">
       <span id="fileTitle">אישור הזמנה</span>
       <span class="fspace"></span>
+      <a id="fileOpenTab" class="fbtn" target="_blank" rel="noopener">פתח ↗</a>
       <a id="fileDownload" class="fbtn" download>⬇︎ הורדה</a>
       <button class="fbtn" id="fileClose">✖</button>
     </div>
@@ -1642,7 +1644,7 @@ function openBookingModal(kind, refId){
   if(kind&&refId!=null) bkEntity.value=kind+':'+refId;
   bkLabel.value=''; bkFile.value=''; bkPendingFile=null; bkStatus.textContent='';
   bookingModal.classList.add('show');
-  setTimeout(()=>{ try{ bkLabel.focus(); }catch(e){} },60);
+  /* no autofocus: on mobile the keyboard would cover the buttons and cause taps to hit the file input */
 }
 function closeBookingModal(){ bookingModal.classList.remove('show'); }
 document.getElementById('bkAddBtn').addEventListener('click',()=>openBookingModal());
@@ -1675,19 +1677,39 @@ document.getElementById('bkSave').addEventListener('click',()=>{
 /* ---- Booking file viewer ---- */
 const fileModal=document.getElementById('fileModal');
 const fileBody=document.getElementById('fileBody');
+let currentObjUrl=null;
+/* data: URLs don't render PDFs reliably (esp. on mobile); use a Blob object URL instead */
+function dataUrlToBlob(dataUrl){
+  const i=dataUrl.indexOf(','); const head=dataUrl.slice(0,i); const b64=dataUrl.slice(i+1);
+  const mime=(head.match(/data:([^;]+)/)||[])[1]||'application/octet-stream';
+  const bin=atob(b64); const arr=new Uint8Array(bin.length);
+  for(let j=0;j<bin.length;j++) arr[j]=bin.charCodeAt(j);
+  return new Blob([arr],{type:mime});
+}
+function closeFileViewer(){
+  fileModal.classList.remove('show'); fileBody.innerHTML='';
+  if(currentObjUrl){ URL.revokeObjectURL(currentObjUrl); currentObjUrl=null; }
+}
 function openFileViewer(b){
-  document.getElementById('fileTitle').textContent=b.name||'אישור הזמנה';
-  const dl=document.getElementById('fileDownload'); dl.href=b.dataUrl; dl.setAttribute('download', b.name||'booking');
+  if(currentObjUrl){ URL.revokeObjectURL(currentObjUrl); currentObjUrl=null; }
+  document.getElementById('fileTitle').textContent=b.label||b.name||'אישור הזמנה';
+  let url=b.dataUrl;
+  try{ currentObjUrl=URL.createObjectURL(dataUrlToBlob(b.dataUrl)); url=currentObjUrl; }catch(e){}
+  const dl=document.getElementById('fileDownload'); dl.href=url; dl.setAttribute('download', b.name||'booking');
+  const openTab=document.getElementById('fileOpenTab'); openTab.href=url;
   fileBody.innerHTML='';
   if(b.type&&b.type.startsWith('image/')){
-    const img=document.createElement('img'); img.src=b.dataUrl; img.alt=b.name||''; fileBody.appendChild(img);
+    const img=document.createElement('img'); img.src=url; img.alt=b.name||''; fileBody.appendChild(img);
   } else {
-    const emb=document.createElement('iframe'); emb.src=b.dataUrl; fileBody.appendChild(emb);
+    const emb=document.createElement('iframe'); emb.src=url; emb.setAttribute('title', b.name||'booking'); fileBody.appendChild(emb);
+    const hint=document.createElement('div'); hint.className='file-hint';
+    hint.innerHTML='לא רואים את הקובץ? הקישו <b>“פתח ↗”</b> למעלה כדי לפתוח אותו בכרטיסייה חדשה.';
+    fileBody.appendChild(hint);
   }
   fileModal.classList.add('show');
 }
-document.getElementById('fileClose').addEventListener('click',()=>{ fileModal.classList.remove('show'); fileBody.innerHTML=''; });
-fileModal.addEventListener('click',e=>{ if(e.target===fileModal){ fileModal.classList.remove('show'); fileBody.innerHTML=''; } });
+document.getElementById('fileClose').addEventListener('click',closeFileViewer);
+fileModal.addEventListener('click',e=>{ if(e.target===fileModal) closeFileViewer(); });
 
 /* ================= Filters ================= */
 function withinFilters(o){
