@@ -828,8 +828,12 @@ svg.leaflet-image-layer.leaflet-interactive path {
   body.light #fitBtn{background:#ffffffee;color:#0f172a}
   body.light .btn.primary{background:#e0f2fe;border-color:#7dd3fc;color:#0b3a52}
   body.light .seg .sbtn.on{background:#dbeafe;border-color:#7dbde8;color:#0b3a52}
-  body.light .chip.on{background:#eef2f7}
-  body.light .pill{background:#eef2f7}
+  body.light .chip{color:#5b6b86}
+  body.light .chip.on{background:#dbeafe;border-color:#7dbde8;color:#0b3a52}
+  body.light .subtab.on{background:#dbeafe;border-color:#7dbde8;color:#0b3a52}
+  body.light .pill{background:#eef2f7;color:#0f172a}
+  body.light .card h3,body.light .card .region,body.light .poi .pinfo h4,body.light .dest-card h3,body.light .view h2,body.light .about-card,body.light .catcount{color:#0f172a}
+  body.light .section-title,body.light .poi .pinfo small,body.light .view .lead,body.light .dest-card .eng{color:#5b6b86}
   body.light #banner{background:#e0f2fe;border-color:#7dd3fc;color:#0b3a52}
   body.light #banner button{background:#ffffff;border-color:#7dd3fc;color:#0b3a52}
   body.light #modal{background:#0006}
@@ -1201,9 +1205,9 @@ function savePlaces(){ if(isAdmin) localStorage.setItem(LS_PLACES, JSON.stringif
 
 /* ================= Map ================= */
 const map = L.map('map',{zoomControl:true,scrollWheelZoom:true,tap:true});
-const TILES_LIGHT='https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-const TILES_DARK='https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-const baseTiles=L.tileLayer(TILES_LIGHT,{attribution:'&copy; OpenStreetMap &copy; CARTO', maxZoom:19}).addTo(map);
+const TILES_LIGHT='https://{s}.basemaps.cartocdn.com/rastertiles/positron/{z}/{x}/{y}{r}.png';
+const TILES_DARK='https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+const baseTiles=L.tileLayer(TILES_DARK,{attribution:'&copy; OpenStreetMap &copy; CARTO', maxZoom:19}).addTo(map);
 const routeLayer=L.layerGroup().addTo(map);
 
 function poiIcon(cat){
