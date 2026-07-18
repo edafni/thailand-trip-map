@@ -802,6 +802,19 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .file-body img{max-width:100%;max-height:100%;display:block}
   .file-body iframe,.file-body embed{width:100%;height:100%;border:0}
 
+  #confirmModal{position:fixed;inset:0;z-index:1700;background:#0009;display:none;align-items:center;justify-content:center;padding:16px}
+  #confirmModal.show{display:flex}
+  .confirm-card{background:#0f1b36;border:1px solid var(--line);border-radius:16px;padding:18px;width:100%;max-width:340px}
+  body.light .confirm-card{background:#fff}
+  .confirm-card h3{margin:0 0 8px;font-size:16px}
+  .confirm-msg{font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6}
+  #confirmCode{width:100%;background:#0b1428;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:11px 12px;font-size:17px;font-family:inherit;text-align:center;letter-spacing:3px}
+  body.light #confirmCode{background:#f4f7fb}
+  .confirm-actions{display:flex;gap:8px;margin-top:14px}
+  .confirm-actions .btn{flex:1}
+  .btn.danger{background:#3a1620;border-color:#7f2233;color:#ffb4c0}
+  body.light .btn.danger{background:#fee2e2;border-color:#fca5a5;color:#b91c1c}
+
   .poi-pin{position:relative;width:32px;height:32px;background:var(--pc);border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 9px #0008}
   .poi-pin .emoji{transform:rotate(45deg);font-size:15px;line-height:1}
   .trans-marker{font-size:17px;filter:drop-shadow(0 1px 2px #000a)}
@@ -1048,6 +1061,19 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
 <!-- Hidden input for booking confirmation upload -->
 <input id="bookingInput" type="file" accept="image/*,application/pdf" style="display:none" />
+
+<!-- Delete confirmation (requires typing 123) -->
+<div id="confirmModal">
+  <div class="confirm-card">
+    <h3>🗑️ מחיקת מקום</h3>
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <input id="confirmCode" type="text" inputmode="numeric" autocomplete="off" placeholder="הקלידו 123" />
+    <div class="confirm-actions">
+      <button class="btn cancel" id="confirmCancelBtn">ביטול</button>
+      <button class="btn danger" id="confirmDelBtn">מחק</button>
+    </div>
+  </div>
+</div>
 
 <!-- Booking file viewer -->
 <div id="fileModal">
@@ -1438,15 +1464,31 @@ function buildPoiMarkers(){
     poiMeta.push({pid:p.id, marker:m, cat:p.cat, region:rkey, latlng:[p.lat,p.lng], name:p.name, note:p.note, dist:Infinity});
   });
 }
+/* In-app delete confirmation (reliable on mobile / standalone, unlike window.prompt). */
+let pendingDeleteId=null;
 window.deletePlace=function(id){
   const p=places.find(x=>x.id===id);
-  const nm=p?p.name:'';
-  const ans=prompt('האם למחוק את "'+nm+'"?\nלאישור, הקלידו 123 ולחצו אישור:');
-  if(ans===null) return;                 /* ביטול */
-  if(ans.trim()!=='123'){ alert('המחיקה בוטלה — לא הוקלד 123.'); return; }
+  pendingDeleteId=id;
+  const cm=document.getElementById('confirmModal');
+  document.getElementById('confirmMsg').innerHTML='למחיקת <b>"'+esc(p?p.name:'')+'"</b> הקלידו <b>123</b> ואשרו.<br>המחיקה תתבצע אצל כל מי שמשתמש בקישור.';
+  const inp=document.getElementById('confirmCode'); inp.value=''; inp.style.borderColor='';
+  cm.classList.add('show');
+  setTimeout(()=>{ try{ inp.focus(); }catch(e){} },60);
+};
+function doConfirmDelete(){
+  const inp=document.getElementById('confirmCode');
+  if(inp.value.trim()!=='123'){ inp.style.borderColor='#ef4444'; inp.focus(); return; }
+  const id=pendingDeleteId; pendingDeleteId=null;
+  closeConfirm();
+  if(id==null) return;
   removePlaceOp(id); map.closePopup();
   buildPoiMarkers(); applyFilters();
-};
+}
+function closeConfirm(){ document.getElementById('confirmModal').classList.remove('show'); }
+document.getElementById('confirmDelBtn').addEventListener('click',doConfirmDelete);
+document.getElementById('confirmCancelBtn').addEventListener('click',()=>{ pendingDeleteId=null; closeConfirm(); });
+document.getElementById('confirmCode').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); doConfirmDelete(); } });
+document.getElementById('confirmModal').addEventListener('click',e=>{ if(e.target.id==='confirmModal'){ pendingDeleteId=null; closeConfirm(); } });
 
 /* ---- Hotel paid / booking actions ---- */
 window.toggleHotelPaid=function(id){ setHotelPaid(id, !hs(id).paid); };
