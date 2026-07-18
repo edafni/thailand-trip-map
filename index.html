@@ -852,6 +852,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .res:active{background:#16233f}
   .res b{display:block;font-size:13px} .res small{color:var(--muted);font-size:11px}
   .coordsBox{font-size:12px;color:#7dd3fc;margin-top:6px;min-height:16px}
+  .icon-picker{display:flex;flex-wrap:wrap;gap:6px}
+  .icon-opt{width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid var(--line);border-radius:10px;background:#0b1428;cursor:pointer;line-height:1}
+  .icon-opt.on{border-color:#3a5680;background:#1d3556;box-shadow:0 0 0 2px #3a568055}
+  body.light .icon-opt{background:#fff}
   .status{font-size:11px;color:var(--muted);margin-top:6px;min-height:14px}
   .modal-actions{display:flex;gap:8px;margin-top:8px}
   .modal-actions .btn.cancel{background:transparent}
@@ -917,10 +921,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .tab.on{color:var(--text);border-bottom-color:var(--accentLine)}
 
   /* ===== Views (overlays) ===== */
-  .view{position:fixed;inset:0;z-index:1100;background:var(--bg);color:var(--text);display:none;
+  div.view{position:fixed;inset:0;z-index:1100;background:var(--bg);color:var(--text);display:none;
     overflow-y:auto;-webkit-overflow-scrolling:touch;
     padding:calc(env(safe-area-inset-top) + 104px) 16px calc(env(safe-area-inset-bottom) + 30px)}
-  .view.on{display:block}
+  div.view.on{display:block}
   .view h2{font-size:18px;margin:4px 4px 4px}
   .view .lead{color:var(--muted);font-size:13px;margin:0 4px 14px;line-height:1.6}
   .vsearch{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:11px;padding:10px 12px;font-size:14px;font-family:inherit;margin-bottom:12px}
@@ -1083,8 +1087,25 @@ svg.leaflet-image-layer.leaflet-interactive path {
 <div id="bookingModal">
   <div class="modal-card">
     <h3>🧾 הוספת אישור הזמנה</h3>
-    <div class="field"><label>שיוך (מלון / טיסה)</label><select id="bkEntity"></select></div>
-    <div class="field"><label>שם ההזמנה / של מי (לא חובה)</label><input id="bkLabel" type="text" placeholder="למשל: משפחת דפני" /></div>
+    <div class="field"><label>שיוך</label><select id="bkEntity"></select></div>
+    <div class="field"><label id="bkLabelLbl">שם ההזמנה / של מי (לא חובה)</label><input id="bkLabel" type="text" placeholder="למשל: משפחת דפני" /></div>
+
+    <div class="field" id="bkOtherFields" style="display:none">
+      <label>תאריך</label>
+      <input id="bkDate" type="date" />
+      <label style="margin-top:8px">מיקום במפה</label>
+      <div class="row"><input id="bkSearch" type="text" placeholder="שם מקום / כתובת (למשל: Raja Ferry Pier)" /><button type="button" class="btn small primary" id="bkSearchBtn">חפש</button></div>
+      <div class="results" id="bkResults"></div>
+      <button type="button" class="btn small" id="bkMapPick" style="margin-top:6px">🗺️ בחרו נקודה על המפה</button>
+      <div class="coordsBox" id="bkCoords"></div>
+    </div>
+
+    <div class="field">
+      <label>אייקון</label>
+      <div class="icon-picker" id="bkIconPicker"></div>
+      <input id="bkIconCustom" type="text" maxlength="4" placeholder="או הדביקו אימוג'י משלכם" style="margin-top:6px;max-width:220px" />
+    </div>
+
     <div class="field"><label>קובץ אישור (תמונה או PDF)</label><input id="bkFile" type="file" accept="image/*,application/pdf" /></div>
     <div class="status" id="bkStatus"></div>
     <div class="modal-actions">
@@ -1429,6 +1450,7 @@ function removeBookingItem(id){
 }
 function refreshBookingsUI(){
   refreshHotels();
+  if(typeof buildBookingMarkers==='function'){ buildBookingMarkers(); applyFilters(); }
   if(document.body.dataset.view==='bookings') renderBookings();
 }
 
@@ -1553,6 +1575,32 @@ function buildPoiMarkers(){
     poiMeta.push({pid:p.id, marker:m, cat:p.cat, region:rkey, latlng:[p.lat,p.lng], name:p.name, note:p.note, dist:Infinity});
   });
 }
+
+/* Map pins for "other" bookings (car rental, ferry, etc.) */
+let bookingMeta=[];
+function buildBookingMarkers(){
+  bookingMeta.forEach(o=>{ if(map.hasLayer(o.marker)) map.removeLayer(o.marker); });
+  bookingMeta=[];
+  bookings.forEach(b=>{
+    if(b.kind!=='other' || b.lat==null || b.lng==null) return;
+    const rkey=b.region||regionOf(b.lat,b.lng);
+    const em=b.icon||'📍';
+    const icon=L.divIcon({className:'',html:`<div class="poi-pin booking-pin" style="--pc:#f59e0b"><span class="emoji">${em}</span></div>`,iconSize:[32,32],iconAnchor:[16,32],popupAnchor:[0,-30]});
+    const m=L.marker([b.lat,b.lng],{icon});
+    const dateTxt=b.date?fmtLong(b.date):'';
+    m.bindPopup(`
+      <div class="pop">
+        <h3>${em} ${esc(b.label||'הזמנה')}</h3>
+        <div class="r">אישור הזמנה${dateTxt?' · '+dateTxt:''}${REGIONS[rkey]&&REGIONS[rkey].eng?' · '+REGIONS[rkey].eng:''}</div>
+        <div class="hactions">
+          <button class="hbtn view" onclick="viewBooking('${b.id}')">📄 הצג אישור</button>
+          <button class="hbtn ghost" onclick="deleteBooking('${b.id}')">🗑️ מחק</button>
+        </div>
+        <a href="${gmapsLink(b.label||'', rkey, b.lat, b.lng)}" target="_blank" rel="noopener">פתח ב-Google Maps ↗</a>
+      </div>`);
+    bookingMeta.push({bid:b.id, marker:m, type:'booking', region:rkey, latlng:[b.lat,b.lng], dist:Infinity});
+  });
+}
 /* In-app delete confirmation (reliable on mobile / standalone, unlike window.prompt). */
 let pendingDeleteId=null;
 window.deletePlace=function(id){
@@ -1629,6 +1677,9 @@ const bkLabel=document.getElementById('bkLabel');
 const bkFile=document.getElementById('bkFile');
 const bkStatus=document.getElementById('bkStatus');
 let bkPendingFile=null;
+let bkPending=null;               // {lat,lng} for "other" bookings
+const BK_ICONS=['🚗','🚐','⛴️','🚕','🚌','🚆','🏨','✈️','🎫'];
+let bkIcon='🏨';
 
 function fillEntitySelect(){
   bkEntity.innerHTML='';
@@ -1638,18 +1689,82 @@ function fillEntitySelect(){
   const gf=document.createElement('optgroup'); gf.label='✈️ טיסות';
   flights.forEach(f=>{ const o=document.createElement('option'); o.value='flight:'+f.id; o.textContent=f.title+' ('+fmtLong(f.date)+')'; gf.appendChild(o); });
   bkEntity.appendChild(gf);
+  const go=document.createElement('optgroup'); go.label='🚗 אחר';
+  const oo=document.createElement('option'); oo.value='other:new'; oo.textContent='השכרת רכב / מעבורת / אחר'; go.appendChild(oo);
+  bkEntity.appendChild(go);
+}
+function buildBkIconPicker(){
+  const host=document.getElementById('bkIconPicker'); host.innerHTML='';
+  BK_ICONS.forEach(em=>{
+    const d=document.createElement('div'); d.className='icon-opt'+(em===bkIcon?' on':''); d.textContent=em;
+    d.addEventListener('click',()=>{ bkIcon=em; document.getElementById('bkIconCustom').value=''; buildBkIconPicker(); });
+    host.appendChild(d);
+  });
+}
+function setDefaultBkIcon(){
+  const [kind,refId]=(bkEntity.value||'').split(':');
+  bkIcon = kind==='flight' ? (flightById(refId)&&flightById(refId).ic||'✈️')
+         : kind==='other'  ? '🚗' : '🏨';
+  document.getElementById('bkIconCustom').value='';
+  buildBkIconPicker();
+}
+function updateBookingModalMode(){
+  const isOther=(bkEntity.value||'').startsWith('other:');
+  document.getElementById('bkOtherFields').style.display=isOther?'':'none';
+  document.getElementById('bkLabelLbl').textContent=isOther?'שם ההזמנה (למשל: השכרת רכב)':'שם ההזמנה / של מי (לא חובה)';
+}
+function setBkCoords(lat,lng){
+  bkPending={lat:+(+lat).toFixed(6),lng:+(+lng).toFixed(6)};
+  document.getElementById('bkCoords').textContent=`📍 נבחר: ${bkPending.lat}, ${bkPending.lng}`;
 }
 function openBookingModal(kind, refId){
   fillEntitySelect();
   if(kind&&refId!=null) bkEntity.value=kind+':'+refId;
   bkLabel.value=''; bkFile.value=''; bkPendingFile=null; bkStatus.textContent='';
+  bkPending=null;
+  document.getElementById('bkDate').value='';
+  document.getElementById('bkSearch').value='';
+  document.getElementById('bkResults').innerHTML='';
+  document.getElementById('bkCoords').textContent='';
+  document.getElementById('bkIconCustom').value='';
+  setDefaultBkIcon(); updateBookingModalMode();
   bookingModal.classList.add('show');
   /* no autofocus: on mobile the keyboard would cover the buttons and cause taps to hit the file input */
 }
 function closeBookingModal(){ bookingModal.classList.remove('show'); }
+bkEntity.addEventListener('change',()=>{ setDefaultBkIcon(); updateBookingModalMode(); });
+document.getElementById('bkIconCustom').addEventListener('input',e=>{
+  const v=e.target.value.trim();
+  if(v){ bkIcon=v; document.querySelectorAll('#bkIconPicker .icon-opt').forEach(x=>x.classList.remove('on')); }
+});
 document.getElementById('bkAddBtn').addEventListener('click',()=>openBookingModal());
 document.getElementById('bkCancel').addEventListener('click',closeBookingModal);
 bookingModal.addEventListener('click',e=>{ if(e.target===bookingModal) closeBookingModal(); });
+document.getElementById('bkSearchBtn').addEventListener('click',doBkSearch);
+document.getElementById('bkSearch').addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();doBkSearch();} });
+document.getElementById('bkMapPick').addEventListener('click',()=>{
+  placeTarget='booking'; placing=true; bookingModal.classList.remove('show'); banner.classList.add('show'); if(isMobile()) sheet.classList.add('collapsed');
+});
+async function doBkSearch(){
+  const q=document.getElementById('bkSearch').value.trim(); if(!q) return;
+  const box=document.getElementById('bkResults'); box.innerHTML='<div class="status">מחפש...</div>';
+  try{
+    const res=await nomSearch(q);
+    if(!res.length){ box.innerHTML='<div class="status">לא נמצאו תוצאות. נסו שם באנגלית.</div>'; return; }
+    box.innerHTML='';
+    res.forEach(r=>{
+      const div=document.createElement('div'); div.className='res';
+      const main=r.display_name.split(',')[0];
+      div.innerHTML=`<b>${esc(main)}</b><small>${esc(r.display_name)}</small>`;
+      div.addEventListener('click',()=>{
+        setBkCoords(r.lat,r.lon);
+        if(!bkLabel.value.trim()) bkLabel.value=main;
+        box.innerHTML=`<div class="status">✓ נבחר: ${esc(main)}</div>`;
+      });
+      box.appendChild(div);
+    });
+  }catch(e){ box.innerHTML='<div class="status">שגיאת חיפוש. בדקו חיבור אינטרנט.</div>'; }
+}
 bkFile.addEventListener('change',async()=>{
   const file=bkFile.files&&bkFile.files[0];
   if(!file){ bkPendingFile=null; bkStatus.textContent=''; return; }
@@ -1663,15 +1778,32 @@ bkFile.addEventListener('change',async()=>{
 document.getElementById('bkSave').addEventListener('click',()=>{
   if(!bkPendingFile){ bkStatus.textContent='⚠ בחרו קובץ אישור הזמנה'; return; }
   const [kind, refId]=(bkEntity.value||'').split(':');
-  if(!kind||!refId){ bkStatus.textContent='⚠ בחרו מלון או טיסה'; return; }
-  const b={ id:'bk'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
-    kind, refId, label:bkLabel.value.trim()||bkPendingFile.name,
-    name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl,
-    date:entityDate(kind, refId), createdAt:Date.now() };
+  if(!kind){ bkStatus.textContent='⚠ בחרו שיוך'; return; }
+  const id='bk'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  let b;
+  if(kind==='other'){
+    const label=bkLabel.value.trim();
+    if(!label){ bkStatus.textContent='⚠ הזינו שם להזמנה'; return; }
+    const date=document.getElementById('bkDate').value;
+    if(!date){ bkStatus.textContent='⚠ בחרו תאריך'; return; }
+    if(!bkPending){ bkStatus.textContent='⚠ בחרו מיקום (חיפוש או לחיצה על המפה)'; return; }
+    b={ id, kind:'other', label, name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl,
+        icon:bkIcon||'📍', date, lat:bkPending.lat, lng:bkPending.lng, region:regionOf(bkPending.lat,bkPending.lng), createdAt:Date.now() };
+  } else {
+    if(!refId){ bkStatus.textContent='⚠ בחרו מלון או טיסה'; return; }
+    b={ id, kind, refId, label:bkLabel.value.trim()||bkPendingFile.name,
+        name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl,
+        icon:bkIcon||'', date:entityDate(kind, refId), createdAt:Date.now() };
+  }
   addBookingItem(b);
   closeBookingModal();
-  const meta=hotelMeta.find(m=>m.hid===+refId);
-  if(kind==='hotel' && meta&&meta.marker&&meta.marker.isPopupOpen&&meta.marker.isPopupOpen()) meta.marker.openPopup();
+  if(kind==='other'){
+    const o=bookingMeta.find(x=>x.bid===id);
+    switchView('map'); setTimeout(()=>focusLatLng([b.lat,b.lng],14,o&&o.marker),120);
+  } else {
+    const meta=hotelMeta.find(m=>m.hid===+refId);
+    if(kind==='hotel' && meta&&meta.marker&&meta.marker.isPopupOpen&&meta.marker.isPopupOpen()) meta.marker.openPopup();
+  }
 });
 
 /* ---- Booking file viewer ---- */
@@ -1713,12 +1845,12 @@ fileModal.addEventListener('click',e=>{ if(e.target===fileModal) closeFileViewer
 
 /* ================= Filters ================= */
 function withinFilters(o){
-  if(!active[o.cat]) return false;
+  if(o.type!=='booking' && !active[o.cat]) return false; // booking pins ignore category chips
   if(nearbyOn){ return o.dist<=radiusKm; }
   return locFilter==='all' || o.region===locFilter;
 }
 function applyFilters(){
-  [...hotelMeta,...poiMeta].forEach(o=>{
+  [...hotelMeta,...poiMeta,...bookingMeta].forEach(o=>{
     const show=withinFilters(o);
     if(show){ if(!map.hasLayer(o.marker)) o.marker.addTo(map); }
     else { if(map.hasLayer(o.marker)) map.removeLayer(o.marker); }
@@ -1805,7 +1937,7 @@ function toggleNearUI(on){
   radiusSel.style.display = on?'block':'none';
 }
 function computeDistances(){
-  [...hotelMeta,...poiMeta].forEach(o=>{ o.dist = nearCenter? haversine(nearCenter,o.latlng): Infinity; });
+  [...hotelMeta,...poiMeta,...bookingMeta].forEach(o=>{ o.dist = nearCenter? haversine(nearCenter,o.latlng): Infinity; });
 }
 function drawNearCircle(){
   if(nearCircle){ map.removeLayer(nearCircle); nearCircle=null; }
@@ -1966,13 +2098,18 @@ document.getElementById('fLinkBtn').addEventListener('click',async()=>{
   else { fLinkStatus.innerHTML='לא הצלחתי לחלץ מיקום מהקישור. אפשרויות:<br>1) פתחו את הקישור ב-Google Maps, ובלשונית 🔎 <b>חיפוש</b> חפשו את שם המקום.<br>2) הדביקו כאן קואורדינטות בפורמט 9.79041, 99.98695.<br>3) הדביקו קוד Plus Code (למשל Q3H3+5G Ban Tai).'; }
 });
 
-/* map pick */
+/* map pick (shared by the place modal and the "other" booking modal) */
+let placeTarget='place';
 document.getElementById('fMapPick').addEventListener('click',()=>{
-  placing=true; closeModal(); banner.classList.add('show'); if(isMobile()) sheet.classList.add('collapsed');
+  placeTarget='place'; placing=true; closeModal(); banner.classList.add('show'); if(isMobile()) sheet.classList.add('collapsed');
 });
-document.getElementById('bannerCancel').addEventListener('click',()=>{ placing=false; banner.classList.remove('show'); openModal(); });
+document.getElementById('bannerCancel').addEventListener('click',()=>{
+  placing=false; banner.classList.remove('show');
+  if(placeTarget==='booking') bookingModal.classList.add('show'); else openModal();
+});
 map.on('click',e=>{
   if(!placing) return; placing=false; banner.classList.remove('show');
+  if(placeTarget==='booking'){ setBkCoords(e.latlng.lat,e.latlng.lng); bookingModal.classList.add('show'); return; }
   setCoords(e.latlng.lat,e.latlng.lng); switchPane('map'); openModal();
 });
 
@@ -2107,14 +2244,16 @@ function renderBookings(){
   if(!items.length){ host.innerHTML='<div class="empty">אין עדיין הזמנות. לחצו על ➕ כדי להוסיף אישור הזמנה של מלון או טיסה.</div>'; return; }
   items.forEach(b=>{
     const isFlight=b.kind==='flight';
-    const ic=isFlight?(flightById(b.refId)&&flightById(b.refId).ic||'✈️'):'🏨';
+    const defIc=isFlight?(flightById(b.refId)&&flightById(b.refId).ic||'✈️'):(b.kind==='other'?'📍':'🏨');
+    const ic=b.icon||defIc;
     const dateTxt=b.date?fmtLong(b.date):'';
+    const sub=(b.kind==='other') ? ((REGIONS[b.region]&&REGIONS[b.region].he)?('📍 '+REGIONS[b.region].he):'הזמנה כללית') : entityName(b.kind, b.refId);
     const row=document.createElement('div'); row.className='bkcard';
     row.innerHTML=`
       <div class="bkic">${ic}</div>
       <div class="bkinfo">
         <h4>${esc(b.label||b.name||'הזמנה')}</h4>
-        <small>${esc(entityName(b.kind, b.refId))}${dateTxt?' · '+dateTxt:''}</small>
+        <small>${esc(sub)}${dateTxt?' · '+dateTxt:''}</small>
       </div>
       <button class="bkbtn view" data-view="${esc(b.id)}">📄 הצג</button>
       <button class="bkbtn del" data-del="${esc(b.id)}">🗑️</button>`;
@@ -2207,6 +2346,7 @@ function renderAbout(){
   buildLocSeg();
   buildChips();
   buildPoiMarkers();
+  buildBookingMarkers();
   refreshHotels();
   applyFilters();
   fitAll();
@@ -2264,6 +2404,7 @@ function renderAbout(){
     cloud.onBookings(list=>{
       bookings = list.map(b=>({...b}));
       saveBookings(); refreshHotels();
+      buildBookingMarkers(); applyFilters();
       const v=document.body.dataset.view;
       if(v==='bookings') renderBookings();
     });
