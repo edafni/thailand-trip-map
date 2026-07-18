@@ -1768,7 +1768,11 @@ bookingModal.addEventListener('click',e=>{ if(e.target===bookingModal) closeBook
 document.getElementById('bkSearchBtn').addEventListener('click',doBkSearch);
 document.getElementById('bkSearch').addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();doBkSearch();} });
 document.getElementById('bkMapPick').addEventListener('click',()=>{
-  placeTarget='booking'; placing=true; bookingModal.classList.remove('show'); banner.classList.add('show'); if(isMobile()) sheet.classList.add('collapsed');
+  placeTarget='booking'; placing=true;
+  bookingModal.classList.remove('show');
+  switchView('map');                 // Bookings tab overlays the map; reveal it so it can be tapped
+  banner.classList.add('show');
+  if(isMobile()) sheet.classList.add('collapsed');
 });
 async function doBkSearch(){
   const q=document.getElementById('bkSearch').value.trim(); if(!q) return;
