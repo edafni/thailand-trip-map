@@ -755,6 +755,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .poi .pinfo small{color:var(--muted);font-size:11px}
   .poi .dist{font-size:11px;color:#7dd3fc;font-weight:700;flex:0 0 auto}
   .poi .del{background:transparent;border:none;color:#8892ab;font-size:16px;cursor:pointer;padding:4px}
+  .poi .iglink{flex:0 0 auto;font-size:16px;text-decoration:none;padding:4px;margin-top:0}
   .empty{color:var(--muted);font-size:12px;text-align:center;padding:12px;border:1px dashed var(--line);border-radius:12px}
   footer{color:#5f6f8c;font-size:10.5px;margin:14px 6px 0;line-height:1.6}
 
@@ -769,6 +770,37 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .pop .note{font-size:12px;color:#cdd8ef;margin:6px 0}
   .pop a{color:#7dd3fc;font-size:12px;display:inline-block;margin-top:6px}
   .pop .delbtn{margin-top:8px;background:#3a1620;border:1px solid #7f2233;color:#ffb4c0;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer}
+  .pop .insta{display:inline-flex;align-items:center;gap:5px;margin-top:6px;color:#e1306c !important;font-weight:600}
+  .hactions{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}
+  .hbtn{background:#12243f;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+  .hbtn.paid{background:#0f3d2e;border-color:#1c6b4f;color:#8ef0c4}
+  .hbtn.unpaid{background:#3a2a10;border-color:#7a5a1e;color:#f3d08a}
+  .hbtn.view{background:#123e57;border-color:#1d5f83;color:#bfe6ff}
+  .hbtn.ghost{background:transparent}
+  .hbadges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .paidbadge{font-size:11px;font-weight:700;border-radius:999px;padding:3px 9px;border:1px solid var(--line)}
+  .paidbadge.ok{background:#0f3d2e;border-color:#1c6b4f;color:#8ef0c4}
+  .paidbadge.no{background:#3a2a10;border-color:#7a5a1e;color:#f3d08a}
+  .paidbadge.doc{background:#123e57;border-color:#1d5f83;color:#bfe6ff}
+  body.light .hbtn{background:#eef2f7} body.light .hbtn.paid{background:#dcfce7;border-color:#86efac;color:#166534}
+  body.light .hbtn.unpaid{background:#fef3c7;border-color:#fcd34d;color:#92660b}
+  body.light .hbtn.view{background:#e0f2fe;border-color:#7dd3fc;color:#0b3a52}
+  body.light .paidbadge.ok{background:#dcfce7;border-color:#86efac;color:#166534}
+  body.light .paidbadge.no{background:#fef3c7;border-color:#fcd34d;color:#92660b}
+  body.light .paidbadge.doc{background:#e0f2fe;border-color:#7dd3fc;color:#0b3a52}
+
+  #fileModal{position:fixed;inset:0;z-index:1600;background:#000c;display:none;align-items:center;justify-content:center;padding:12px}
+  #fileModal.show{display:flex}
+  .file-card{background:#0f1b36;border:1px solid var(--line);border-radius:14px;width:100%;max-width:640px;height:86vh;display:flex;flex-direction:column;overflow:hidden}
+  body.light .file-card{background:#fff}
+  .file-head{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);font-size:14px;font-weight:700}
+  .file-head .fspace{flex:1}
+  .fbtn{background:#12243f;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer;text-decoration:none}
+  body.light .fbtn{background:#eef2f7}
+  .file-body{flex:1;overflow:auto;background:#0b1428;display:flex;align-items:center;justify-content:center}
+  body.light .file-body{background:#f4f7fb}
+  .file-body img{max-width:100%;max-height:100%;display:block}
+  .file-body iframe,.file-body embed{width:100%;height:100%;border:0}
 
   .poi-pin{position:relative;width:32px;height:32px;background:var(--pc);border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 9px #0008}
   .poi-pin .emoji{transform:rotate(45deg);font-size:15px;line-height:1}
@@ -984,6 +1016,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <div class="field"><label>שם המקום</label><input id="fName" type="text" placeholder="לדוגמה: מסעדת פיש מרקט" /></div>
     <div class="field"><label>קטגוריה</label><select id="fCat"></select></div>
     <div class="field"><label>הערה (לא חובה)</label><textarea id="fNote" placeholder="שעות פתיחה, המלצה, מחיר..."></textarea></div>
+    <div class="field"><label>📸 קישור אינסטגרם (לא חובה)</label><input id="fInsta" type="url" inputmode="url" placeholder="https://www.instagram.com/p/..." /></div>
 
     <div class="field">
       <label>מיקום</label>
@@ -1013,6 +1046,22 @@ svg.leaflet-image-layer.leaflet-interactive path {
   </div>
 </div>
 
+<!-- Hidden input for booking confirmation upload -->
+<input id="bookingInput" type="file" accept="image/*,application/pdf" style="display:none" />
+
+<!-- Booking file viewer -->
+<div id="fileModal">
+  <div class="file-card">
+    <div class="file-head">
+      <span id="fileTitle">אישור הזמנה</span>
+      <span class="fspace"></span>
+      <a id="fileDownload" class="fbtn" download>⬇︎ הורדה</a>
+      <button class="fbtn" id="fileClose">✖</button>
+    </div>
+    <div class="file-body" id="fileBody"></div>
+  </div>
+</div>
+
 <script>
 /* @preserve
  * Leaflet 1.9.4, a JS library for interactive maps. https://leafletjs.com
@@ -1025,7 +1074,39 @@ svg.leaflet-image-layer.leaflet-interactive path {
 /* ================= Config ================= */
 const ADMIN_HASH="6f19a63124e2790558f5aa75a27ff5efea4438ed5eedf8d4ec4a8d73c3f63334";
 const LS_PLACES='thai_places_v3';
+const LS_HOTELS='thai_hotels_v1';
 const LS_ADMIN='thai_admin';
+const FILE_LIMIT=900*1024; /* מגבלת גודל קובץ אישור הזמנה (שומר על נפח קטן בענן ובמכשיר) */
+
+/* ---- Cloud sync (optional) — live shared editing for everyone with the link ----
+   Setup (one time, free):
+   1) Create a project at https://console.firebase.google.com
+   2) Add a "Web app" and copy its firebaseConfig object
+   3) Paste the values below, replacing every PASTE... value, and save this file
+   4) In the console open "Firestore Database" → Create database (production mode)
+   5) In Firestore → Rules, paste the rules below and Publish so everyone with the
+      link can read & write the trip data:
+
+        rules_version = '2';
+        service cloud.firestore {
+          match /databases/{database}/documents {
+            match /trips/{trip}/{document=**} { allow read, write: if true; }
+          }
+        }
+
+   Note: these rules make the trip data public to anyone who knows the URL — fine for
+   sharing a trip with friends. Until the config below is filled in, the app runs fully
+   locally (each device keeps its own copy). */
+window.FIREBASE_CONFIG = window.FIREBASE_CONFIG || {
+  apiKey:"PASTE_FIREBASE_API_KEY",
+  authDomain:"PASTE.firebaseapp.com",
+  projectId:"PASTE_PROJECT_ID",
+  storageBucket:"PASTE.appspot.com",
+  messagingSenderId:"PASTE_SENDER_ID",
+  appId:"PASTE_APP_ID"
+};
+window.TRIP_ID = window.TRIP_ID || 'thailand-2026';
+window.CloudSyncReady = window.CloudSyncReady || new Promise(res=>{ window.__cloudResolve = res; });
 
 const CATEGORIES = {
   hotel:      {he:'מלונות',   emoji:'🏨', color:'#0ea5a4'},
@@ -1165,6 +1246,10 @@ async function sha256hex(str){const buf=await crypto.subtle.digest('SHA-256',new
   return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');}
 function getHashParams(){const h=location.hash.replace(/^#/,'');const o={};h.split('&').forEach(kv=>{const i=kv.indexOf('=');if(i>0)o[kv.slice(0,i)]=kv.slice(i+1);});return o;}
 
+/* Instagram link display for a place */
+function normInsta(u){ u=String(u||'').trim(); if(!u) return ''; if(!/^https?:\/\//i.test(u)) u='https://'+u.replace(/^\/+/,''); return /instagram\.com|instagr\.am/i.test(u)?u:''; }
+function instaHtml(p){ const u=normInsta(p&&p.insta); return u?`<div><a class="insta" href="${esc(u)}" target="_blank" rel="noopener">📸 צפו באינסטגרם ↗</a></div>`:''; }
+
 /* Google Maps link that resolves to the exact named venue */
 function gmapsLink(name, regionKey, lat, lng){
   if(name){
@@ -1180,6 +1265,8 @@ function gmapsLink(name, regionKey, lat, lng){
 /* ================= State ================= */
 let isAdmin=false;
 let places=[];
+let hotelState={};          /* { [hotelId]: { paid:bool, booking:{name,type,dataUrl}|null } } */
+let cloud={enabled:false};  /* cloud sync handle (populated in init) */
 let locFilter='all';
 let nearbyOn=false, nearCenter=null, radiusKm=5, nearCircle=null, meMarker=null;
 const active={}; Object.keys(CATEGORIES).forEach(k=>active[k]=true);
@@ -1201,7 +1288,35 @@ function loadPlaces(){
   }
   places.forEach(p=>{ if(!p.region) p.region=regionOf(p.lat,p.lng); });
 }
-function savePlaces(){ if(isAdmin) localStorage.setItem(LS_PLACES, JSON.stringify(places)); }
+function savePlaces(){ try{ localStorage.setItem(LS_PLACES, JSON.stringify(places)); }catch(e){} }
+
+function loadHotelState(){
+  let stored=null; try{ stored=JSON.parse(localStorage.getItem(LS_HOTELS)); }catch(e){}
+  hotelState = (stored&&typeof stored==='object')? stored : {};
+  hotels.forEach(h=>{ if(!hotelState[h.id]) hotelState[h.id]={paid:false, booking:null}; });
+}
+function saveHotelState(){ try{ localStorage.setItem(LS_HOTELS, JSON.stringify(hotelState)); }catch(e){} }
+function hs(id){ if(!hotelState[id]) hotelState[id]={paid:false, booking:null}; return hotelState[id]; }
+
+/* ---- Edit operations (local + cloud) ---- */
+function addPlace(p){
+  places.push(p); savePlaces();
+  if(cloud.enabled){ cloud.upsertPlace(p).catch(e=>console.error('cloud upsert',e)); }
+}
+function removePlaceOp(id){
+  places=places.filter(p=>p.id!==id); savePlaces();
+  if(cloud.enabled){ cloud.removePlace(id).catch(e=>console.error('cloud remove',e)); }
+}
+function setHotelPaid(id, paid){
+  hs(id).paid=!!paid; saveHotelState();
+  if(cloud.enabled){ cloud.setHotel(id,{paid:!!paid}).catch(e=>console.error('cloud hotel',e)); }
+  refreshHotels();
+}
+function setHotelBooking(id, booking){
+  hs(id).booking=booking; saveHotelState();
+  if(cloud.enabled){ cloud.setHotel(id,{booking:booking||null}).catch(e=>console.error('cloud booking',e)); }
+  refreshHotels();
+}
 
 /* ================= Map ================= */
 const map = L.map('map',{zoomControl:true,scrollWheelZoom:true,tap:true});
@@ -1219,27 +1334,18 @@ function poiIcon(cat){
 /* ---- Hotels (static markers + itinerary list) ---- */
 const hotelMeta=[];
 const listEl=document.getElementById('list');
-hotels.forEach(h=>{
-  const legRow=document.createElement('div');
-  legRow.className='leg';
-  legRow.innerHTML=`<span class="ic">${h.leg.ic}</span><span>${h.leg.txt}</span>`;
-  listEl.appendChild(legRow);
-  const card=document.createElement('div');
-  card.className=`card ${h.area}`;
-  card.innerHTML=`
-    <div class="idx">${h.id}</div>
-    <h3>${esc(h.name)}</h3>
-    <div class="region">${esc(h.region)}</div>
-    <div class="dates"><span class="pill">${fmtLong(h.from)}</span><span>←</span><span class="pill">${fmtLong(h.to)}</span></div>
-    <div class="meta"><span>🌙 ${h.nights} לילות</span><span>฿ ${h.thb.toLocaleString()}</span></div>`;
-  card.addEventListener('click',()=>focusLatLng([h.lat,h.lng], h.id===5?12:14, hotelMeta.find(m=>m.hid===h.id).marker));
-  listEl.appendChild(card);
-  h._card=card;
 
-  const rkey=areaToRegion[h.area];
-  const icon=L.divIcon({className:'',html:`<div class="poi-pin" style="--pc:${areaColor(h.area)}"><span class="emoji">🏨</span></div>`,iconSize:[32,32],iconAnchor:[16,32],popupAnchor:[0,-30]});
-  const m=L.marker([h.lat,h.lng],{icon});
-  m.bindPopup(`
+function hotelPopupHtml(h, rkey){
+  const st=hs(h.id);
+  const paidBtn = st.paid
+    ? `<button class="hbtn paid" onclick="toggleHotelPaid(${h.id})">✓ שולם · לחצו לביטול</button>`
+    : `<button class="hbtn unpaid" onclick="toggleHotelPaid(${h.id})">💳 סמן כשולם</button>`;
+  const bookingRow = st.booking
+    ? `<button class="hbtn view" onclick="viewBooking(${h.id})">📄 הצג אישור הזמנה</button>
+       <button class="hbtn ghost" onclick="uploadBooking(${h.id})">↻ החלף</button>
+       <button class="hbtn ghost" onclick="removeBooking(${h.id})">🗑️</button>`
+    : `<button class="hbtn" onclick="uploadBooking(${h.id})">📎 העלה אישור הזמנה</button>`;
+  return `
     <div class="pop">
       <h3>🏨 ${h.id}. ${esc(h.name)}</h3>
       <div class="r">${esc(h.region)}</div>
@@ -1248,11 +1354,56 @@ hotels.forEach(h=>{
         <tr><td>צ'ק אאוט</td><td><b>${fmtLong(h.to)} 2026</b></td></tr>
         <tr><td>לילות</td><td><b>${h.nights}</b></td></tr>
         <tr><td>עלות</td><td><b>฿ ${h.thb.toLocaleString()}</b></td></tr>
+        <tr><td>תשלום</td><td><b>${st.paid?'שולם ✓':'טרם שולם'}</b></td></tr>
       </table>
+      <div class="hactions">
+        ${paidBtn}
+        ${bookingRow}
+      </div>
       <a href="${gmapsLink(h.name, rkey, h.lat, h.lng)}" target="_blank" rel="noopener">פתח ב-Google Maps ↗</a>
-    </div>`);
+    </div>`;
+}
+function hotelCardHtml(h){
+  const st=hs(h.id);
+  const badge = st.paid ? `<span class="paidbadge ok">שולם ✓</span>` : `<span class="paidbadge no">טרם שולם</span>`;
+  const doc = st.booking ? `<span class="paidbadge doc">📄 אישור</span>` : '';
+  return `
+    <div class="idx">${h.id}</div>
+    <h3>${esc(h.name)}</h3>
+    <div class="region">${esc(h.region)}</div>
+    <div class="dates"><span class="pill">${fmtLong(h.from)}</span><span>←</span><span class="pill">${fmtLong(h.to)}</span></div>
+    <div class="meta"><span>🌙 ${h.nights} לילות</span><span>฿ ${h.thb.toLocaleString()}</span></div>
+    <div class="hbadges">${badge}${doc}</div>`;
+}
+
+hotels.forEach(h=>{
+  const legRow=document.createElement('div');
+  legRow.className='leg';
+  legRow.innerHTML=`<span class="ic">${h.leg.ic}</span><span>${h.leg.txt}</span>`;
+  listEl.appendChild(legRow);
+  const card=document.createElement('div');
+  card.className=`card ${h.area}`;
+  card.innerHTML=hotelCardHtml(h);
+  card.addEventListener('click',()=>focusLatLng([h.lat,h.lng], h.id===5?12:14, hotelMeta.find(m=>m.hid===h.id).marker));
+  listEl.appendChild(card);
+  h._card=card;
+
+  const rkey=areaToRegion[h.area];
+  const icon=L.divIcon({className:'',html:`<div class="poi-pin" style="--pc:${areaColor(h.area)}"><span class="emoji">🏨</span></div>`,iconSize:[32,32],iconAnchor:[16,32],popupAnchor:[0,-30]});
+  const m=L.marker([h.lat,h.lng],{icon});
+  m.bindPopup(hotelPopupHtml(h, rkey), {maxWidth:280});
   hotelMeta.push({hid:h.id, marker:m, cat:'hotel', region:rkey, latlng:[h.lat,h.lng], dist:Infinity});
 });
+
+function refreshHotels(){
+  hotels.forEach(h=>{
+    if(h._card) h._card.innerHTML=hotelCardHtml(h);
+    const meta=hotelMeta.find(m=>m.hid===h.id);
+    if(meta && meta.marker){
+      meta.marker.setPopupContent(hotelPopupHtml(h, areaToRegion[h.area]));
+    }
+  });
+}
 
 /* ---- Route segments ---- */
 segs.forEach(s=>{
@@ -1277,6 +1428,7 @@ function buildPoiMarkers(){
         <h3>${c.emoji} ${esc(p.name)}</h3>
         <div class="r">${esc(c.he)}${REGIONS[rkey]&&REGIONS[rkey].eng?' · '+REGIONS[rkey].eng:''}</div>
         ${p.note?`<div class="note">${esc(p.note)}</div>`:''}
+        ${instaHtml(p)}
         <a href="${gmapsLink(p.name, rkey, p.lat, p.lng)}" target="_blank" rel="noopener">פתח ב-Google Maps ↗</a>
         ${isAdmin?`<div><button class="delbtn" onclick="deletePlace('${p.id}')">🗑️ מחק מקום</button></div>`:''}
       </div>`);
@@ -1284,10 +1436,86 @@ function buildPoiMarkers(){
   });
 }
 window.deletePlace=function(id){
-  if(!isAdmin) return;
-  places=places.filter(p=>p.id!==id); savePlaces(); map.closePopup();
+  removePlaceOp(id); map.closePopup();
   buildPoiMarkers(); applyFilters();
 };
+
+/* ---- Hotel paid / booking actions ---- */
+window.toggleHotelPaid=function(id){ setHotelPaid(id, !hs(id).paid); };
+
+let bookingTargetHotel=null;
+window.uploadBooking=function(id){ bookingTargetHotel=id; bookingInput.value=''; bookingInput.click(); };
+window.removeBooking=function(id){
+  if(confirm('להסיר את אישור ההזמנה?')){ setHotelBooking(id, null); }
+};
+window.viewBooking=function(id){
+  const b=hs(id).booking; if(!b) return;
+  openFileViewer(b);
+};
+
+/* compress images to stay under FILE_LIMIT; PDFs must already be small enough */
+function readBookingFile(file){
+  return new Promise((resolve,reject)=>{
+    if(file.type==='application/pdf' || !file.type.startsWith('image/')){
+      if(file.size>FILE_LIMIT) return reject('גדול מדי');
+      const fr=new FileReader();
+      fr.onload=()=>resolve({name:file.name, type:file.type, dataUrl:fr.result});
+      fr.onerror=()=>reject('קריאה נכשלה'); fr.readAsDataURL(file);
+      return;
+    }
+    const fr=new FileReader();
+    fr.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        let {width,height}=img; const maxDim=1600;
+        if(Math.max(width,height)>maxDim){ const s=maxDim/Math.max(width,height); width=Math.round(width*s); height=Math.round(height*s); }
+        const cv=document.createElement('canvas'); cv.width=width; cv.height=height;
+        cv.getContext('2d').drawImage(img,0,0,width,height);
+        let q=0.82, out=cv.toDataURL('image/jpeg',q);
+        while(out.length>FILE_LIMIT && q>0.4){ q-=0.12; out=cv.toDataURL('image/jpeg',q); }
+        if(out.length>FILE_LIMIT) return reject('גדול מדי');
+        resolve({name:(file.name||'booking').replace(/\.[^.]+$/,'')+'.jpg', type:'image/jpeg', dataUrl:out});
+      };
+      img.onerror=()=>reject('תמונה לא תקינה'); img.src=fr.result;
+    };
+    fr.onerror=()=>reject('קריאה נכשלה'); fr.readAsDataURL(file);
+  });
+}
+
+const bookingInput=document.getElementById('bookingInput');
+bookingInput.addEventListener('change',async()=>{
+  const file=bookingInput.files&&bookingInput.files[0];
+  const id=bookingTargetHotel; bookingTargetHotel=null;
+  if(!file || id==null) return;
+  try{
+    const booking=await readBookingFile(file);
+    setHotelBooking(id, booking);
+    const meta=hotelMeta.find(m=>m.hid===id);
+    if(meta&&meta.marker&&meta.marker.isPopupOpen&&meta.marker.isPopupOpen()) meta.marker.openPopup();
+    alert('אישור ההזמנה נשמר ✓');
+  }catch(err){
+    alert(err==='גדול מדי'
+      ? 'הקובץ גדול מדי (מעל ~900KB). העלו צילום מסך של האישור או קובץ קטן יותר.'
+      : 'לא ניתן לטעון את הקובץ. נסו קובץ תמונה או PDF.');
+  }
+});
+
+/* ---- Booking file viewer ---- */
+const fileModal=document.getElementById('fileModal');
+const fileBody=document.getElementById('fileBody');
+function openFileViewer(b){
+  document.getElementById('fileTitle').textContent=b.name||'אישור הזמנה';
+  const dl=document.getElementById('fileDownload'); dl.href=b.dataUrl; dl.setAttribute('download', b.name||'booking');
+  fileBody.innerHTML='';
+  if(b.type&&b.type.startsWith('image/')){
+    const img=document.createElement('img'); img.src=b.dataUrl; img.alt=b.name||''; fileBody.appendChild(img);
+  } else {
+    const emb=document.createElement('iframe'); emb.src=b.dataUrl; fileBody.appendChild(emb);
+  }
+  fileModal.classList.add('show');
+}
+document.getElementById('fileClose').addEventListener('click',()=>{ fileModal.classList.remove('show'); fileBody.innerHTML=''; });
+fileModal.addEventListener('click',e=>{ if(e.target===fileModal){ fileModal.classList.remove('show'); fileBody.innerHTML=''; } });
 
 /* ================= Filters ================= */
 function withinFilters(o){
@@ -1355,7 +1583,7 @@ function renderPoiList(){
     row.className='poi';
     row.innerHTML=`
       <div class="pemoji" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</div>
-      <div class="pinfo"><h4>${esc(p.name)}</h4><small>${esc(c.he)}${p.note?' · '+esc(p.note):''}</small></div>
+      <div class="pinfo"><h4>${esc(p.name)}</h4><small>${esc(c.he)}${normInsta(p.insta)?' · 📸':''}${p.note?' · '+esc(p.note):''}</small></div>
       ${nearbyOn?`<span class="dist">${o.dist<1?Math.round(o.dist*1000)+' מ׳':o.dist.toFixed(1)+' ק״מ'}</span>`:''}
       ${isAdmin?`<button class="del" title="מחק" data-del="${p.id}">🗑️</button>`:''}`;
     row.addEventListener('click',e=>{ if(e.target.closest('[data-del]')) return; focusLatLng(o.latlng,15,o.marker); });
@@ -1416,7 +1644,7 @@ let placing=false;
 function openModal(){ modal.classList.add('show'); }
 function closeModal(){ modal.classList.remove('show'); }
 function setCoords(lat,lng){ pending={lat:+(+lat).toFixed(6),lng:+(+lng).toFixed(6)}; document.getElementById('fCoords').textContent=`📍 נבחר: ${pending.lat}, ${pending.lng}`; }
-function resetForm(){ pending=null; document.getElementById('fName').value=''; document.getElementById('fNote').value=''; fCat.value='restaurant';
+function resetForm(){ pending=null; document.getElementById('fName').value=''; document.getElementById('fNote').value=''; document.getElementById('fInsta').value=''; fCat.value='restaurant';
   document.getElementById('fSearch').value=''; document.getElementById('fResults').innerHTML=''; document.getElementById('fLink').value=''; document.getElementById('fLinkStatus').textContent=''; document.getElementById('fCoords').textContent=''; switchPane('search'); }
 
 document.getElementById('addBtn').addEventListener('click',()=>{ resetForm(); openModal(); });
@@ -1509,9 +1737,10 @@ document.getElementById('fSave').addEventListener('click',()=>{
   const name=document.getElementById('fName').value.trim();
   if(!name){ alert('הזינו שם למקום'); document.getElementById('fName').focus(); return; }
   if(!pending){ alert('בחרו מיקום (חיפוש / קישור / מפה)'); return; }
+  const insta=normInsta(document.getElementById('fInsta').value);
   const place={ id:'u'+Date.now().toString(36), name, cat:fCat.value,
-    note:document.getElementById('fNote').value.trim(), lat:pending.lat, lng:pending.lng, region:regionOf(pending.lat,pending.lng) };
-  places.push(place); savePlaces(); closeModal();
+    note:document.getElementById('fNote').value.trim(), insta:insta||'', lat:pending.lat, lng:pending.lng, region:regionOf(pending.lat,pending.lng) };
+  addPlace(place); closeModal();
   buildPoiMarkers(); applyFilters();
   setTimeout(()=>{ const o=poiMeta.find(x=>x.pid===place.id); focusLatLng([place.lat,place.lng],15,o&&o.marker); },100);
 });
@@ -1519,14 +1748,20 @@ document.getElementById('fSave').addEventListener('click',()=>{
 /* ================= Share ================= */
 document.getElementById('shareBtn').addEventListener('click',async()=>{
   let url=location.origin+location.pathname;
-  if(places.length){
-    const b64=btoa(unescape(encodeURIComponent(JSON.stringify(places))));
-    url+='#places='+encodeURIComponent(b64);
+  let msg;
+  if(cloud.enabled){
+    msg='הקישור הועתק! כל מי שיפתח אותו יראה את אותם המקומות והמלונות ויוכל לערוך יחד איתכם בזמן אמת.';
+  } else {
+    if(places.length){
+      const b64=btoa(unescape(encodeURIComponent(JSON.stringify(places))));
+      url+='#places='+encodeURIComponent(b64);
+    }
+    msg='הקישור הועתק! אפשר להדביק בוואטסאפ.\n(שיתוף חי לכולם דורש הגדרת ענן חד-פעמית — ראו לשונית "אודות").';
   }
   try{
     if(navigator.share){ await navigator.share({title:'מסלול תאילנד 2026',url}); return; }
     await navigator.clipboard.writeText(url);
-    alert('הקישור הועתק! אפשר להדביק בוואטסאפ.\nהצופים יראו את המקומות שלך אך לא יוכלו לערוך.');
+    alert(msg);
   }catch(e){ prompt('העתיקו את הקישור לשיתוף:',url); }
 });
 
@@ -1538,13 +1773,13 @@ lockBtn.addEventListener('click',()=>{
 async function initAdmin(){
   const hp=getHashParams();
   if(hp.admin){
-    try{ const h=await sha256hex(decodeURIComponent(hp.admin)); if(h===ADMIN_HASH){ localStorage.setItem(LS_ADMIN,'1'); } }catch(e){}
-    // strip admin from hash (keep places if present)
+    // legacy admin param no longer needed — editing is open to everyone. Strip it.
     const keep=hp.places?('#places='+hp.places):'';
     history.replaceState(null,'',location.pathname+location.search+keep);
   }
-  isAdmin = localStorage.getItem(LS_ADMIN)==='1';
-  document.body.classList.toggle('admin',isAdmin);
+  isAdmin = true;                       // editing is available to everyone with the link
+  document.body.classList.add('admin'); // show the add/share toolbar
+  const lb=document.getElementById('lockBtn'); if(lb) lb.style.display='none';
 }
 async function tryUnlockFromHash(){
   if(localStorage.getItem(LS_ADMIN)==='1') return;
@@ -1604,10 +1839,12 @@ function renderAttractions(){
     items.forEach(p=>{
       total++;
       const rkey=p.region||regionOf(p.lat,p.lng);
+      const u=normInsta(p.insta);
       const row=document.createElement('div'); row.className='poi';
       row.innerHTML=`<div class="pemoji" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</div>
-        <div class="pinfo"><h4>${esc(p.name)}</h4><small>${REGIONS[rkey]?esc(REGIONS[rkey].he):''}${p.note?' · '+esc(p.note):''}</small></div>`;
-      row.addEventListener('click',()=>{ const o=poiMeta.find(x=>x.pid===p.id); switchView('map'); if(o) focusLatLng(o.latlng,15,o.marker); });
+        <div class="pinfo"><h4>${esc(p.name)}</h4><small>${REGIONS[rkey]?esc(REGIONS[rkey].he):''}${p.note?' · '+esc(p.note):''}</small></div>
+        ${u?`<a class="insta iglink" href="${esc(u)}" target="_blank" rel="noopener" title="אינסטגרם">📸</a>`:''}`;
+      row.addEventListener('click',e=>{ if(e.target.closest('.iglink')) return; const o=poiMeta.find(x=>x.pid===p.id); switchView('map'); if(o) focusLatLng(o.latlng,15,o.marker); });
       host.appendChild(row);
     });
   });
@@ -1648,13 +1885,14 @@ function renderDestinations(){
 function renderAbout(){
   const host=document.getElementById('view-about');
   const nights=hotels.reduce((s,h)=>s+h.nights,0);
+  const paidCount=hotels.filter(h=>hs(h.id).paid).length;
   host.innerHTML=`
     <h2>ℹ️ אודות הטיול</h2>
     <div class="stat-grid">
       <div class="stat-box"><div class="n">${hotels.length}</div><div class="l">מלונות</div></div>
       <div class="stat-box"><div class="n">${nights}</div><div class="l">לילות</div></div>
-      <div class="stat-box"><div class="n">3</div><div class="l">יעדים</div></div>
       <div class="stat-box"><div class="n">${places.length}</div><div class="l">מקומות</div></div>
+      <div class="stat-box"><div class="n">${paidCount}/${hotels.length}</div><div class="l">שולמו</div></div>
     </div>
     <div class="about-card">
       <h3>המסלול 🇹🇭</h3>
@@ -1669,7 +1907,19 @@ function renderAbout(){
       • במפה: סננו לפי יעד וקטגוריה, או <b>📍 קרוב אליי</b> להצגת מקומות סביבכם.<br>
       • כפתור 🌙/☀️ מחליף בין מצב כהה לבהיר.
     </div>
-    ${isAdmin?`<div class="about-card"><h3>מצב מנהל 🔓</h3>אתם במצב מנהל: אפשר להוסיף מקומות (➕), למחוק, ולשתף קישור שכולל את השינויים (🔗).</div>`:''}
+    <div class="about-card">
+      <h3>מה חדש ✨</h3>
+      • <b>אטרקציות מאינסטגרם</b> — בהוספת מקום (➕) הדביקו קישור אינסטגרם. הוא יופיע במפה ובלשונית האטרקציות עם כפתור 📸.<br>
+      • <b>סטטוס תשלום למלון</b> — טפו על מלון במפה וסמנו "שולם / טרם שולם". הסטטוס מוצג גם בכרטיס המלון.<br>
+      • <b>אישור הזמנה</b> — אפשר להעלות קובץ/צילום של אישור ההזמנה לכל מלון, וללחוץ עליו כדי לצפות בו.<br>
+      • <b>עריכה לכולם</b> — כל מי שמקבל את הקישור יכול להוסיף, לערוך ולסמן.
+    </div>
+    <div class="about-card">
+      <h3>${cloud.enabled?'שיתוף חי פעיל ✅':'שיתוף חי לכולם ☁️'}</h3>
+      ${cloud.enabled
+        ? 'האפליקציה מחוברת לענן. כל השינויים (מקומות, תשלומים, אישורי הזמנה) מסתנכרנים אוטומטית לכל מי שפתח את הקישור.'
+        : 'כרגע כל שינוי נשמר במכשיר הזה בלבד, וכפתור השיתוף (🔗) שולח "צילום מצב". כדי שכולם יראו וישנו את אותם הנתונים בזמן אמת, בצעו הגדרה חד-פעמית וחינמית של Firebase והדביקו את פרטי החיבור בקובץ (חפשו FIREBASE_CONFIG בקוד — יש שם הסבר צעד-אחר-צעד).'}
+    </div>
     <div class="about-card" style="color:var(--muted);font-size:12px">
       המקומות מבוססים על הרשימות השמורות ב-Google Maps. מיקומי המלונות מקורבים לפי כתובת.
     </div>`;
@@ -1679,9 +1929,11 @@ function renderAbout(){
 (async function init(){
   await initAdmin();
   loadPlaces();
+  loadHotelState();
   buildLocSeg();
   buildChips();
   buildPoiMarkers();
+  refreshHotels();
   applyFilters();
   fitAll();
   applyTheme(theme);
@@ -1689,7 +1941,71 @@ function renderAbout(){
   if(isMobile()) sheet.classList.add('collapsed');
   setTimeout(()=>map.invalidateSize(),300);
   window.addEventListener('resize',()=>map.invalidateSize());
+
+  /* ---- Optional cloud sync (live shared editing) ---- */
+  try{ cloud = await window.CloudSyncReady; }catch(e){ cloud={enabled:false}; }
+  if(cloud && cloud.enabled){
+    document.body.classList.add('cloud');
+    try{
+      const meta = await cloud.getMeta();
+      if(!meta || !meta.seeded){
+        for(const p of DEFAULT_PLACES){ await cloud.upsertPlace({...p, insta:p.insta||'', region:regionOf(p.lat,p.lng)}); }
+        await cloud.setMeta({seeded:true, seededAt:Date.now()});
+      }
+    }catch(e){ console.error('cloud seed failed',e); }
+    cloud.onPlaces(list=>{
+      places = list.map(p=>({...p, insta:p.insta||'', region:p.region||regionOf(p.lat,p.lng)}));
+      savePlaces();
+      buildPoiMarkers(); applyFilters();
+      const v=document.body.dataset.view;
+      if(v==='attractions') renderAttractions();
+      else if(v==='destinations') renderDestinations();
+      else if(v==='about') renderAbout();
+    });
+    cloud.onHotels(obj=>{
+      Object.keys(obj||{}).forEach(id=>{ const d=obj[id]||{}; hotelState[id]={paid:!!d.paid, booking:d.booking||null}; });
+      saveHotelState(); refreshHotels();
+      if(document.body.dataset.view==='about') renderAbout();
+    });
+  }
 })();
+</script>
+
+<!-- ================= Optional Firebase cloud sync =================
+     Loads only when FIREBASE_CONFIG is filled in. Provides live shared
+     editing so everyone with the link sees & edits the same data. -->
+<script type="module">
+  const resolve = window.__cloudResolve || function(){};
+  const cfg = window.FIREBASE_CONFIG || {};
+  const configured = cfg.apiKey && cfg.projectId && !String(cfg.apiKey).includes('PASTE') && !String(cfg.projectId).includes('PASTE');
+  if(!configured){ resolve({enabled:false}); }
+  else {
+    try{
+      const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js");
+      const { getFirestore, collection, doc, setDoc, deleteDoc, getDoc, onSnapshot }
+        = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
+      const app = initializeApp(cfg);
+      const db = getFirestore(app);
+      const TRIP = window.TRIP_ID || 'thailand-2026';
+      const placesCol = ()=>collection(db,'trips',TRIP,'places');
+      const hotelsCol = ()=>collection(db,'trips',TRIP,'hotels');
+      resolve({
+        enabled:true,
+        onPlaces(cb){ return onSnapshot(placesCol(), snap=>cb(snap.docs.map(d=>d.data())),
+          err=>console.error('places sync',err)); },
+        onHotels(cb){ return onSnapshot(hotelsCol(), snap=>{ const o={}; snap.docs.forEach(d=>o[d.id]=d.data()); cb(o); },
+          err=>console.error('hotels sync',err)); },
+        upsertPlace(p){ return setDoc(doc(placesCol(), String(p.id)), p); },
+        removePlace(id){ return deleteDoc(doc(placesCol(), String(id))); },
+        setHotel(id,data){ return setDoc(doc(hotelsCol(), String(id)), data, {merge:true}); },
+        getMeta(){ return getDoc(doc(db,'trips',TRIP,'meta','info')).then(s=>s.exists()?s.data():null); },
+        setMeta(d){ return setDoc(doc(db,'trips',TRIP,'meta','info'), d, {merge:true}); },
+      });
+    }catch(e){
+      console.error('Firebase init failed — running locally.', e);
+      resolve({enabled:false, error:String(e)});
+    }
+  }
 </script>
 </body>
 </html>
