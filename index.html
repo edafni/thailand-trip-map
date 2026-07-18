@@ -850,6 +850,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .row{display:flex;gap:8px}
   .results{margin-top:8px;max-height:180px;overflow-y:auto}
   .res{padding:8px 10px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;cursor:pointer;font-size:13px;background:#0b1428}
+  .res.sel{border-color:#3a5680;background:#1d3556;box-shadow:0 0 0 1px #3a568055}
+  body.light .res.sel{background:#e0f2fe;border-color:#7dd3fc}
   .res:active{background:#16233f}
   .res b{display:block;font-size:13px} .res small{color:var(--muted);font-size:11px}
   .coordsBox{font-size:12px;color:#7dd3fc;margin-top:6px;min-height:16px}
@@ -1781,16 +1783,19 @@ async function doBkSearch(){
     const res=await nomSearch(q);
     if(!res.length){ box.innerHTML='<div class="status">לא נמצאו תוצאות. נסו שם באנגלית.</div>'; return; }
     box.innerHTML='';
-    res.forEach(r=>{
+    const items=[];
+    res.forEach((r,idx)=>{
       const div=document.createElement('div'); div.className='res';
       const main=r.display_name.split(',')[0];
       div.innerHTML=`<b>${esc(main)}</b><small>${esc(r.display_name)}</small>`;
-      div.addEventListener('click',()=>{
+      const pick=()=>{
         setBkCoords(r.lat,r.lon);
         if(!bkLabel.value.trim()) bkLabel.value=main;
-        box.innerHTML=`<div class="status">✓ נבחר: ${esc(main)}</div>`;
-      });
-      box.appendChild(div);
+        items.forEach(d=>d.classList.remove('sel')); div.classList.add('sel');
+      };
+      div.addEventListener('click',pick);
+      box.appendChild(div); items.push(div);
+      if(idx===0) pick();   // auto-select the top result so Save works without an extra tap
     });
   }catch(e){ box.innerHTML='<div class="status">שגיאת חיפוש. בדקו חיבור אינטרנט.</div>'; }
 }
@@ -1804,7 +1809,7 @@ bkFile.addEventListener('change',async()=>{
       ? '⚠ הקובץ גדול מדי (מעל ~900KB). העלו צילום מסך או קובץ קטן יותר.'
       : '⚠ לא ניתן לטעון את הקובץ. נסו תמונה או PDF.'; }
 });
-document.getElementById('bkSave').addEventListener('click',()=>{
+document.getElementById('bkSave').addEventListener('click',async ()=>{
   if(!bkPendingFile){ bkStatus.textContent='⚠ בחרו קובץ אישור הזמנה'; return; }
   const [kind, refId]=(bkEntity.value||'').split(':');
   if(!kind){ bkStatus.textContent='⚠ בחרו שיוך'; return; }
@@ -1815,7 +1820,13 @@ document.getElementById('bkSave').addEventListener('click',()=>{
     if(!label){ bkStatus.textContent='⚠ הזינו שם להזמנה'; return; }
     const date=document.getElementById('bkDate').value;
     if(!date){ bkStatus.textContent='⚠ בחרו תאריך'; return; }
-    if(!bkPending){ bkStatus.textContent='⚠ בחרו מיקום (חיפוש או לחיצה על המפה)'; return; }
+    if(!bkPending){
+      // fallback: user typed a place but didn't tap a result — resolve it now
+      const q=document.getElementById('bkSearch').value.trim();
+      if(q){ bkStatus.textContent='מאתר מיקום…';
+        try{ const res=await nomSearch(q); if(res&&res.length){ setBkCoords(res[0].lat,res[0].lon); bkStatus.textContent=''; } }catch(e){} }
+    }
+    if(!bkPending){ bkStatus.textContent='⚠ בחרו מיקום: הקלידו שם ולחצו “חפש”, או “בחרו נקודה על המפה”.'; return; }
     b={ id, kind:'other', label, name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl,
         icon:bkIcon||'📍', date, lat:bkPending.lat, lng:bkPending.lng, region:regionOf(bkPending.lat,bkPending.lng), createdAt:Date.now() };
   } else {
