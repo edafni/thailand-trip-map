@@ -756,6 +756,20 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .poi .dist{font-size:11px;color:#7dd3fc;font-weight:700;flex:0 0 auto}
   .poi .del{background:transparent;border:none;color:#8892ab;font-size:16px;cursor:pointer;padding:4px}
   .poi .editbtn{background:transparent;border:none;color:#8892ab;font-size:15px;cursor:pointer;padding:4px;flex:0 0 auto}
+  .poi .visbtn{background:transparent;border:none;color:#22c55e;font-size:15px;cursor:pointer;padding:4px;flex:0 0 auto}
+  .poi.visited{opacity:.5}
+  .poi.visited .pemoji{filter:grayscale(1)}
+  .vtag{font-size:10px;color:#22c55e;font-weight:700;margin-inline-start:6px;white-space:nowrap}
+  .poi-pin.visited{filter:grayscale(1);opacity:.6}
+  .cd{color:var(--text);font-weight:800}
+  .cc-grid{display:flex;gap:8px;flex-wrap:wrap}
+  .cc-grid label{flex:1;min-width:90px;display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+  .cc-grid input{background:#0b1428;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 10px;font-size:15px;font-family:inherit;width:100%}
+  body.light .cc-grid input{background:#f4f7fb}
+  .cc-note{margin-top:8px;font-size:12px;color:var(--muted)}
+  .inforow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .inforow:last-child{border-bottom:none}
+  .inforow a{color:var(--accentLine,#38bdf8);font-weight:700;text-decoration:none;font-size:16px}
   .poi .iglink{flex:0 0 auto;font-size:16px;text-decoration:none;padding:4px;margin-top:0}
   .empty{color:var(--muted);font-size:12px;text-align:center;padding:12px;border:1px dashed var(--line);border-radius:12px}
   footer{color:#5f6f8c;font-size:10.5px;margin:14px 6px 0;line-height:1.6}
@@ -982,7 +996,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <span class="flag">🇹🇭</span>
     <div class="tb-title">
       <h1>מסלול תאילנד 2026</h1>
-      <div class="sub">6 באוגוסט – 1 בספטמבר · 26 לילות</div>
+      <div class="sub" id="tripSub">6 באוגוסט – 1 בספטמבר · 26 לילות</div>
     </div>
     <span class="tb-spacer"></span>
     <span class="adminBadge" id="adminBadge">מנהל 🔓</span>
@@ -993,6 +1007,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <button class="tab" data-view="attractions">⭐ אטרקציות</button>
     <button class="tab" data-view="bookings">🧾 הזמנות</button>
     <button class="tab" data-view="destinations">📍 יעדים</button>
+    <button class="tab" data-view="info">🧭 מידע</button>
     <button class="tab" data-view="about">ℹ️ אודות</button>
   </div>
 </div>
@@ -1063,6 +1078,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   <div class="lead">שלושת היעדים בטיול. טפו על "הצג במפה" כדי למקד את המפה על היעד.</div>
   <div id="destList"></div>
 </div>
+<div class="view" id="view-info"></div>
 <div class="view" id="view-about"></div>
 
 <!-- Add place modal -->
@@ -1502,9 +1518,9 @@ const TILES_DARK=TILES_LIGHT;
 const baseTiles=L.tileLayer(TILES_DARK,{attribution:'Tiles &copy; Esri', maxZoom:19}).addTo(map);
 const routeLayer=L.layerGroup().addTo(map);
 
-function poiIcon(cat){
+function poiIcon(cat, visited){
   const c=CATEGORIES[cat]||CATEGORIES.other;
-  return L.divIcon({className:'',html:`<div class="poi-pin" style="--pc:${c.color}"><span class="emoji">${c.emoji}</span></div>`,
+  return L.divIcon({className:'',html:`<div class="poi-pin${visited?' visited':''}" style="--pc:${c.color}"><span class="emoji">${c.emoji}</span></div>`,
     iconSize:[32,32],iconAnchor:[16,32],popupAnchor:[0,-30]});
 }
 
@@ -1603,15 +1619,15 @@ function buildPoiMarkers(){
   places.forEach(p=>{
     const c=CATEGORIES[p.cat]||CATEGORIES.other;
     const rkey=p.region||regionOf(p.lat,p.lng);
-    const m=L.marker([p.lat,p.lng],{icon:poiIcon(p.cat)});
+    const m=L.marker([p.lat,p.lng],{icon:poiIcon(p.cat, p.visited)});
     m.bindPopup(`
       <div class="pop">
         <h3>${c.emoji} ${esc(p.name)}</h3>
-        <div class="r">${esc(c.he)}${REGIONS[rkey]&&REGIONS[rkey].eng?' · '+REGIONS[rkey].eng:''}</div>
+        <div class="r">${esc(c.he)}${REGIONS[rkey]&&REGIONS[rkey].eng?' · '+REGIONS[rkey].eng:''}${p.visited?' · <b style="color:#22c55e">✓ ביקרנו</b>':''}</div>
         ${p.note?`<div class="note">${esc(p.note)}</div>`:''}
         ${instaHtml(p)}
         <a href="${gmapsLink(p.name, rkey, p.lat, p.lng)}" target="_blank" rel="noopener">פתח ב-Google Maps ↗</a>
-        ${isAdmin?`<div class="hactions"><button class="hbtn" onclick="editPlace('${p.id}')">✏️ ערוך</button><button class="delbtn" onclick="deletePlace('${p.id}')">🗑️ מחק</button></div>`:''}
+        ${isAdmin?`<div class="hactions"><button class="hbtn" onclick="toggleVisited('${p.id}')">${p.visited?'↩︎ בטל ביקור':'✓ ביקרנו'}</button><button class="hbtn" onclick="editPlace('${p.id}')">✏️ ערוך</button><button class="delbtn" onclick="deletePlace('${p.id}')">🗑️ מחק</button></div>`:''}
       </div>`);
     poiMeta.push({pid:p.id, marker:m, cat:p.cat, region:rkey, latlng:[p.lat,p.lng], name:p.name, note:p.note, dist:Infinity});
   });
@@ -2407,10 +2423,136 @@ function switchView(name){
   else if(name==='bookings') renderBookings();
   else if(name==='destinations') renderDestinations();
   else if(name==='about') renderAbout();
+  else if(name==='info') renderInfo();
   else if(name==='map') setTimeout(()=>map.invalidateSize(),60);
   const v=document.getElementById('view-'+name); if(v) v.scrollTop=0;
 }
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchView(t.dataset.view)));
+
+/* ================= Countdown ================= */
+const TRIP_START='2026-08-05', TRIP_END='2026-09-01';
+function updateCountdown(){
+  const el=document.getElementById('tripSub'); if(!el) return;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const start=new Date(TRIP_START+'T00:00:00'), end=new Date(TRIP_END+'T00:00:00');
+  const dayMs=86400000, base='6 באוגוסט – 1 בספטמבר · 26 לילות';
+  let cd;
+  if(today<start){ const d=Math.round((start-today)/dayMs); cd=(d===1?'עוד יום':'עוד '+d+' ימים')+' לתאילנד 🇹🇭'; }
+  else if(today<=end){ const d=Math.round((today-start)/dayMs)+1; cd='יום '+d+' בטיול 🌴'; }
+  else cd='הטיול הסתיים 🎉';
+  el.innerHTML=`${base} · <b class="cd">${cd}</b>`;
+}
+
+/* ================= Visited toggle (123-gated) ================= */
+window.toggleVisited=function(id){
+  const p=places.find(x=>x.id===id); if(!p) return;
+  openConfirm({
+    title:p.visited?'↩︎ ביטול סימון ביקור':'✓ סימון כמקום שביקרנו', okLabel:'המשך', danger:false,
+    msgHtml:(p.visited?'לביטול הסימון של ':'לסימון ')+'<b>"'+esc(p.name)+'"</b>'+(p.visited?'':' כמקום שביקרתם')+' הקלידו <b>123</b> ואשרו.',
+    onOk:()=>{ updatePlaceOp({...p, visited:!p.visited}); map.closePopup(); buildPoiMarkers(); applyFilters();
+      if(document.body.dataset.view==='attractions') renderAttractions(); }
+  });
+};
+
+/* ================= Currency (฿ ↔ ₪ ↔ $) ================= */
+let fxRates=(function(){ try{ const c=JSON.parse(localStorage.getItem('thai_fx')); if(c&&c.ILS&&c.USD) return c; }catch(e){} return {ILS:0.105, USD:0.028, approx:true}; })();
+async function refreshFx(){
+  try{
+    const r=await fetch('https://open.er-api.com/v6/latest/THB');
+    const d=await r.json();
+    if(d&&d.rates&&d.rates.ILS&&d.rates.USD){
+      fxRates={ILS:d.rates.ILS, USD:d.rates.USD, ts:Date.now()};
+      try{ localStorage.setItem('thai_fx', JSON.stringify(fxRates)); }catch(e){}
+      if(document.body.dataset.view==='info') ccRecalc('THB');
+      const n=document.getElementById('ccNote'); if(n) n.innerHTML=ccNoteHtml();
+    }
+  }catch(e){}
+}
+const ccRound=v=>{ if(!isFinite(v)) return ''; return (Math.round(v*100)/100).toString(); };
+function ccRecalc(src){
+  const thb=document.getElementById('ccTHB'), ils=document.getElementById('ccILS'), usd=document.getElementById('ccUSD');
+  if(!thb) return;
+  let base;
+  if(src==='ILS') base=(parseFloat(ils.value)||0)/fxRates.ILS;
+  else if(src==='USD') base=(parseFloat(usd.value)||0)/fxRates.USD;
+  else base=parseFloat(thb.value)||0;
+  if(src!=='THB') thb.value=ccRound(base);
+  if(src!=='ILS') ils.value=ccRound(base*fxRates.ILS);
+  if(src!=='USD') usd.value=ccRound(base*fxRates.USD);
+}
+function ccNoteHtml(){
+  const perThbIls=ccRound(fxRates.ILS), perThbUsd=ccRound(fxRates.USD);
+  const when = fxRates.approx ? 'שער משוער' : ('עודכן '+(fxRates.ts?new Date(fxRates.ts).toLocaleDateString('he-IL'):''));
+  return `1 ฿ ≈ ${perThbIls} ₪ · ≈ ${perThbUsd} $ &nbsp;·&nbsp; ${when}`;
+}
+
+/* ================= Info tab ================= */
+function renderInfo(){
+  const host=document.getElementById('view-info');
+  host.innerHTML=`
+    <h2>🧭 מידע שימושי</h2>
+    <div class="lead">כל מה שכדאי שיהיה בהישג יד בטיול.</div>
+
+    <div class="about-card">
+      <h3>💱 המרת מטבע</h3>
+      <div class="cc-grid">
+        <label>บาท ฿<input id="ccTHB" type="number" inputmode="decimal" value="100" /></label>
+        <label>שקל ₪<input id="ccILS" type="number" inputmode="decimal" /></label>
+        <label>דולר $<input id="ccUSD" type="number" inputmode="decimal" /></label>
+      </div>
+      <div class="cc-note" id="ccNote">${ccNoteHtml()}</div>
+    </div>
+
+    <div class="about-card">
+      <h3>🆘 חירום</h3>
+      <div class="inforow"><span>משטרת תיירות</span><a href="tel:1155">1155</a></div>
+      <div class="inforow"><span>חירום כללי / משטרה</span><a href="tel:191">191</a></div>
+      <div class="inforow"><span>אמבולנס / חילוץ</span><a href="tel:1669">1669</a></div>
+      <div class="inforow"><span>מכבי אש</span><a href="tel:199">199</a></div>
+    </div>
+
+    <div class="about-card">
+      <h3>🇮🇱 שגרירות ישראל בבנגקוק</h3>
+      <div class="inforow"><span>טלפון</span><a href="tel:+6622047600">+66 2 204 7600</a></div>
+      <div class="inforow"><span>חירום קונסולרי</span><a href="tel:+66898946800">+66 89 894 6800</a></div>
+      <div style="color:var(--muted);font-size:12px;margin-top:6px">Ocean Tower 2, 25th floor, Sukhumvit — בנגקוק</div>
+    </div>
+
+    <div class="about-card">
+      <h3>🔌 חשמל ותקשורת</h3>
+      <div class="inforow"><span>מתח</span><b>220V · 50Hz</b></div>
+      <div class="inforow"><span>תקעים</span><b>Type A / B / C</b></div>
+      <div class="inforow"><span>צד נסיעה</span><b>שמאל 🚗</b></div>
+      <div class="inforow"><span>אזור זמן</span><b>+7 (5 שעות לפני ישראל)</b></div>
+      <div style="color:var(--muted);font-size:12px;margin-top:6px">שווה eSIM (AIS / TrueMove) לנתונים.</div>
+    </div>
+
+    <div class="about-card">
+      <h3>🗣️ ביטויים בתאית</h3>
+      <div class="inforow"><span>שלום (גבר/אישה)</span><b>סָוָואדִי כְׁרַאבּ / כָּה</b></div>
+      <div class="inforow"><span>תודה</span><b>כּוֹבּ כֻון</b></div>
+      <div class="inforow"><span>כן / לא</span><b>צָׁ׳אי / מַאי</b></div>
+      <div class="inforow"><span>כמה זה עולה?</span><b>תָׁאו רַאי?</b></div>
+      <div class="inforow"><span>יקר מדי</span><b>פָּׁאנג מָאק</b></div>
+      <div class="inforow"><span>טעים</span><b>אָרוֹי</b></div>
+      <div class="inforow"><span>לא חריף</span><b>מַאי פֶּׁט</b></div>
+      <div class="inforow"><span>המשקום / שירותים</span><b>הׁוֹנג נָאם</b></div>
+    </div>
+
+    <div class="about-card">
+      <h3>💵 טיפים ומזומן</h3>
+      • מסעדות: לרוב 10% שירות כלול; אחרת ~20–50 บาท.<br>
+      • נהגי טוקטוק/מונית: עיגול כלפי מעלה.<br>
+      • ספא/עיסוי: ~50–100 บาท.<br>
+      • מזומן עדיף בשווקים ובאיים; כספומטים גובים ~220 บาท עמלה.
+    </div>`;
+  ccRecalc('THB');
+  ['ccTHB','ccILS','ccUSD'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.addEventListener('input',()=>ccRecalc(id.slice(2)));
+  });
+  if(fxRates.approx || !fxRates.ts || (Date.now()-fxRates.ts)>12*3600*1000) refreshFx();
+}
 
 function renderAttractions(){
   const q=(document.getElementById('attrSearch').value||'').trim().toLowerCase();
@@ -2427,12 +2569,13 @@ function renderAttractions(){
       total++;
       const rkey=p.region||regionOf(p.lat,p.lng);
       const u=normInsta(p.insta);
-      const row=document.createElement('div'); row.className='poi';
+      const row=document.createElement('div'); row.className='poi'+(p.visited?' visited':'');
       row.innerHTML=`<div class="pemoji" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</div>
-        <div class="pinfo"><h4>${esc(p.name)}</h4><small>${REGIONS[rkey]?esc(REGIONS[rkey].he):''}${p.note?' · '+esc(p.note):''}</small></div>
+        <div class="pinfo"><h4>${esc(p.name)}</h4><small>${p.visited?'<span class="vtag">✓ ביקרנו</span> · ':''}${REGIONS[rkey]?esc(REGIONS[rkey].he):''}${p.note?' · '+esc(p.note):''}</small></div>
         ${u?`<a class="insta iglink" href="${esc(u)}" target="_blank" rel="noopener" title="אינסטגרם">📸</a>`:''}
+        ${isAdmin?`<button class="visbtn" title="${p.visited?'בטל ביקור':'סמן שביקרנו'}" onclick="toggleVisited('${p.id}')">${p.visited?'↩︎':'✓'}</button>`:''}
         ${isAdmin?`<button class="editbtn" title="ערוך" onclick="editPlace('${p.id}')">✏️</button>`:''}`;
-      row.addEventListener('click',e=>{ if(e.target.closest('.iglink')||e.target.closest('.editbtn')) return; const o=poiMeta.find(x=>x.pid===p.id); switchView('map'); if(o) focusLatLng(o.latlng,15,o.marker); });
+      row.addEventListener('click',e=>{ if(e.target.closest('.iglink')||e.target.closest('.editbtn')||e.target.closest('.visbtn')) return; const o=poiMeta.find(x=>x.pid===p.id); switchView('map'); if(o) focusLatLng(o.latlng,15,o.marker); });
       host.appendChild(row);
     });
   });
@@ -2590,6 +2733,8 @@ function renderAbout(){
   fitAll();
   applyTheme(theme);
   applyAccent(accentPreset);
+  updateCountdown();
+  refreshFx();
   document.body.dataset.view='map';
   if(isMobile()) sheet.classList.add('collapsed');
   setTimeout(()=>map.invalidateSize(),300);
