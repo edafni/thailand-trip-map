@@ -2353,6 +2353,12 @@ const _hsl=(h,s,l)=>`hsl(${h},${s}%,${l}%)`;
 function buildAccentCss(H){
   const bright=_hsl(H,85,60), deepBg=_hsl(H,60,21), deepB=_hsl(H,60,33), on=_hsl(H,90,85), softBg=_hsl(H,45,25), softB=_hsl(H,40,46);
   const Lbright=_hsl(H,80,42), LdeepBg=_hsl(H,85,92), LdeepB=_hsl(H,70,72), Lon=_hsl(H,70,25), LsoftBg=_hsl(H,82,90), LsoftB=_hsl(H,60,74);
+  // ---- background tint (dark) ----
+  const dBg=_hsl(H,40,8), dPanel=_hsl(H,36,12), dPanel2=_hsl(H,32,16), dLine=_hsl(H,28,24),
+        dHeader=`hsla(${H},44%,9%,.92)`, dCard=_hsl(H,38,13), dInput=_hsl(H,40,10), dSheet1=_hsl(H,40,9), dSheet2=_hsl(H,38,13);
+  // ---- background tint (light) ----
+  const lBg=_hsl(H,52,96), lPanel=_hsl(H,50,99), lPanel2=_hsl(H,45,94), lLine=_hsl(H,35,87),
+        lHeader=`hsla(${H},55%,98%,.94)`, lCard=_hsl(H,55,99), lInput=_hsl(H,45,96), lSheet=_hsl(H,50,99);
   return `
   .tab.on{border-bottom-color:${bright}}
   .btn.primary{background:${deepBg};border-color:${deepB}}
@@ -2367,7 +2373,16 @@ function buildAccentCss(H){
   body.light .btn.primary,body.light .hbtn.view,body.light .paidbadge.doc,body.light .bkbtn,body.light #banner{background:${LdeepBg};border-color:${LdeepB};color:${Lon}}
   body.light .res.sel{background:${LdeepBg};border-color:${LdeepB}}
   body.light .seg .sbtn.on,body.light .subtab.on,body.light .chip.on{background:${LsoftBg};border-color:${LsoftB};color:${Lon}}
-  body.light .coordsBox,body.light .poi .dist,body.light .pop a{color:${Lbright}}`;
+  body.light .coordsBox,body.light .poi .dist,body.light .pop a{color:${Lbright}}
+  /* ===== full background tint ===== */
+  body{--bg:${dBg};--panel:${dPanel};--panel2:${dPanel2};--line:${dLine};--headerBg:${dHeader}}
+  #sheet{background:linear-gradient(180deg,${dSheet1} 0%,${dSheet2} 100%)}
+  .leaflet-popup-content-wrapper,.leaflet-popup-tip,.file-card,.confirm-card,.modal-card,#fitBtn{background:${dCard}}
+  .field input,.field select,.field textarea,#confirmCode,.subtab,.res,.icon-opt,.file-body{background:${dInput}}
+  body.light{--bg:${lBg};--panel:${lPanel};--panel2:${lPanel2};--line:${lLine};--headerBg:${lHeader}}
+  body.light #sheet{background:${lSheet}}
+  body.light .leaflet-popup-content-wrapper,body.light .leaflet-popup-tip,body.light .file-card,body.light .confirm-card,body.light .modal-card,body.light #fitBtn{background:${lCard}}
+  body.light .field input,body.light .field select,body.light .field textarea,body.light #confirmCode,body.light .subtab,body.light .res,body.light .icon-opt,body.light .file-body{background:${lInput}}`;
 }
 window.applyAccent=function(id){
   accentPreset=id;
