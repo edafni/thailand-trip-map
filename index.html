@@ -1038,8 +1038,13 @@ svg.leaflet-image-layer.leaflet-interactive path {
 </div>
 <div class="view" id="view-bookings">
   <h2>🧾 ההזמנות שלי</h2>
-  <div class="lead">כל אישורי ההזמנה (מלונות וטיסות), מסודרים לפי תאריך. הוסיפו שם לכל הזמנה כדי לדעת של מי היא.</div>
-  <button class="btn primary" id="bkAddBtn" style="margin-bottom:14px">➕ הוסף הזמנה</button>
+  <div class="lead">כל אישורי ההזמנה, מסודרים לפי תאריך ומחולקים לפי משפחה. בחרו משפחה בלשוניות למטה.</div>
+  <button class="btn primary" id="bkAddBtn" style="margin-bottom:12px">➕ הוסף הזמנה</button>
+  <div class="subtabs" id="bkFamilyTabs" style="margin-bottom:12px">
+    <div class="subtab on" data-fam="all">הכל</div>
+    <div class="subtab" data-fam="f1">משפחת דפני</div>
+    <div class="subtab" data-fam="f2">משפחת בן חמו</div>
+  </div>
   <div id="bookingsList"></div>
 </div>
 <div class="view" id="view-destinations">
@@ -1089,7 +1094,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
 <!-- Add-booking modal (hotel/flight + name + file) -->
 <div id="bookingModal">
   <div class="modal-card">
-    <h3>🧾 הוספת אישור הזמנה</h3>
+    <h3 id="bkModalTitle">🧾 הוספת אישור הזמנה</h3>
+    <div class="field"><label>משפחה</label><select id="bkFamily"></select></div>
     <div class="field"><label>שיוך</label><select id="bkEntity"></select></div>
     <div class="field"><label id="bkLabelLbl">שם ההזמנה / של מי (לא חובה)</label><input id="bkLabel" type="text" placeholder="למשל: משפחת דפני" /></div>
 
@@ -1394,6 +1400,11 @@ function loadHotelState(){
 function saveHotelState(){ try{ localStorage.setItem(LS_HOTELS, JSON.stringify(hotelState)); }catch(e){} }
 function hs(id){ if(!hotelState[id]) hotelState[id]={paid:false}; return hotelState[id]; }
 
+/* Families that a reservation can belong to */
+const FAMILIES=[{id:'f1',name:'משפחת דפני'},{id:'f2',name:'משפחת בן חמו'}];
+function familyName(id){ const f=FAMILIES.find(x=>x.id===id); return f?f.name:FAMILIES[0].name; }
+function normFamily(id){ return FAMILIES.some(f=>f.id===id)?id:'f1'; }
+
 function loadBookings(){
   let stored=null; try{ stored=JSON.parse(localStorage.getItem(LS_BOOKINGS)); }catch(e){}
   bookings = Array.isArray(stored)? stored : [];
@@ -1410,6 +1421,7 @@ function loadBookings(){
       delete st.booking;
     }
   });
+  bookings.forEach(b=>{ b.family=normFamily(b.family); });   // existing reservations default to family 1 (Dafni)
   saveHotelState(); saveBookings();
 }
 function saveBookings(){ try{ localStorage.setItem(LS_BOOKINGS, JSON.stringify(bookings)); }catch(e){} }
@@ -1450,6 +1462,13 @@ function setHotelPaid(id, paid){
 function addBookingItem(b){
   bookings.push(b); saveBookings();
   if(cloud.enabled){ cloud.upsertBooking(b).catch(e=>console.error('cloud booking',e)); }
+  refreshBookingsUI();
+}
+function updateBookingItem(b){
+  const i=bookings.findIndex(x=>x.id===b.id);
+  if(i<0) return;
+  bookings[i]=b; saveBookings();
+  if(cloud.enabled){ cloud.upsertBooking(b).catch(e=>console.error('cloud booking upd',e)); }
   refreshBookingsUI();
 }
 function removeBookingItem(id){
@@ -1600,9 +1619,10 @@ function buildBookingMarkers(){
     m.bindPopup(`
       <div class="pop">
         <h3>${em} ${esc(b.label||'הזמנה')}</h3>
-        <div class="r">אישור הזמנה${dateTxt?' · '+dateTxt:''}${REGIONS[rkey]&&REGIONS[rkey].eng?' · '+REGIONS[rkey].eng:''}</div>
+        <div class="r">👪 ${esc(familyName(normFamily(b.family)))}${dateTxt?' · '+dateTxt:''}${REGIONS[rkey]&&REGIONS[rkey].eng?' · '+REGIONS[rkey].eng:''}</div>
         <div class="hactions">
           <button class="hbtn view" onclick="viewBooking('${b.id}')">📄 הצג אישור</button>
+          <button class="hbtn" onclick="editBooking('${b.id}')">✏️ ערוך</button>
           <button class="hbtn ghost" onclick="deleteBooking('${b.id}')">🗑️ מחק</button>
         </div>
         <a href="${gmapsLink(b.label||'', rkey, b.lat, b.lng)}" target="_blank" rel="noopener">פתח ב-Google Maps ↗</a>
@@ -1666,6 +1686,14 @@ window.deleteBooking=function(id){
   const b=bookings.find(x=>x.id===id); if(!b) return;
   if(confirm('להסיר את ההזמנה "'+(b.label||b.name||'')+'"?')) removeBookingItem(id);
 };
+window.editBooking=function(id){
+  const b=bookings.find(x=>x.id===id); if(!b) return;
+  openConfirm({
+    title:'✏️ עריכת הזמנה', okLabel:'המשך', danger:false,
+    msgHtml:'לעריכת <b>"'+esc(b.label||b.name||'')+'"</b> הקלידו <b>123</b> ואשרו.',
+    onOk:()=>openEditBookingModal(id)
+  });
+};
 window.addBookingFor=function(kind, refId){ openBookingModal(kind, String(refId)); };
 
 /* compress images to stay under FILE_LIMIT; PDFs must already be small enough */
@@ -1700,14 +1728,21 @@ function readBookingFile(file){
 /* ---- Add-booking modal ---- */
 const bookingModal=document.getElementById('bookingModal');
 const bkEntity=document.getElementById('bkEntity');
+const bkFamily=document.getElementById('bkFamily');
 const bkLabel=document.getElementById('bkLabel');
 const bkFile=document.getElementById('bkFile');
 const bkStatus=document.getElementById('bkStatus');
 let bkPendingFile=null;
 let bkPending=null;               // {lat,lng} for "other" bookings
+let editingBookingId=null;        // set while editing an existing reservation
+let bkFamilyFilter='all';         // which family sub-tab is active in the list
 const BK_ICONS=['🚗','🚐','⛴️','🚕','🚌','🚆','🏨','✈️','🎫'];
 let bkIcon='🏨';
 
+function fillFamilySelect(){
+  bkFamily.innerHTML='';
+  FAMILIES.forEach(f=>{ const o=document.createElement('option'); o.value=f.id; o.textContent=f.name; bkFamily.appendChild(o); });
+}
 function fillEntitySelect(){
   bkEntity.innerHTML='';
   const gh=document.createElement('optgroup'); gh.label='🏨 מלונות';
@@ -1745,8 +1780,12 @@ function setBkCoords(lat,lng){
   document.getElementById('bkCoords').textContent=`📍 נבחר: ${bkPending.lat}, ${bkPending.lng}`;
 }
 function openBookingModal(kind, refId){
-  fillEntitySelect();
+  editingBookingId=null;
+  document.getElementById('bkModalTitle').textContent='🧾 הוספת אישור הזמנה';
+  document.getElementById('bkSave').textContent='שמור הזמנה';
+  fillEntitySelect(); fillFamilySelect();
   if(kind&&refId!=null) bkEntity.value=kind+':'+refId;
+  bkFamily.value = (bkFamilyFilter==='f1'||bkFamilyFilter==='f2') ? bkFamilyFilter : 'f1';
   bkLabel.value=''; bkFile.value=''; bkPendingFile=null; bkStatus.textContent='';
   bkPending=null;
   document.getElementById('bkDate').value='';
@@ -1757,6 +1796,26 @@ function openBookingModal(kind, refId){
   setDefaultBkIcon(); updateBookingModalMode();
   bookingModal.classList.add('show');
   /* no autofocus: on mobile the keyboard would cover the buttons and cause taps to hit the file input */
+}
+function openEditBookingModal(id){
+  const b=bookings.find(x=>x.id===id); if(!b) return;
+  openBookingModal();                       // reset to a clean state first
+  editingBookingId=id;
+  document.getElementById('bkModalTitle').textContent='✏️ עריכת הזמנה';
+  document.getElementById('bkSave').textContent='שמור שינויים';
+  bkEntity.value = b.kind==='other' ? 'other:new' : (b.kind+':'+b.refId);
+  bkFamily.value = normFamily(b.family);
+  bkLabel.value = b.label||'';
+  bkIcon = b.icon || bkIcon;
+  document.getElementById('bkIconCustom').value='';
+  if(b.kind==='other'){
+    document.getElementById('bkDate').value = b.date||'';
+    if(b.lat!=null && b.lng!=null) setBkCoords(b.lat, b.lng);
+  }
+  // keep the existing file unless the user picks a new one
+  if(b.dataUrl){ bkPendingFile={ name:b.name, type:b.type, dataUrl:b.dataUrl }; bkStatus.textContent='✓ קובץ קיים — העלו חדש רק אם רוצים להחליף'; }
+  buildBkIconPicker(); updateBookingModalMode();
+  bookingModal.classList.add('show');
 }
 function closeBookingModal(){ bookingModal.classList.remove('show'); }
 bkEntity.addEventListener('change',()=>{ setDefaultBkIcon(); updateBookingModalMode(); });
@@ -1813,7 +1872,10 @@ document.getElementById('bkSave').addEventListener('click',async ()=>{
   if(!bkPendingFile){ bkStatus.textContent='⚠ בחרו קובץ אישור הזמנה'; return; }
   const [kind, refId]=(bkEntity.value||'').split(':');
   if(!kind){ bkStatus.textContent='⚠ בחרו שיוך'; return; }
-  const id='bk'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const isEdit=!!editingBookingId;
+  const existing = isEdit ? bookings.find(x=>x.id===editingBookingId) : null;
+  const id = isEdit ? editingBookingId : ('bk'+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
+  const family = normFamily(bkFamily.value);
   let b;
   if(kind==='other'){
     const label=bkLabel.value.trim();
@@ -1827,14 +1889,16 @@ document.getElementById('bkSave').addEventListener('click',async ()=>{
         try{ const res=await nomSearch(q); if(res&&res.length){ setBkCoords(res[0].lat,res[0].lon); bkStatus.textContent=''; } }catch(e){} }
     }
     if(!bkPending){ bkStatus.textContent='⚠ בחרו מיקום: הקלידו שם ולחצו “חפש”, או “בחרו נקודה על המפה”.'; return; }
-    b={ id, kind:'other', label, name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl,
-        icon:bkIcon||'📍', date, lat:bkPending.lat, lng:bkPending.lng, region:regionOf(bkPending.lat,bkPending.lng), createdAt:Date.now() };
+    b={ id, kind:'other', family, label, name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl,
+        icon:bkIcon||'📍', date, lat:bkPending.lat, lng:bkPending.lng, region:regionOf(bkPending.lat,bkPending.lng),
+        createdAt:(existing&&existing.createdAt)||Date.now() };
   } else {
     if(!refId){ bkStatus.textContent='⚠ בחרו מלון או טיסה'; return; }
-    b={ id, kind, refId, label:bkLabel.value.trim()||bkPendingFile.name,
+    b={ id, kind, refId, family, label:bkLabel.value.trim()||bkPendingFile.name,
         name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl,
-        icon:bkIcon||'', date:entityDate(kind, refId), createdAt:Date.now() };
+        icon:bkIcon||'', date:entityDate(kind, refId), createdAt:(existing&&existing.createdAt)||Date.now() };
   }
+  if(isEdit){ updateBookingItem(b); editingBookingId=null; closeBookingModal(); return; }
   addBookingItem(b);
   closeBookingModal();
   if(kind==='other'){
@@ -2033,10 +2097,11 @@ document.getElementById('addBtn').addEventListener('click',()=>{ resetForm(); op
 document.getElementById('fCancel').addEventListener('click',()=>{ closeModal(); pending=null; });
 
 /* subtabs */
-document.querySelectorAll('.subtab').forEach(t=>t.addEventListener('click',()=>switchPane(t.dataset.pane)));
+document.querySelectorAll('#modal .subtab').forEach(t=>t.addEventListener('click',()=>switchPane(t.dataset.pane)));
 function switchPane(name){
-  document.querySelectorAll('.subtab').forEach(t=>t.classList.toggle('on',t.dataset.pane===name));
-  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  if(!name) return;
+  document.querySelectorAll('#modal .subtab').forEach(t=>t.classList.toggle('on',t.dataset.pane===name));
+  document.querySelectorAll('#modal .pane').forEach(p=>p.classList.remove('on'));
   document.getElementById('pane'+name.charAt(0).toUpperCase()+name.slice(1)).classList.add('on');
 }
 
@@ -2306,32 +2371,46 @@ document.getElementById('attrSearch').addEventListener('input',renderAttractions
 
 function renderBookings(){
   const host=document.getElementById('bookingsList'); host.innerHTML='';
-  const items=bookings.slice().sort((a,b)=>{
-    const da=a.date||'', db=b.date||'';
-    if(da!==db) return da<db?-1:1;
-    return (a.createdAt||0)-(b.createdAt||0);
-  });
-  if(!items.length){ host.innerHTML='<div class="empty">אין עדיין הזמנות. לחצו על ➕ כדי להוסיף אישור הזמנה של מלון או טיסה.</div>'; return; }
+  const items=bookings
+    .filter(b=> bkFamilyFilter==='all' || normFamily(b.family)===bkFamilyFilter)
+    .sort((a,b)=>{
+      const da=a.date||'', db=b.date||'';
+      if(da!==db) return da<db?-1:1;
+      return (a.createdAt||0)-(b.createdAt||0);
+    });
+  if(!items.length){
+    const who = bkFamilyFilter==='all' ? '' : ' עבור '+familyName(bkFamilyFilter);
+    host.innerHTML='<div class="empty">אין עדיין הזמנות'+who+'. לחצו על ➕ כדי להוסיף.</div>'; return;
+  }
   items.forEach(b=>{
     const isFlight=b.kind==='flight';
     const defIc=isFlight?(flightById(b.refId)&&flightById(b.refId).ic||'✈️'):(b.kind==='other'?'📍':'🏨');
     const ic=b.icon||defIc;
     const dateTxt=b.date?fmtLong(b.date):'';
     const sub=(b.kind==='other') ? ((REGIONS[b.region]&&REGIONS[b.region].he)?('📍 '+REGIONS[b.region].he):'הזמנה כללית') : entityName(b.kind, b.refId);
+    const famTxt=familyName(normFamily(b.family));
     const row=document.createElement('div'); row.className='bkcard';
     row.innerHTML=`
       <div class="bkic">${ic}</div>
       <div class="bkinfo">
         <h4>${esc(b.label||b.name||'הזמנה')}</h4>
-        <small>${esc(sub)}${dateTxt?' · '+dateTxt:''}</small>
+        <small>👪 ${esc(famTxt)} · ${esc(sub)}${dateTxt?' · '+dateTxt:''}</small>
       </div>
       <button class="bkbtn view" data-view="${esc(b.id)}">📄 הצג</button>
+      <button class="bkbtn edit" data-edit="${esc(b.id)}">✏️</button>
       <button class="bkbtn del" data-del="${esc(b.id)}">🗑️</button>`;
     host.appendChild(row);
   });
   host.querySelectorAll('[data-view]').forEach(x=>x.addEventListener('click',()=>viewBooking(x.dataset.view)));
+  host.querySelectorAll('[data-edit]').forEach(x=>x.addEventListener('click',()=>editBooking(x.dataset.edit)));
   host.querySelectorAll('[data-del]').forEach(x=>x.addEventListener('click',()=>deleteBooking(x.dataset.del)));
 }
+/* family sub-tabs in the reservations view */
+document.querySelectorAll('#bkFamilyTabs .subtab').forEach(t=>t.addEventListener('click',()=>{
+  bkFamilyFilter=t.dataset.fam;
+  document.querySelectorAll('#bkFamilyTabs .subtab').forEach(x=>x.classList.toggle('on',x===t));
+  renderBookings();
+}));
 
 function renderDestinations(){
   const host=document.getElementById('destList'); host.innerHTML='';
@@ -2472,7 +2551,7 @@ function renderAbout(){
       if(document.body.dataset.view==='about') renderAbout();
     });
     cloud.onBookings(list=>{
-      bookings = list.map(b=>({...b}));
+      bookings = list.map(b=>({...b, family:normFamily(b.family)}));
       saveBookings(); refreshHotels();
       buildBookingMarkers(); applyFilters();
       const v=document.body.dataset.view;
