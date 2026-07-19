@@ -761,6 +761,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .poi.visited .pemoji{filter:grayscale(1)}
   .vtag{font-size:10px;color:#22c55e;font-weight:700;margin-inline-start:6px;white-space:nowrap}
   .poi-pin.visited{filter:grayscale(1);opacity:.6}
+  .poi .starbtn{background:transparent;border:none;font-size:16px;cursor:pointer;padding:4px;flex:0 0 auto;color:#eab308;line-height:1}
+  .poi .starbtn:not(.on){filter:grayscale(.2);opacity:.75}
+  .poi-pin.star{box-shadow:0 0 0 2px #eab308,0 3px 9px #0008}
+  .poi-pin .star-badge{position:absolute;top:-11px;right:-11px;transform:rotate(45deg);font-size:13px;line-height:1;filter:drop-shadow(0 1px 1px #0008)}
+  .hbtn.starred{background:#eab30822;border-color:#eab308aa;color:#eab308}
   .cd{color:var(--text);font-weight:800}
   .cc-grid{display:flex;gap:8px;flex-wrap:wrap}
   .cc-grid label{flex:1;min-width:90px;display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
@@ -1064,6 +1069,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   <h2>⭐ אטרקציות ומקומות</h2>
   <div class="lead">כל המקומות השמורים, מקובצים לפי סוג. טפו על מקום כדי לראותו במפה.</div>
   <input id="attrSearch" class="vsearch" placeholder="🔎 חיפוש לפי שם..." />
+  <button class="btn small" id="attrStarBtn" style="margin:2px 2px 10px">⭐ רק מומלצים</button>
   <div id="attrList"></div>
 </div>
 <div class="view" id="view-bookings">
@@ -1530,9 +1536,9 @@ const TILES_DARK=TILES_LIGHT;
 const baseTiles=L.tileLayer(TILES_DARK,{attribution:'Tiles &copy; Esri', maxZoom:19}).addTo(map);
 const routeLayer=L.layerGroup().addTo(map);
 
-function poiIcon(cat, visited){
+function poiIcon(cat, visited, star){
   const c=CATEGORIES[cat]||CATEGORIES.other;
-  return L.divIcon({className:'',html:`<div class="poi-pin${visited?' visited':''}" style="--pc:${c.color}"><span class="emoji">${c.emoji}</span></div>`,
+  return L.divIcon({className:'',html:`<div class="poi-pin${visited?' visited':''}${star?' star':''}" style="--pc:${c.color}"><span class="emoji">${c.emoji}</span>${star?'<span class="star-badge">⭐</span>':''}</div>`,
     iconSize:[32,32],iconAnchor:[16,32],popupAnchor:[0,-30]});
 }
 
@@ -1631,14 +1637,15 @@ function buildPoiMarkers(){
   places.forEach(p=>{
     const c=CATEGORIES[p.cat]||CATEGORIES.other;
     const rkey=p.region||regionOf(p.lat,p.lng);
-    const m=L.marker([p.lat,p.lng],{icon:poiIcon(p.cat, p.visited)});
+    const m=L.marker([p.lat,p.lng],{icon:poiIcon(p.cat, p.visited, p.star)});
     m.bindPopup(`
       <div class="pop">
-        <h3>${c.emoji} ${esc(p.name)}</h3>
+        <h3>${p.star?'⭐ ':''}${c.emoji} ${esc(p.name)}</h3>
         <div class="r">${esc(c.he)}${REGIONS[rkey]&&REGIONS[rkey].eng?' · '+REGIONS[rkey].eng:''}${p.visited?' · <b style="color:#22c55e">✓ ביקרנו</b>':''}</div>
         ${p.note?`<div class="note">${esc(p.note)}</div>`:''}
         ${instaHtml(p)}
         <div class="navrow"><a class="wazebtn" href="${wazeLink(p.lat, p.lng)}" target="_blank" rel="noopener">🧭 נווט ב-Waze</a><a href="${gmapsLink(p.name, rkey, p.lat, p.lng)}" target="_blank" rel="noopener">Google Maps ↗</a></div>
+        <div class="hactions"><button class="hbtn${p.star?' starred':''}" onclick="toggleStar('${p.id}')">${p.star?'⭐ מומלץ — הסר':'☆ סמן כמומלץ'}</button></div>
         ${isAdmin?`<div class="hactions"><button class="hbtn" onclick="toggleVisited('${p.id}')">${p.visited?'↩︎ בטל ביקור':'✓ ביקרנו'}</button><button class="hbtn" onclick="editPlace('${p.id}')">✏️ ערוך</button><button class="delbtn" onclick="deletePlace('${p.id}')">🗑️ מחק</button></div>`:''}
       </div>`);
     poiMeta.push({pid:p.id, marker:m, cat:p.cat, region:rkey, latlng:[p.lat,p.lng], name:p.name, note:p.note, dist:Infinity});
@@ -2466,6 +2473,15 @@ window.toggleVisited=function(id){
   });
 };
 
+/* Shared "must-see" star — a quick toggle for everyone (no password), synced */
+window.toggleStar=function(id){
+  const p=places.find(x=>x.id===id); if(!p) return;
+  updatePlaceOp({...p, star:!p.star});
+  buildPoiMarkers(); applyFilters();
+  const o=poiMeta.find(x=>x.pid===id); if(o) o.marker.openPopup();
+  if(document.body.dataset.view==='attractions') renderAttractions();
+};
+
 /* ================= Currency (฿ ↔ ₪ ↔ $) ================= */
 let fxRates=(function(){ try{ const c=JSON.parse(localStorage.getItem('thai_fx')); if(c&&c.ILS&&c.USD) return c; }catch(e){} return {ILS:0.105, USD:0.028, approx:true}; })();
 async function refreshFx(){
@@ -2638,7 +2654,7 @@ function renderAttractions(){
   let total=0;
   Object.keys(CATEGORIES).filter(k=>k!=='hotel').forEach(k=>{
     const c=CATEGORIES[k];
-    const items=places.filter(p=>p.cat===k && (!q || p.name.toLowerCase().includes(q)));
+    const items=places.filter(p=>p.cat===k && (!q || p.name.toLowerCase().includes(q)) && (!attrStarOnly || p.star));
     if(!items.length) return;
     const h=document.createElement('div'); h.className='attr-h';
     h.innerHTML=`<span class="cdot" style="background:${c.color}"></span>${c.emoji} ${c.he} · ${items.length}`;
@@ -2649,18 +2665,25 @@ function renderAttractions(){
       const u=normInsta(p.insta);
       const row=document.createElement('div'); row.className='poi'+(p.visited?' visited':'');
       row.innerHTML=`<div class="pemoji" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</div>
-        <div class="pinfo"><h4>${esc(p.name)}</h4><small>${p.visited?'<span class="vtag">✓ ביקרנו</span> · ':''}${REGIONS[rkey]?esc(REGIONS[rkey].he):''}${p.note?' · '+esc(p.note):''}</small></div>
+        <div class="pinfo"><h4>${p.star?'⭐ ':''}${esc(p.name)}</h4><small>${p.visited?'<span class="vtag">✓ ביקרנו</span> · ':''}${REGIONS[rkey]?esc(REGIONS[rkey].he):''}${p.note?' · '+esc(p.note):''}</small></div>
+        <button class="starbtn${p.star?' on':''}" title="${p.star?'הסר מהמומלצים':'סמן כמומלץ'}" onclick="toggleStar('${p.id}')">${p.star?'⭐':'☆'}</button>
         <a class="wazelink iglink" href="${wazeLink(p.lat,p.lng)}" target="_blank" rel="noopener" title="נווט ב-Waze">🧭</a>
         ${u?`<a class="insta iglink" href="${esc(u)}" target="_blank" rel="noopener" title="אינסטגרם">📸</a>`:''}
         ${isAdmin?`<button class="visbtn" title="${p.visited?'בטל ביקור':'סמן שביקרנו'}" onclick="toggleVisited('${p.id}')">${p.visited?'↩︎':'✓'}</button>`:''}
         ${isAdmin?`<button class="editbtn" title="ערוך" onclick="editPlace('${p.id}')">✏️</button>`:''}`;
-      row.addEventListener('click',e=>{ if(e.target.closest('.iglink')||e.target.closest('.editbtn')||e.target.closest('.visbtn')) return; const o=poiMeta.find(x=>x.pid===p.id); switchView('map'); if(o) focusLatLng(o.latlng,15,o.marker); });
+      row.addEventListener('click',e=>{ if(e.target.closest('.iglink')||e.target.closest('.editbtn')||e.target.closest('.visbtn')||e.target.closest('.starbtn')) return; const o=poiMeta.find(x=>x.pid===p.id); switchView('map'); if(o) focusLatLng(o.latlng,15,o.marker); });
       host.appendChild(row);
     });
   });
-  if(total===0) host.innerHTML='<div class="empty">לא נמצאו מקומות</div>';
+  if(total===0) host.innerHTML='<div class="empty">'+(attrStarOnly?'עדיין אין מקומות מומלצים ⭐. סמנו מקומות בכוכב.':'לא נמצאו מקומות')+'</div>';
 }
 document.getElementById('attrSearch').addEventListener('input',renderAttractions);
+let attrStarOnly=false;
+document.getElementById('attrStarBtn').addEventListener('click',()=>{
+  attrStarOnly=!attrStarOnly;
+  document.getElementById('attrStarBtn').classList.toggle('primary', attrStarOnly);
+  renderAttractions();
+});
 
 function renderBookings(){
   const host=document.getElementById('bookingsList'); host.innerHTML='';
