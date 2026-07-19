@@ -1040,10 +1040,16 @@ svg.leaflet-image-layer.leaflet-interactive path {
   <h2>🧾 ההזמנות שלי</h2>
   <div class="lead">כל אישורי ההזמנה, מסודרים לפי תאריך ומחולקים לפי משפחה. בחרו משפחה בלשוניות למטה.</div>
   <button class="btn primary" id="bkAddBtn" style="margin-bottom:12px">➕ הוסף הזמנה</button>
-  <div class="subtabs" id="bkFamilyTabs" style="margin-bottom:12px">
+  <div class="subtabs" id="bkFamilyTabs" style="margin-bottom:8px">
     <div class="subtab on" data-fam="all">הכל</div>
     <div class="subtab" data-fam="f1">משפחת דפני</div>
     <div class="subtab" data-fam="f2">משפחת בן חמו</div>
+  </div>
+  <div class="subtabs" id="bkTypeTabs" style="margin-bottom:12px">
+    <div class="subtab on" data-type="all">הכל</div>
+    <div class="subtab" data-type="hotel">🏨 מלונות</div>
+    <div class="subtab" data-type="flight">✈️ טיסות</div>
+    <div class="subtab" data-type="other">🚗 אחר</div>
   </div>
   <div id="bookingsList"></div>
 </div>
@@ -1736,6 +1742,7 @@ let bkPendingFile=null;
 let bkPending=null;               // {lat,lng} for "other" bookings
 let editingBookingId=null;        // set while editing an existing reservation
 let bkFamilyFilter='all';         // which family sub-tab is active in the list
+let bkTypeFilter='all';           // which type sub-tab is active (hotel/flight/other)
 const BK_ICONS=['🚗','🚐','⛴️','🚕','🚌','🚆','🏨','✈️','🎫'];
 let bkIcon='🏨';
 
@@ -2373,14 +2380,19 @@ function renderBookings(){
   const host=document.getElementById('bookingsList'); host.innerHTML='';
   const items=bookings
     .filter(b=> bkFamilyFilter==='all' || normFamily(b.family)===bkFamilyFilter)
+    .filter(b=> bkTypeFilter==='all' || (b.kind||'hotel')===bkTypeFilter)
     .sort((a,b)=>{
       const da=a.date||'', db=b.date||'';
       if(da!==db) return da<db?-1:1;
       return (a.createdAt||0)-(b.createdAt||0);
     });
   if(!items.length){
-    const who = bkFamilyFilter==='all' ? '' : ' עבור '+familyName(bkFamilyFilter);
-    host.innerHTML='<div class="empty">אין עדיין הזמנות'+who+'. לחצו על ➕ כדי להוסיף.</div>'; return;
+    const bits=[];
+    if(bkFamilyFilter!=='all') bits.push(familyName(bkFamilyFilter));
+    const typeName={hotel:'מלונות',flight:'טיסות',other:'אחר'}[bkTypeFilter];
+    if(typeName) bits.push(typeName);
+    const who = bits.length ? ' ('+bits.join(' · ')+')' : '';
+    host.innerHTML='<div class="empty">אין הזמנות בסינון הנוכחי'+who+'. לחצו על ➕ כדי להוסיף.</div>'; return;
   }
   items.forEach(b=>{
     const isFlight=b.kind==='flight';
@@ -2409,6 +2421,12 @@ function renderBookings(){
 document.querySelectorAll('#bkFamilyTabs .subtab').forEach(t=>t.addEventListener('click',()=>{
   bkFamilyFilter=t.dataset.fam;
   document.querySelectorAll('#bkFamilyTabs .subtab').forEach(x=>x.classList.toggle('on',x===t));
+  renderBookings();
+}));
+/* type sub-tabs (hotel / flight / other) in the reservations view */
+document.querySelectorAll('#bkTypeTabs .subtab').forEach(t=>t.addEventListener('click',()=>{
+  bkTypeFilter=t.dataset.type;
+  document.querySelectorAll('#bkTypeTabs .subtab').forEach(x=>x.classList.toggle('on',x===t));
   renderBookings();
 }));
 
