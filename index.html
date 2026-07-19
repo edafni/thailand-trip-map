@@ -760,6 +760,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .empty{color:var(--muted);font-size:12px;text-align:center;padding:12px;border:1px dashed var(--line);border-radius:12px}
   footer{color:#5f6f8c;font-size:10.5px;margin:14px 6px 0;line-height:1.6}
 
+  /* Esri English base map; a light touch of dimming in dark mode so it sits better with the dark UI */
+  body:not(.light) .leaflet-tile{filter:brightness(.9) saturate(.92)}
   .leaflet-popup-content-wrapper{background:#0f1b36;color:var(--text);border-radius:12px;border:1px solid var(--line)}
   .leaflet-popup-content{margin:12px 14px}
   .leaflet-popup-tip{background:#0f1b36;border:1px solid var(--line)}
@@ -1493,9 +1495,11 @@ function refreshBookingsUI(){
 
 /* ================= Map ================= */
 const map = L.map('map',{zoomControl:true,scrollWheelZoom:true,tap:true});
-const TILES_LIGHT='https://{s}.basemaps.cartocdn.com/rastertiles/positron/{z}/{x}/{y}{r}.png';
-const TILES_DARK='https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-const baseTiles=L.tileLayer(TILES_DARK,{attribution:'&copy; OpenStreetMap &copy; CARTO', maxZoom:19}).addTo(map);
+/* Esri World Street Map = English/Latin labels, no API key. Note {z}/{y}/{x}
+   order. Same tiles for both themes; dark mode gets a CSS filter. */
+const TILES_LIGHT='https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
+const TILES_DARK=TILES_LIGHT;
+const baseTiles=L.tileLayer(TILES_DARK,{attribution:'Tiles &copy; Esri', maxZoom:19}).addTo(map);
 const routeLayer=L.layerGroup().addTo(map);
 
 function poiIcon(cat){
