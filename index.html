@@ -786,6 +786,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .pop td{padding:2px 6px} .pop td:first-child{color:var(--muted)}
   .pop .note{font-size:12px;color:#cdd8ef;margin:6px 0}
   .pop a{color:#7dd3fc;font-size:12px;display:inline-block;margin-top:6px}
+  .navrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+  .navrow a{margin-top:0}
+  .pop .wazebtn{display:inline-flex;align-items:center;gap:4px;background:#33ccff22;border:1px solid #33ccff77;color:#33ccff;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700;text-decoration:none}
+  .poi .wazelink{color:inherit}
   .pop .delbtn{margin-top:8px;background:#3a1620;border:1px solid #7f2233;color:#ffb4c0;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer}
   .pop .insta{display:inline-flex;align-items:center;gap:5px;margin-top:6px;color:#e1306c !important;font-weight:600}
   .hactions{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}
@@ -1389,6 +1393,8 @@ function gmapsLink(name, regionKey, lat, lng){
   }
   return 'https://www.google.com/maps/search/?api=1&query='+lat+','+lng;
 }
+/* Waze deep link — opens the Waze app (or web) and navigates to the point */
+function wazeLink(lat, lng){ return 'https://waze.com/ul?ll='+lat+','+lng+'&navigate=yes'; }
 
 /* ================= State ================= */
 let isAdmin=false;
@@ -1556,7 +1562,7 @@ function hotelPopupHtml(h, rkey){
         ${paidBtn}
         ${bookingRow}
       </div>
-      <a href="${gmapsLink(h.name, rkey, h.lat, h.lng)}" target="_blank" rel="noopener">פתח ב-Google Maps ↗</a>
+      <div class="navrow"><a class="wazebtn" href="${wazeLink(h.lat, h.lng)}" target="_blank" rel="noopener">🧭 נווט ב-Waze</a><a href="${gmapsLink(h.name, rkey, h.lat, h.lng)}" target="_blank" rel="noopener">Google Maps ↗</a></div>
     </div>`;
 }
 function hotelCardHtml(h){
@@ -1626,7 +1632,7 @@ function buildPoiMarkers(){
         <div class="r">${esc(c.he)}${REGIONS[rkey]&&REGIONS[rkey].eng?' · '+REGIONS[rkey].eng:''}${p.visited?' · <b style="color:#22c55e">✓ ביקרנו</b>':''}</div>
         ${p.note?`<div class="note">${esc(p.note)}</div>`:''}
         ${instaHtml(p)}
-        <a href="${gmapsLink(p.name, rkey, p.lat, p.lng)}" target="_blank" rel="noopener">פתח ב-Google Maps ↗</a>
+        <div class="navrow"><a class="wazebtn" href="${wazeLink(p.lat, p.lng)}" target="_blank" rel="noopener">🧭 נווט ב-Waze</a><a href="${gmapsLink(p.name, rkey, p.lat, p.lng)}" target="_blank" rel="noopener">Google Maps ↗</a></div>
         ${isAdmin?`<div class="hactions"><button class="hbtn" onclick="toggleVisited('${p.id}')">${p.visited?'↩︎ בטל ביקור':'✓ ביקרנו'}</button><button class="hbtn" onclick="editPlace('${p.id}')">✏️ ערוך</button><button class="delbtn" onclick="deletePlace('${p.id}')">🗑️ מחק</button></div>`:''}
       </div>`);
     poiMeta.push({pid:p.id, marker:m, cat:p.cat, region:rkey, latlng:[p.lat,p.lng], name:p.name, note:p.note, dist:Infinity});
@@ -1654,7 +1660,7 @@ function buildBookingMarkers(){
           <button class="hbtn" onclick="editBooking('${b.id}')">✏️ ערוך</button>
           <button class="hbtn ghost" onclick="deleteBooking('${b.id}')">🗑️ מחק</button>
         </div>
-        <a href="${gmapsLink(b.label||'', rkey, b.lat, b.lng)}" target="_blank" rel="noopener">פתח ב-Google Maps ↗</a>
+        <div class="navrow"><a class="wazebtn" href="${wazeLink(b.lat, b.lng)}" target="_blank" rel="noopener">🧭 נווט ב-Waze</a><a href="${gmapsLink(b.label||'', rkey, b.lat, b.lng)}" target="_blank" rel="noopener">Google Maps ↗</a></div>
       </div>`);
     bookingMeta.push({bid:b.id, marker:m, type:'booking', region:rkey, latlng:[b.lat,b.lng], dist:Infinity});
   });
@@ -2572,6 +2578,7 @@ function renderAttractions(){
       const row=document.createElement('div'); row.className='poi'+(p.visited?' visited':'');
       row.innerHTML=`<div class="pemoji" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</div>
         <div class="pinfo"><h4>${esc(p.name)}</h4><small>${p.visited?'<span class="vtag">✓ ביקרנו</span> · ':''}${REGIONS[rkey]?esc(REGIONS[rkey].he):''}${p.note?' · '+esc(p.note):''}</small></div>
+        <a class="wazelink iglink" href="${wazeLink(p.lat,p.lng)}" target="_blank" rel="noopener" title="נווט ב-Waze">🧭</a>
         ${u?`<a class="insta iglink" href="${esc(u)}" target="_blank" rel="noopener" title="אינסטגרם">📸</a>`:''}
         ${isAdmin?`<button class="visbtn" title="${p.visited?'בטל ביקור':'סמן שביקרנו'}" onclick="toggleVisited('${p.id}')">${p.visited?'↩︎':'✓'}</button>`:''}
         ${isAdmin?`<button class="editbtn" title="ערוך" onclick="editPlace('${p.id}')">✏️</button>`:''}`;
