@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="theme-color" content="#0f172a" />
 <meta name="apple-mobile-web-app-title" content="תאילנד 2026" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<link rel="icon" type="image/png" href="icon-192.png" />
 <title>מסלול תאילנד 2026</title>
 <style>
 /* required styles */
@@ -2573,6 +2576,11 @@ function renderAbout(){
     <div class="about-card" style="color:var(--muted);font-size:12px">
       המקומות מבוססים על הרשימות השמורות ב-Google Maps. מיקומי המלונות מקורבים לפי כתובת.
     </div>`;
+}
+
+/* ================= Service worker (offline / installable) ================= */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js').catch(e=>console.warn('SW registration failed',e)); });
 }
 
 /* ================= Init ================= */
