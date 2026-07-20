@@ -772,6 +772,15 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .cc-grid input{background:#0b1428;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 10px;font-size:15px;font-family:inherit;width:100%}
   body.light .cc-grid input{background:#f4f7fb}
   .cc-note{margin-top:8px;font-size:12px;color:var(--muted)}
+  .wxstrip{margin:10px 0 4px}
+  .wxstrip-inner{display:flex;gap:6px}
+  .wxday{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 2px}
+  .wxday .wxd{font-size:11px;color:var(--muted);font-weight:700}
+  .wxday .wxe{font-size:18px;line-height:1}
+  .wxday .wxt{font-size:12px;font-weight:700}
+  .wxday .wxt small{color:var(--muted);font-weight:500;margin-inline-start:2px}
+  .wxday .wxp{font-size:10px;font-weight:700;color:#38bdf8}
+  .wxstrip-fallback{font-size:12px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
   .wxrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
   .wxrow:last-of-type{border-bottom:none}
   .wxreg{flex:0 0 74px;font-weight:700}
@@ -2521,8 +2530,6 @@ function renderInfo(){
     <h2>🧭 מידע שימושי</h2>
     <div class="lead">כל מה שכדאי שיהיה בהישג יד בטיול.</div>
 
-    <div class="about-card" id="wxCard">${weatherCardHtml()}</div>
-
     <div class="about-card">
       <h3>💱 המרת מטבע</h3>
       <div class="cc-grid">
@@ -2582,7 +2589,6 @@ function renderInfo(){
     el.addEventListener('input',()=>ccRecalc(id.slice(2)));
   });
   if(fxRates.approx || !fxRates.ts || (Date.now()-fxRates.ts)>12*3600*1000) refreshFx();
-  refreshWeather();
 }
 
 /* ================= Weather ================= */
@@ -2593,58 +2599,47 @@ const WX_REGIONS=[
 ];
 const WX_TYPICAL={
   samui:  {hi:31, lo:26, em:'⛅', txt:'לח · גשם מזדמן'},
-  phangan:{hi:31, lo:26, em:'🌦️', txt:'לח · גשם מזדמן'},
-  bangkok:{hi:33, lo:26, em:'🌧️', txt:'ממטרים אחה״צ'},
+  phangan:{hi:31, lo:26, em:'⛅', txt:'לח · גשם מזדמן'},
+  bangkok:{hi:33, lo:26, em:'⛅', txt:'ממטרים אחה״צ'},
 };
-let wxLive=(function(){ try{ return JSON.parse(localStorage.getItem('thai_wx'))||{}; }catch(e){ return {}; } })();
-function wxEmoji(code){
-  if(code===0) return '☀️';
-  if(code<=2) return '⛅';
-  if(code===3) return '☁️';
-  if(code>=45&&code<=48) return '🌫️';
-  if(code>=51&&code<=67) return '🌦️';
-  if(code>=71&&code<=77) return '❄️';
-  if(code>=80&&code<=82) return '🌧️';
-  if(code>=95) return '⛈️';
-  return '⛅';
+/* Sun / partly-cloudy only — the rain chance is shown separately as a % */
+function wxSunEmoji(code){ return (code<=1)?'☀️':'⛅'; }
+
+/* ---- 5-day forecast strips for the Destinations cards ---- */
+const WX_DOW=['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
+let wxForecast=(function(){ try{ return JSON.parse(localStorage.getItem('thai_wx5v3'))||{}; }catch(e){ return {}; } })();
+function regionStripHtml(key){
+  const days=wxForecast[key];
+  if(days && days.length){
+    const cells=days.slice(0,5).map(d=>{
+      const dt=new Date(d.date+'T00:00:00');
+      const pop=(d.pop!=null)?`<span class="wxp">💧${d.pop}%</span>`:'';
+      return `<div class="wxday"><span class="wxd">${WX_DOW[dt.getDay()]}</span><span class="wxe">${wxSunEmoji(d.code)}</span><span class="wxt">${d.hi}°<small>${d.lo}°</small></span>${pop}</div>`;
+    }).join('');
+    return `<div class="wxstrip-inner">${cells}</div>`;
+  }
+  const t=WX_TYPICAL[key];
+  return `<div class="wxstrip-fallback">${t.em} ממוצע אוגוסט · ${t.hi}° / ${t.lo}° · ${t.txt}</div>`;
 }
-function weatherCardHtml(){
-  const anyLive=WX_REGIONS.some(r=>wxLive[r.key]);
-  const rows=WX_REGIONS.map(r=>{
-    const live=wxLive[r.key];
-    const d = live || WX_TYPICAL[r.key];
-    const rain = live ? (live.pop!=null?('☔ '+live.pop+'%'):'') : d.txt;
-    return `<div class="wxrow">
-      <span class="wxreg">${r.he}</span>
-      <span class="wxem">${d.em}</span>
-      <span class="wxtemp">${d.hi}° / ${d.lo}°</span>
-      <span class="wxtxt">${rain}</span>
-    </div>`;
-  }).join('');
-  const note = anyLive ? 'תחזית עדכנית (Open-Meteo)' : 'ממוצע טיפוסי לאוגוסט — תחזית חיה תופיע ככל שמתקרבים לתאריכים';
-  return `<h3>☀️ מזג אוויר</h3>${rows}<div class="cc-note">${note}</div>`;
-}
-async function refreshWeather(){
-  const today=new Date(); today.setHours(0,0,0,0);
+async function refreshForecast(){
   let changed=false;
   for(const r of WX_REGIONS){
-    const target=new Date(r.date+'T00:00:00');
-    const days=Math.round((target-today)/86400000);
-    if(days<0 || days>15) continue;   // Open-Meteo forecast horizon ~16 days
     try{
-      const url=`https://api.open-meteo.com/v1/forecast?latitude=${r.lat}&longitude=${r.lng}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=Asia%2FBangkok&forecast_days=16`;
+      const url=`https://api.open-meteo.com/v1/forecast?latitude=${r.lat}&longitude=${r.lng}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=Asia%2FBangkok&forecast_days=6`;
       const d=await (await fetch(url)).json();
-      const i=(d.daily&&d.daily.time||[]).indexOf(r.date);
-      if(i>=0){
-        wxLive[r.key]={ hi:Math.round(d.daily.temperature_2m_max[i]), lo:Math.round(d.daily.temperature_2m_min[i]),
-          em:wxEmoji(d.daily.weather_code[i]), pop:d.daily.precipitation_probability_max[i], ts:Date.now() };
+      const t=d.daily&&d.daily.time;
+      if(t&&t.length){
+        wxForecast[r.key]=t.slice(0,5).map((date,i)=>({date, hi:Math.round(d.daily.temperature_2m_max[i]), lo:Math.round(d.daily.temperature_2m_min[i]), code:d.daily.weather_code[i], pop:d.daily.precipitation_probability_max[i]}));
         changed=true;
       }
     }catch(e){}
   }
   if(changed){
-    try{ localStorage.setItem('thai_wx', JSON.stringify(wxLive)); }catch(e){}
-    const card=document.getElementById('wxCard'); if(card) card.innerHTML=weatherCardHtml();
+    wxForecast.ts=Date.now();
+    try{ localStorage.setItem('thai_wx5v3', JSON.stringify(wxForecast)); }catch(e){}
+    if(document.body.dataset.view==='destinations'){
+      document.querySelectorAll('[data-wxstrip]').forEach(el=>{ el.innerHTML=regionStripHtml(el.dataset.wxstrip); });
+    }
   }
 }
 
@@ -2755,6 +2750,7 @@ function renderDestinations(){
       <h3>${esc(r.he)}</h3>
       <div class="eng">${esc(r.eng)}${dr?' · '+dr:''} · ${ps.length} מקומות</div>
       ${hotelsHtml}
+      <div class="wxstrip" data-wxstrip="${rk}">${regionStripHtml(rk)}</div>
       <div class="catcounts">${countsHtml}</div>
       <button class="btn primary" data-region="${rk}">🗺️ הצג במפה</button>`;
     card.querySelector('[data-region]').addEventListener('click',()=>{
@@ -2767,6 +2763,7 @@ function renderDestinations(){
     });
     host.appendChild(card);
   });
+  if(!wxForecast.ts || (Date.now()-wxForecast.ts)>3*3600*1000) refreshForecast();
 }
 
 function renderAbout(){
