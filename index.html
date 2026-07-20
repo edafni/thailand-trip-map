@@ -1058,6 +1058,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <div class="seg" id="locSeg"></div>
     <div class="nearbar">
       <button class="btn" id="nearBtn">📍 קרוב אליי</button>
+      <button class="btn" id="mapStarBtn">⭐ רק מומלצים</button>
       <select id="radiusSel" class="rsel" style="display:none">
         <option value="1">1 ק״מ</option>
         <option value="3">3 ק״מ</option>
@@ -1428,6 +1429,7 @@ let hotelState={};          /* { [hotelId]: { paid:bool } } */
 let bookings=[];            /* [{ id, kind:'hotel'|'flight', refId, label, name, type, dataUrl, date, createdAt }] */
 let cloud={enabled:false};  /* cloud sync handle (populated in init) */
 let locFilter='all';
+let mapStarOnly=false;   // "⭐ רק מומלצים" filter on the map
 let nearbyOn=false, nearCenter=null, radiusKm=5, nearCircle=null, meMarker=null;
 const active={}; Object.keys(CATEGORIES).forEach(k=>active[k]=true);
 
@@ -1661,7 +1663,7 @@ function buildPoiMarkers(){
         <div class="hactions"><button class="hbtn${p.star?' starred':''}" onclick="toggleStar('${p.id}')">${p.star?'⭐ מומלץ — הסר':'☆ סמן כמומלץ'}</button></div>
         ${isAdmin?`<div class="hactions"><button class="hbtn" onclick="toggleVisited('${p.id}')">${p.visited?'↩︎ בטל ביקור':'✓ ביקרנו'}</button><button class="hbtn" onclick="editPlace('${p.id}')">✏️ ערוך</button><button class="delbtn" onclick="deletePlace('${p.id}')">🗑️ מחק</button></div>`:''}
       </div>`);
-    poiMeta.push({pid:p.id, marker:m, cat:p.cat, region:rkey, latlng:[p.lat,p.lng], name:p.name, note:p.note, dist:Infinity});
+    poiMeta.push({pid:p.id, marker:m, cat:p.cat, region:rkey, latlng:[p.lat,p.lng], name:p.name, note:p.note, star:!!p.star, dist:Infinity});
   });
 }
 
@@ -2012,6 +2014,7 @@ fileModal.addEventListener('click',e=>{ if(e.target===fileModal) closeFileViewer
 /* ================= Filters ================= */
 function withinFilters(o){
   if(o.type!=='booking' && !active[o.cat]) return false; // booking pins ignore category chips
+  if(mapStarOnly && o.pid!=null && !o.star) return false; // "must-see only" hides non-starred attractions
   if(nearbyOn){ return o.dist<=radiusKm; }
   return locFilter==='all' || o.region===locFilter;
 }
@@ -2093,6 +2096,15 @@ function focusLatLng(ll, z, marker){
 }
 const allPts=hotels.map(h=>[h.lat,h.lng]);
 function fitAll(){ map.fitBounds(L.latLngBounds(allPts).pad(0.18)); }
+
+/* ================= Must-see filter (map) ================= */
+const mapStarBtn=document.getElementById('mapStarBtn');
+mapStarBtn.addEventListener('click',()=>{
+  mapStarOnly=!mapStarOnly;
+  mapStarBtn.classList.toggle('primary', mapStarOnly);
+  mapStarBtn.textContent = mapStarOnly ? '✖ הצג הכל' : '⭐ רק מומלצים';
+  applyFilters();
+});
 
 /* ================= Nearby ================= */
 const nearBtn=document.getElementById('nearBtn');
