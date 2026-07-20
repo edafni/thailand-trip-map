@@ -957,6 +957,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .tb-title h1{font-size:15px;margin:0;font-weight:700}
   .tb-title .sub{font-size:11px;color:var(--muted);margin-top:1px}
   .tb-spacer{flex:1}
+  .netstat{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);white-space:nowrap}
+  .netstat .netdot{width:9px;height:9px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px #22c55e33}
+  .netstat.off .netdot{background:#ef4444;box-shadow:0 0 0 3px #ef444433}
+  .netstat.off{color:#ef4444}
   .adminBadge{margin-inline-start:0 !important}
   .iconbtn{pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:var(--text);
     width:38px;height:38px;border-radius:10px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
@@ -1023,7 +1027,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
       <div class="sub" id="tripSub">6 באוגוסט – 1 בספטמבר · 26 לילות</div>
     </div>
     <span class="tb-spacer"></span>
-    <span class="adminBadge" id="adminBadge">מנהל 🔓</span>
+    <span class="netstat" id="netStatus" title=""><span class="netdot"></span><span class="nettext"></span></span>
     <button id="themeBtn" class="iconbtn" title="מצב כהה / בהיר">🌙</button>
   </div>
   <div class="tabs" id="tabs">
@@ -2378,12 +2382,23 @@ let theme=(function(){try{return localStorage.getItem('thai_theme')||'dark';}cat
 function applyTheme(t){
   theme=t;
   document.body.classList.toggle('light', t==='light');
-  themeBtn.textContent = t==='light'?'☀️':'🌙';
+  themeBtn.textContent = t==='light'?'🌙':'☀️';
   if(typeof baseTiles!=='undefined' && baseTiles) baseTiles.setUrl(t==='light'?TILES_LIGHT:TILES_DARK);
   const mc=document.querySelector('meta[name="theme-color"]'); if(mc) mc.setAttribute('content', t==='light'?'#eef2f8':'#0f172a');
   try{localStorage.setItem('thai_theme',t);}catch(e){}
 }
 themeBtn.addEventListener('click',()=>applyTheme(document.body.classList.contains('light')?'dark':'light'));
+
+/* ================= Online / offline indicator ================= */
+function updateNetStatus(){
+  const el=document.getElementById('netStatus'); if(!el) return;
+  const online=navigator.onLine;
+  el.classList.toggle('off', !online);
+  el.title = online ? 'מחובר לאינטרנט' : 'לא מקוון';
+  const txt=el.querySelector('.nettext'); if(txt) txt.textContent = online ? 'מקוון' : 'לא מקוון';
+}
+window.addEventListener('online', updateNetStatus);
+window.addEventListener('offline', updateNetStatus);
 
 /* ================= Accent color (per-device) ================= */
 const ACCENT_PRESETS=[
@@ -2831,6 +2846,7 @@ function renderAbout(){
   applyFilters();
   fitAll();
   applyTheme(theme);
+  updateNetStatus();
   applyAccent(accentPreset);
   updateCountdown();
   refreshFx();
