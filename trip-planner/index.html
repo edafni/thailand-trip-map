@@ -1340,6 +1340,7 @@ window.FIREBASE_CONFIG = window.FIREBASE_CONFIG || {
    lets them pick/create a trip, then sets TRIP_ID and boots the app. */
 window.FREE_TRIP_LIMIT     = window.FREE_TRIP_LIMIT     || 1;   // free plan: 1 trip
 window.STRIPE_PAYMENT_LINK = window.STRIPE_PAYMENT_LINK || "";  // paste your Stripe Payment Link to enable Pro upgrades
+window.OWNER_EMAILS        = window.OWNER_EMAILS        || ['erezdafni@gmail.com']; // always-Pro (unlimited trips)
 window.CloudSyncReady = window.CloudSyncReady || new Promise(res=>{ window.__cloudResolve = res; });
 window.TripReady      = window.TripReady      || new Promise(res=>{ window.__tripResolve  = res; });
 
@@ -1374,6 +1375,7 @@ function regionOf(lat,lng){
 }
 let areaToRegion={s:'samui',p:'phangan',b:'bangkok'};
 let TRIP_CUR={code:'THB',sym:'฿'};   // trip currency (Thailand default; set per-trip from destination)
+let TRIP_COUNTRY='';                  // ISO country code of the main destination (for per-country info)
 
 /* ================= Itinerary ================= */
 let hotels = [
@@ -2738,6 +2740,7 @@ async function resolveTripCurrency(d){
     const j=await r.json();
     const cc=j&&j.address&&j.address.country_code;
     if(!cc) return;
+    TRIP_COUNTRY=String(cc).toLowerCase();
     TRIP_CUR=currencyForCountry(cc);
     fxRates=fxLoad(TRIP_CUR.code);
     await refreshFx();
@@ -2779,12 +2782,72 @@ function ccNoteHtml(){
 }
 
 /* ================= Info tab ================= */
+/* ---- Per-country info (for custom trips) ---- */
+const EU_CC='at be cy ee fi fr de gr ie it lv lt lu mt nl pt sk si es hr bg cz dk hu pl ro se'.split(' ');
+const EM_LABEL={general:'חירום כללי',police:'משטרה',ambulance:'אמבולנס',fire:'מכבי אש',tourist:'משטרת תיירות'};
+function emergencyFor(cc){
+  cc=String(cc||'').toLowerCase();
+  const M={
+    th:{tourist:'1155',police:'191',ambulance:'1669'}, il:{police:'100',ambulance:'101',fire:'102'},
+    us:{general:'911'}, ca:{general:'911'}, gb:{general:'999'}, jp:{police:'110',ambulance:'119'},
+    au:{general:'000'}, nz:{general:'111'}, fr:{general:'112',police:'17',ambulance:'15'},
+    de:{general:'112',police:'110'}, in:{police:'100',ambulance:'102'}, cn:{police:'110',ambulance:'120'},
+    ae:{police:'999',ambulance:'998'}, eg:{police:'122',ambulance:'123'}, za:{general:'112',ambulance:'10177'},
+    tr:{general:'112'}, ru:{general:'112'}, mx:{general:'911'}, br:{police:'190',ambulance:'192'},
+    sg:{police:'999',ambulance:'995'}, my:{general:'999'}, id:{police:'110',ambulance:'118'},
+    ph:{general:'911'}, vn:{police:'113',ambulance:'115'}, kr:{police:'112',ambulance:'119'},
+    ma:{police:'19',ambulance:'15'}, jo:{general:'911'}, lk:{general:'119'}
+  };
+  if(M[cc]) return M[cc];
+  if(EU_CC.includes(cc)) return {general:'112'};
+  return {general:'112 / 911'};
+}
+function electricityFor(cc){
+  cc=String(cc||'').toLowerCase();
+  const M={
+    us:{volt:'120V · 60Hz',plugs:'A / B'}, ca:{volt:'120V · 60Hz',plugs:'A / B'},
+    jp:{volt:'100V',plugs:'A / B'}, gb:{volt:'230V',plugs:'G'}, ie:{volt:'230V',plugs:'G'},
+    au:{volt:'230V',plugs:'I'}, nz:{volt:'230V',plugs:'I'}, cn:{volt:'220V',plugs:'A / I / C'},
+    in:{volt:'230V',plugs:'C / D / M'}, th:{volt:'220V',plugs:'A / B / C'}, il:{volt:'230V',plugs:'H / C'},
+    za:{volt:'230V',plugs:'M / N / D'}, ch:{volt:'230V',plugs:'J / C'}, br:{volt:'127/220V',plugs:'N / C'},
+    sg:{volt:'230V',plugs:'G'}, ae:{volt:'230V',plugs:'G'}, tr:{volt:'230V',plugs:'C / F'}
+  };
+  if(M[cc]) return M[cc];
+  if(EU_CC.includes(cc)) return {volt:'230V · 50Hz',plugs:'C / F'};
+  return null;
+}
+function infoCustomHtml(){
+  const em=emergencyFor(TRIP_COUNTRY);
+  const emRows=Object.entries(em).map(([k,v])=>`<div class="inforow"><span>${EM_LABEL[k]||k}</span><a href="tel:${String(v).replace(/[^0-9+]/g,'')}">${v}</a></div>`).join('');
+  const el=electricityFor(TRIP_COUNTRY);
+  return `
+    <div class="about-card" id="infoFacts"><h3>🌍 על היעד</h3><div style="color:var(--muted);font-size:12px">טוען מידע…</div></div>
+    <div class="about-card"><h3>🆘 חירום</h3>${emRows}</div>
+    ${el?`<div class="about-card"><h3>🔌 חשמל</h3><div class="inforow"><span>מתח</span><b>${el.volt}</b></div><div class="inforow"><span>תקעים</span><b>${el.plugs}</b></div></div>`:''}
+    <div class="about-card" style="color:var(--muted);font-size:12px">שווה לשקול eSIM מקומי (Airalo וכד') לנתונים בחו"ל.</div>`;
+}
+async function loadCountryInfo(){
+  const el=document.getElementById('infoFacts'); if(!el) return;
+  if(!TRIP_COUNTRY){ el.innerHTML='<h3>🌍 על היעד</h3><div style="color:var(--muted);font-size:12px">היעד יזוהה אוטומטית; אם לא — צרו את הטיול מחדש עם חיפוש יעד.</div>'; return; }
+  try{
+    const r=await fetch('https://restcountries.com/v3.1/alpha/'+encodeURIComponent(TRIP_COUNTRY)+'?fields=name,capital,languages,timezones,car,idd,flag');
+    const j=await r.json(); const d=Array.isArray(j)?j[0]:j;
+    if(!d||!d.name) throw 0;
+    const langs=d.languages?Object.values(d.languages).join(', '):'';
+    const tz=(d.timezones&&d.timezones[0])||'';
+    const side=(d.car&&d.car.side==='left')?'שמאל 🚗':'ימין 🚗';
+    const idd=(d.idd&&d.idd.root)?(d.idd.root+((d.idd.suffixes&&d.idd.suffixes.length===1)?d.idd.suffixes[0]:'')):'';
+    el.innerHTML=`<h3>${d.flag||'🌍'} ${esc((d.name&&d.name.common)||'')}</h3>
+      <div class="inforow"><span>בירה</span><b>${esc((d.capital&&d.capital[0])||'—')}</b></div>
+      <div class="inforow"><span>שפות</span><b>${esc(langs||'—')}</b></div>
+      ${tz?`<div class="inforow"><span>אזור זמן</span><b>${esc(tz)}</b></div>`:''}
+      <div class="inforow"><span>צד נסיעה</span><b>${side}</b></div>
+      ${idd?`<div class="inforow"><span>קידומת חיוג</span><b>${esc(idd)}</b></div>`:''}`;
+  }catch(e){ el.innerHTML='<h3>🌍 על היעד</h3><div style="color:var(--muted);font-size:12px">לא ניתן לטעון מידע על היעד כרגע.</div>'; }
+}
 function renderInfo(){
   const host=document.getElementById('view-info');
-  host.innerHTML=`
-    <h2>🧭 מידע שימושי</h2>
-    <div class="lead">כל מה שכדאי שיהיה בהישג יד בטיול.</div>
-
+  const converter=`
     <div class="about-card">
       <h3>💱 המרת מטבע</h3>
       <div class="cc-grid">
@@ -2793,8 +2856,8 @@ function renderInfo(){
         <label>דולר $<input id="ccUSD" type="number" inputmode="decimal" /></label>
       </div>
       <div class="cc-note" id="ccNote">${ccNoteHtml()}</div>
-    </div>
-
+    </div>`;
+  const thaiCards=`
     <div class="about-card">
       <h3>🆘 חירום</h3>
       <div class="inforow"><span>משטרת תיירות</span><a href="tel:1155">1155</a></div>
@@ -2802,14 +2865,12 @@ function renderInfo(){
       <div class="inforow"><span>אמבולנס / חילוץ</span><a href="tel:1669">1669</a></div>
       <div class="inforow"><span>מכבי אש</span><a href="tel:199">199</a></div>
     </div>
-
     <div class="about-card">
       <h3>🇮🇱 שגרירות ישראל בבנגקוק</h3>
       <div class="inforow"><span>טלפון</span><a href="tel:+6622047600">+66 2 204 7600</a></div>
       <div class="inforow"><span>חירום קונסולרי</span><a href="tel:+66898946800">+66 89 894 6800</a></div>
       <div style="color:var(--muted);font-size:12px;margin-top:6px">Ocean Tower 2, 25th floor, Sukhumvit — בנגקוק</div>
     </div>
-
     <div class="about-card">
       <h3>🔌 חשמל ותקשורת</h3>
       <div class="inforow"><span>מתח</span><b>220V · 50Hz</b></div>
@@ -2818,7 +2879,6 @@ function renderInfo(){
       <div class="inforow"><span>אזור זמן</span><b>+7 (5 שעות לפני ישראל)</b></div>
       <div style="color:var(--muted);font-size:12px;margin-top:6px">שווה eSIM (AIS / TrueMove) לנתונים.</div>
     </div>
-
     <div class="about-card">
       <h3>🗣️ ביטויים בתאית</h3>
       <div class="inforow"><span>שלום (גבר/אישה)</span><b>סָוָואדִי כְׁרַאבּ / כָּה</b></div>
@@ -2830,7 +2890,6 @@ function renderInfo(){
       <div class="inforow"><span>לא חריף</span><b>מַאי פֶּׁט</b></div>
       <div class="inforow"><span>המשקום / שירותים</span><b>הׁוֹנג נָאם</b></div>
     </div>
-
     <div class="about-card">
       <h3>💵 טיפים ומזומן</h3>
       • מסעדות: לרוב 10% שירות כלול; אחרת ~20–50 บาท.<br>
@@ -2838,12 +2897,15 @@ function renderInfo(){
       • ספא/עיסוי: ~50–100 บาท.<br>
       • מזומן עדיף בשווקים ובאיים; כספומטים גובים ~220 บาท עמלה.
     </div>`;
+  const cards = (window.__TEMPLATE==='thailand') ? thaiCards : infoCustomHtml();
+  host.innerHTML=`<h2>🧭 מידע שימושי</h2><div class="lead">כל מה שכדאי שיהיה בהישג יד בטיול.</div>${converter}${cards}`;
   ccRecalc('BASE');
   ['ccBASE','ccILS','ccUSD'].forEach(id=>{
     const el=document.getElementById(id);
     el.addEventListener('input',()=>ccRecalc(id.slice(2)));
   });
   if(fxRates.approx || !fxRates.ts || (Date.now()-fxRates.ts)>12*3600*1000) refreshFx();
+  if(window.__TEMPLATE!=='thailand') loadCountryInfo();
 }
 
 /* ================= Weather ================= */
@@ -3024,9 +3086,22 @@ function renderDestinations(){
   if(!wxForecast.ts || (Date.now()-wxForecast.ts)>3*3600*1000) refreshForecast();
 }
 
+function routeAboutHtml(nights){
+  if(window.__TEMPLATE==='thailand'){
+    return `<div class="about-card"><h3>המסלול 🇹🇭</h3>
+      6 באוגוסט – 1 בספטמבר 2026 · טיול של ${nights} לילות בין קוסמוי, קופאנגן ובנגקוק.
+      הגעה בטיסה לקוסמוי, מעבורות בין האיים, וטיסה חזרה לבנגקוק בסוף.</div>`;
+  }
+  const IT=window.__ITINERARY||{};
+  const dests=(IT.destinations||[]).map(d=>esc(d.name)).join(' · ');
+  const range=(IT.startDate&&IT.endDate)?(fmtLong(IT.startDate)+' – '+fmtLong(IT.endDate)):'';
+  return `<div class="about-card"><h3>המסלול 🗺️</h3>
+    <b>${esc(window.__TRIP_NAME||'הטיול')}</b>${range?' · '+range:''}${nights?' · '+nights+' לילות':''}
+    ${dests?'<br>יעדים: '+dests:''}</div>`;
+}
 function renderAbout(){
   const host=document.getElementById('view-about');
-  const nights=hotels.reduce((s,h)=>s+h.nights,0);
+  const nights=hotels.reduce((s,h)=>s+(h.nights||0),0);
   const paidCount=hotels.filter(h=>hs(h.id).paid).length;
   host.innerHTML=`
     <h2>ℹ️ אודות הטיול</h2>
@@ -3043,11 +3118,7 @@ function renderAbout(){
         ${ACCENT_PRESETS.map(p=>`<button class="swatch${p.id===accentPreset?' on':''}" data-acc="${p.id}" title="${p.name}" aria-label="${p.name}" style="--sw:hsl(${p.hue},85%,55%)" onclick="applyAccent('${p.id}')"></button>`).join('')}
       </div>
     </div>
-    <div class="about-card">
-      <h3>המסלול 🇹🇭</h3>
-      6 באוגוסט – 1 בספטמבר 2026 · טיול של ${nights} לילות בין קוסמוי, קופאנגן ובנגקוק.
-      הגעה בטיסה לקוסמוי, מעבורות בין האיים, וטיסה חזרה לבנגקוק בסוף.
-    </div>
+    ${routeAboutHtml(nights)}
     <div class="about-card">
       <h3>איך משתמשים</h3>
       • לשונית <b>מפה</b> — מפה אינטראקטיבית עם מלונות, מסעדות, בתי קפה, חופים ועוד.<br>
@@ -3105,6 +3176,7 @@ function applyItinerary(IT){
   TRIP_CD_LABEL='ל'+name;
   WX_REGIONS=dests.map(d=>({key:d.key, he:d.name, lat:d.lat, lng:d.lng, date:d.date||(IT&&IT.startDate)||''}));
   // Trip currency from the main destination's country.
+  TRIP_COUNTRY = (IT&&IT.mainCountry) ? String(IT.mainCountry).toLowerCase() : '';
   const cur = (IT&&IT.currency) ? IT.currency : ((IT&&IT.mainCountry) ? currencyForCountry(IT.mainCountry) : null);
   if(cur){ TRIP_CUR=cur; }
   fxRates = fxLoad(TRIP_CUR.code);   // cached rates for this currency, else approx → refreshFx() fills in
@@ -3347,7 +3419,8 @@ window.TripReady.then(()=>__startApp());
       showGate();
       gateBody.innerHTML = '<div class="g-card"><p>טוען…</p></div>';
       const [profile, trips] = await Promise.all([getProfile(user.uid), listTrips(user.uid)]);
-      const tier = profile.tier==='pro' ? 'pro' : 'free';
+      const isOwner = (window.OWNER_EMAILS||[]).map(e=>String(e).toLowerCase()).includes(String(user.email||'').toLowerCase());
+      const tier = (profile.tier==='pro' || isOwner) ? 'pro' : 'free';
       const atLimit = tier==='free' && trips.length >= FREE_LIMIT;
 
       const rows = trips.map(t=>`
