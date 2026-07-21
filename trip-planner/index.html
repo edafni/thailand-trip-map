@@ -1084,38 +1084,39 @@ svg.leaflet-image-layer.leaflet-interactive path {
     </div>
     <span class="tb-spacer"></span>
     <span class="netstat" id="netStatus" title=""><span class="netdot"></span><span class="nettext"></span></span>
+    <button id="langBtn" class="iconbtn" title="Language / שפה">EN</button>
     <button id="themeBtn" class="iconbtn" title="מצב כהה / בהיר">🌙</button>
   </div>
   <div class="tabs" id="tabs">
-    <button class="tab on" data-view="map">🗺️ מפה</button>
-    <button class="tab" data-view="attractions">⭐ אטרקציות</button>
-    <button class="tab" data-view="bookings">🧾 הזמנות</button>
-    <button class="tab" data-view="destinations">📍 יעדים</button>
-    <button class="tab" data-view="info">🧭 מידע</button>
-    <button class="tab" data-view="about">ℹ️ אודות</button>
+    <button class="tab on" data-view="map" data-i18n="tab_map">🗺️ מפה</button>
+    <button class="tab" data-view="attractions" data-i18n="tab_attractions">⭐ אטרקציות</button>
+    <button class="tab" data-view="bookings" data-i18n="tab_bookings">🧾 הזמנות</button>
+    <button class="tab" data-view="destinations" data-i18n="tab_destinations">📍 יעדים</button>
+    <button class="tab" data-view="info" data-i18n="tab_info">🧭 מידע</button>
+    <button class="tab" data-view="about" data-i18n="tab_about">ℹ️ אודות</button>
   </div>
 </div>
 
 <button id="fitBtn" title="הצג הכל">🧭</button>
 
 <div id="banner">
-  <span>לחצו על המפה כדי לסמן מיקום 📍</span>
-  <button id="bannerCancel">ביטול</button>
+  <span data-i18n="banner_pick">לחצו על המפה כדי לסמן מיקום 📍</span>
+  <button id="bannerCancel" data-i18n="btn_cancel">ביטול</button>
 </div>
 
 <div id="sheet">
   <div class="handle-wrap" id="handle"><div class="handle"></div></div>
   <div class="sheet-head">
     <div class="toolbar admin-only">
-      <button class="btn primary" id="addBtn">➕ הוסף מקום</button>
-      <button class="btn" id="addHotelBtn">🏨 הוסף לינה</button>
-      <button class="btn" id="shareBtn">🔗 שתף</button>
+      <button class="btn primary" id="addBtn" data-i18n="btn_add_place">➕ הוסף מקום</button>
+      <button class="btn" id="addHotelBtn" data-i18n="btn_add_stay">🏨 הוסף לינה</button>
+      <button class="btn" id="shareBtn" data-i18n="btn_share">🔗 שתף</button>
       <button class="btn small" id="lockBtn" title="יציאה ממצב מנהל">🔒</button>
     </div>
     <div class="seg" id="locSeg"></div>
     <div class="nearbar">
-      <button class="btn" id="nearBtn">📍 קרוב אליי</button>
-      <button class="btn" id="mapStarBtn">⭐ רק מומלצים</button>
+      <button class="btn" id="nearBtn" data-i18n="btn_near">📍 קרוב אליי</button>
+      <button class="btn" id="mapStarBtn" data-i18n="btn_star_only">⭐ רק מומלצים</button>
       <select id="radiusSel" class="rsel" style="display:none">
         <option value="1">1 ק״מ</option>
         <option value="3">3 ק״מ</option>
@@ -1127,9 +1128,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <div class="chips" id="chips"></div>
   </div>
   <div class="sheet-body">
-    <div class="section-title">🧭 מסלול המלונות</div>
+    <div class="section-title" data-i18n="sec_hotels">🧭 מסלול המלונות</div>
     <div id="list"></div>
-    <div class="section-title" id="poiTitle">⭐ מקומות מומלצים</div>
+    <div class="section-title" id="poiTitle" data-i18n="sec_recommended">⭐ מקומות מומלצים</div>
     <div id="poiList"></div>
     <footer id="footerText"></footer>
   </div>
@@ -1340,23 +1341,123 @@ window.FIREBASE_CONFIG = window.FIREBASE_CONFIG || {
    lets them pick/create a trip, then sets TRIP_ID and boots the app. */
 window.FREE_TRIP_LIMIT     = window.FREE_TRIP_LIMIT     || 1;   // free plan: 1 trip
 window.STRIPE_PAYMENT_LINK = window.STRIPE_PAYMENT_LINK || "";  // paste your Stripe Payment Link to enable Pro upgrades
+window.OWNER_EMAILS        = window.OWNER_EMAILS        || ['erezdafni@gmail.com']; // always-Pro (unlimited trips)
 window.CloudSyncReady = window.CloudSyncReady || new Promise(res=>{ window.__cloudResolve = res; });
 window.TripReady      = window.TripReady      || new Promise(res=>{ window.__tripResolve  = res; });
 
-const CATEGORIES = {
-  hotel:      {he:'מלונות',   emoji:'🏨', color:'#0ea5a4'},
-  restaurant: {he:'מסעדות',   emoji:'🍽️', color:'#ef4444'},
-  cafe:       {he:'בתי קפה',  emoji:'☕', color:'#b45309'},
-  beach:      {he:'חופים',    emoji:'🏖️', color:'#06b6d4'},
-  attraction: {he:'אטרקציות', emoji:'📸', color:'#8b5cf6'},
-  bar:        {he:'ברים',     emoji:'🍸', color:'#ec4899'},
-  shopping:   {he:'קניות',    emoji:'🛍️', color:'#eab308'},
-  viewpoint:  {he:'תצפיות',   emoji:'🌄', color:'#22c55e'},
-  activity:   {he:'פעילויות', emoji:'🤿', color:'#3b82f6'},
-  temple:     {he:'מקדשים',   emoji:'🛕', color:'#f59e0b'},
-  spa:        {he:'ספא ועיסוי', emoji:'💆', color:'#d946ef'},
-  other:      {he:'אחר',      emoji:'📍', color:'#94a3b8'},
+/* ================= i18n (Hebrew / English) =================
+   Core-UI translation with an extendable dictionary. Shell strings use
+   data-i18n attributes; the sign-in/trip gate uses window.t() in the module. */
+window.I18N = {
+  he:{
+    tab_map:'🗺️ מפה', tab_attractions:'⭐ אטרקציות', tab_bookings:'🧾 הזמנות',
+    tab_destinations:'📍 יעדים', tab_info:'🧭 מידע', tab_about:'ℹ️ אודות',
+    btn_add_place:'➕ הוסף מקום', btn_add_stay:'🏨 הוסף לינה', btn_share:'🔗 שתף',
+    btn_near:'📍 קרוב אליי', btn_star_only:'⭐ רק מומלצים',
+    banner_pick:'לחצו על המפה כדי לסמן מיקום 📍', btn_cancel:'ביטול',
+    // gate / trips / funnel
+    gate_title:'מתכנן הטיולים',
+    gate_login_sub:'התחברו כדי ליצור ולנהל את הטיולים שלכם. הנתונים נשמרים בענן ופרטיים לחשבונכם.',
+    gate_login_google:'התחברות עם Google', gate_login_fail:'התחברות נכשלה: ',
+    gate_my_trips:'הטיולים שלי', gate_plan_pro:'⭐ Pro · ללא הגבלה', gate_plan_free:'תוכנית חינם · עד ',
+    gate_trip:'טיול', gate_logout:'התנתקות', gate_open:'פתח ›', gate_delete:'🗑 מחק',
+    gate_no_trips:'אין עדיין טיולים. צרו את הראשון 👇',
+    gate_confirm_del:'למחוק את הטיול הזה לצמיתות?',
+    gate_new_trip:'➕ טיול חדש', gate_name_ph:'שם הטיול (למשל: יוון 2027)',
+    gate_from:'מתאריך', gate_to:'עד תאריך',
+    gate_dest_ph:'הקלידו יעד (עיר / אזור), למשל: אתונה', gate_search:'חפש',
+    gate_searching:'מחפש…', gate_no_results:'לא נמצאו תוצאות. נסו שם באנגלית.',
+    gate_create:'צור טיול', gate_creating:'יוצר…', gate_sample:'או נסו תבנית לדוגמה: תאילנד 2026',
+    gate_paywall:'הגעתם למכסת התוכנית החינמית. שדרגו ל-Pro לטיולים ללא הגבלה.',
+    gate_upgrade:'⭐ שדרוג ל-Pro', gate_upgrade_cfg:'⭐ שדרוג ל-Pro (דורש הגדרה)',
+    gate_new_trip_name:'טיול חדש',
+    reg_all:'כל היעדים', sec_hotels:'🧭 מסלול המלונות', sec_recommended:'⭐ מקומות מומלצים', sec_nearby:'⭐ מקומות סביבי',
+    poi_empty:'אין מקומות בסינון הנוכחי', poi_empty_add:' · הוסיפו עם ➕',
+    h_nights:'לילות', h_paid:'שולם ✓', h_unpaid:'טרם שולם', h_checkin:"צ'ק אין", h_checkout:"צ'ק אאוט",
+    h_cost:'עלות', h_payment:'תשלום', h_mark_paid:'💳 סמן כשולם', h_mark_paid_undo:'✓ שולם · לחצו לביטול',
+    h_add_booking:'📎 הוסף אישור הזמנה', h_edit:'✏️ ערוך', h_delete_stay:'🗑️ מחק לינה', nav_waze:'🧭 נווט ב-Waze',
+    info_title:'🧭 מידע שימושי', info_lead:'כל מה שכדאי שיהיה בהישג יד בטיול.', cc_title:'💱 המרת מטבע',
+    info_dest:'🌍 על היעד', info_capital:'בירה', info_langs:'שפות', info_tz:'אזור זמן', info_drive:'צד נסיעה', info_dial:'קידומת חיוג',
+    info_emergency:'🆘 חירום (SOS)', info_electric:'🔌 חשמל', info_volt:'מתח', info_plugs:'תקעים',
+    info_esim:'שווה לשקול eSIM מקומי (Airalo) לנתונים בחו"ל.',
+    info_loading:'טוען מידע…', info_no_country:'היעד יזוהה אוטומטית; אם לא — צרו את הטיול מחדש עם חיפוש יעד.', info_cant_load:'לא ניתן לטעון מידע על היעד כרגע.',
+    em_general:'חירום כללי (SOS)', em_police:'משטרה', em_ambulance:'אמבולנס', em_fire:'מכבי אש', em_tourist:'משטרת תיירות',
+    drive_left:'שמאל 🚗', drive_right:'ימין 🚗'
+  },
+  en:{
+    tab_map:'🗺️ Map', tab_attractions:'⭐ Attractions', tab_bookings:'🧾 Bookings',
+    tab_destinations:'📍 Destinations', tab_info:'🧭 Info', tab_about:'ℹ️ About',
+    btn_add_place:'➕ Add place', btn_add_stay:'🏨 Add stay', btn_share:'🔗 Share',
+    btn_near:'📍 Near me', btn_star_only:'⭐ Must-see only',
+    banner_pick:'Tap the map to drop a pin 📍', btn_cancel:'Cancel',
+    gate_title:'Trip Planner',
+    gate_login_sub:'Sign in to create and manage your trips. Your data is saved in the cloud and private to your account.',
+    gate_login_google:'Sign in with Google', gate_login_fail:'Sign-in failed: ',
+    gate_my_trips:'My trips', gate_plan_pro:'⭐ Pro · unlimited', gate_plan_free:'Free plan · up to ',
+    gate_trip:'Trip', gate_logout:'Sign out', gate_open:'Open ›', gate_delete:'🗑 Delete',
+    gate_no_trips:'No trips yet. Create your first 👇',
+    gate_confirm_del:'Delete this trip permanently?',
+    gate_new_trip:'➕ New trip', gate_name_ph:'Trip name (e.g. Greece 2027)',
+    gate_from:'From', gate_to:'To',
+    gate_dest_ph:'Type a destination (city / area), e.g. Athens', gate_search:'Search',
+    gate_searching:'Searching…', gate_no_results:'No results. Try an English name.',
+    gate_create:'Create trip', gate_creating:'Creating…', gate_sample:'Or try the sample: Thailand 2026',
+    gate_paywall:'You reached the free-plan limit. Upgrade to Pro for unlimited trips.',
+    gate_upgrade:'⭐ Upgrade to Pro', gate_upgrade_cfg:'⭐ Upgrade to Pro (needs setup)',
+    gate_new_trip_name:'New trip',
+    reg_all:'All destinations', sec_hotels:'🧭 Hotel route', sec_recommended:'⭐ Recommended places', sec_nearby:'⭐ Places near me',
+    poi_empty:'No places in the current filter', poi_empty_add:' · add with ➕',
+    h_nights:'nights', h_paid:'Paid ✓', h_unpaid:'Not paid', h_checkin:'Check-in', h_checkout:'Check-out',
+    h_cost:'Cost', h_payment:'Payment', h_mark_paid:'💳 Mark as paid', h_mark_paid_undo:'✓ Paid · tap to undo',
+    h_add_booking:'📎 Add booking file', h_edit:'✏️ Edit', h_delete_stay:'🗑️ Delete stay', nav_waze:'🧭 Navigate with Waze',
+    info_title:'🧭 Useful info', info_lead:'Everything worth keeping handy on your trip.', cc_title:'💱 Currency converter',
+    info_dest:'🌍 About the destination', info_capital:'Capital', info_langs:'Languages', info_tz:'Time zone', info_drive:'Driving side', info_dial:'Dialing code',
+    info_emergency:'🆘 Emergency (SOS)', info_electric:'🔌 Electricity', info_volt:'Voltage', info_plugs:'Plugs',
+    info_esim:'Consider a local eSIM (Airalo, etc.) for data abroad.',
+    info_loading:'Loading…', info_no_country:'The destination is detected automatically; if not, recreate the trip using destination search.', info_cant_load:'Could not load destination info right now.',
+    em_general:'General emergency (SOS)', em_police:'Police', em_ambulance:'Ambulance', em_fire:'Fire', em_tourist:'Tourist police',
+    drive_left:'Left 🚗', drive_right:'Right 🚗'
+  }
 };
+window.__lang = (function(){ try{ return localStorage.getItem('planner_lang')||'he'; }catch(e){ return 'he'; } })();
+window.t = function(k){ const L=window.__lang; return (window.I18N[L]&&window.I18N[L][k]) || window.I18N.he[k] || k; };
+function applyLang(l){
+  window.__lang = (l==='en')?'en':'he';
+  try{ localStorage.setItem('planner_lang', window.__lang); }catch(e){}
+  const html=document.documentElement;
+  html.setAttribute('lang', window.__lang);
+  html.setAttribute('dir', window.__lang==='he'?'rtl':'ltr');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ const v=window.t(el.getAttribute('data-i18n')); if(v) el.textContent=v; });
+  const lb=document.getElementById('langBtn'); if(lb) lb.textContent = window.__lang==='he'?'EN':'עב';
+  if(window.__rerenderGate) try{ window.__rerenderGate(); }catch(e){}
+  // Re-render dynamic content that contains translated strings.
+  if(window.__appReady) try{
+    buildChips(); buildLocSeg(); buildHotels(); buildRoute(); applyFilters();
+    const v=document.body.dataset.view;
+    if(v==='attractions') renderAttractions();
+    else if(v==='destinations') renderDestinations();
+    else if(v==='bookings') renderBookings();
+    else if(v==='info') renderInfo();
+    else if(v==='about') renderAbout();
+  }catch(e){ console.warn('lang re-render',e); }
+}
+window.applyLang = applyLang;
+
+const CATEGORIES = {
+  hotel:      {he:'מלונות',   en:'Hotels',      emoji:'🏨', color:'#0ea5a4'},
+  restaurant: {he:'מסעדות',   en:'Restaurants', emoji:'🍽️', color:'#ef4444'},
+  cafe:       {he:'בתי קפה',  en:'Cafés',       emoji:'☕', color:'#b45309'},
+  beach:      {he:'חופים',    en:'Beaches',     emoji:'🏖️', color:'#06b6d4'},
+  attraction: {he:'אטרקציות', en:'Attractions', emoji:'📸', color:'#8b5cf6'},
+  bar:        {he:'ברים',     en:'Bars',        emoji:'🍸', color:'#ec4899'},
+  shopping:   {he:'קניות',    en:'Shopping',    emoji:'🛍️', color:'#eab308'},
+  viewpoint:  {he:'תצפיות',   en:'Viewpoints',  emoji:'🌄', color:'#22c55e'},
+  activity:   {he:'פעילויות', en:'Activities',  emoji:'🤿', color:'#3b82f6'},
+  temple:     {he:'מקדשים',   en:'Temples',     emoji:'🛕', color:'#f59e0b'},
+  spa:        {he:'ספא ועיסוי', en:'Spa',       emoji:'💆', color:'#d946ef'},
+  other:      {he:'אחר',      en:'Other',       emoji:'📍', color:'#94a3b8'},
+};
+const catLabel = k => { const c=CATEGORIES[k]||CATEGORIES.other; return (window.__lang==='en'&&c.en)?c.en:c.he; };
 let REGIONS = {
   all:     {he:'כל היעדים', eng:''},
   samui:   {he:'קוסמוי',    eng:'Koh Samui',  center:[9.512,100.013]},
@@ -1374,6 +1475,7 @@ function regionOf(lat,lng){
 }
 let areaToRegion={s:'samui',p:'phangan',b:'bangkok'};
 let TRIP_CUR={code:'THB',sym:'฿'};   // trip currency (Thailand default; set per-trip from destination)
+let TRIP_COUNTRY='';                  // ISO country code of the main destination (for per-country info)
 
 /* ================= Itinerary ================= */
 let hotels = [
@@ -1479,7 +1581,11 @@ const DEFAULT_PLACES = [
 function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
 const segColor = t => t==="ferry"?css("--ferry"):t==="flight"?css("--flight"):css("--car");
 const areaColor = a => a==="s"?css("--samui"):a==="p"?css("--phangan"):css("--bangkok");
-function fmtLong(d){const[y,m,day]=d.split("-");const M=["ינו","פבר","מרץ","אפר","מאי","יוני","יולי","אוג","ספט","אוק","נוב","דצמ"];return `${+day} ${M[+m-1]}`;}
+function fmtLong(d){const[y,m,day]=d.split("-");
+  const MHE=["ינו","פבר","מרץ","אפר","מאי","יוני","יולי","אוג","ספט","אוק","נוב","דצמ"];
+  const MEN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const M=(window.__lang==='en')?MEN:MHE;
+  return (window.__lang==='en')?`${M[+m-1]} ${+day}`:`${+day} ${M[+m-1]}`;}
 const byId = id => hotels.find(h=>h.id===id);
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function haversine(a,b){const R=6371,dLat=(b[0]-a[0])*Math.PI/180,dLng=(b[1]-a[1])*Math.PI/180,
@@ -1621,8 +1727,12 @@ function updateBookingItem(b){
   refreshBookingsUI();
 }
 function removeBookingItem(id){
+  const gone=bookings.find(b=>b.id===id);
   bookings=bookings.filter(b=>b.id!==id); saveBookings();
-  if(cloud.enabled){ cloud.removeBooking(id).catch(e=>console.error('cloud booking del',e)); }
+  if(cloud.enabled){
+    cloud.removeBooking(id).catch(e=>console.error('cloud booking del',e));
+    if(gone&&gone.storagePath&&cloud.deleteBookingFile) cloud.deleteBookingFile(gone.storagePath);
+  }
   refreshBookingsUI();
 }
 function refreshBookingsUI(){
@@ -1653,8 +1763,8 @@ const listEl=document.getElementById('list');
 function hotelPopupHtml(h, rkey){
   const st=hs(h.id);
   const paidBtn = st.paid
-    ? `<button class="hbtn paid" onclick="toggleHotelPaid(${h.id})">✓ שולם · לחצו לביטול</button>`
-    : `<button class="hbtn unpaid" onclick="toggleHotelPaid(${h.id})">💳 סמן כשולם</button>`;
+    ? `<button class="hbtn paid" onclick="toggleHotelPaid(${h.id})">${window.t('h_mark_paid_undo')}</button>`
+    : `<button class="hbtn unpaid" onclick="toggleHotelPaid(${h.id})">${window.t('h_mark_paid')}</button>`;
   const hb=bookingsFor('hotel', h.id);
   const bookingList = hb.map(b=>
     `<div class="bkrow">
@@ -1662,41 +1772,41 @@ function hotelPopupHtml(h, rkey){
        <button class="hbtn ghost" onclick="deleteBooking('${b.id}')">🗑️</button>
      </div>`).join('');
   const bookingRow = `${bookingList}
-       <button class="hbtn" onclick="addBookingFor('hotel',${h.id})">📎 הוסף אישור הזמנה</button>`;
+       <button class="hbtn" onclick="addBookingFor('hotel',${h.id})">${window.t('h_add_booking')}</button>`;
   const yr=(String(h.from||'').slice(0,4))||'';
   const editRow = (window.__TEMPLATE!=='thailand')
-    ? `<div class="hactions"><button class="hbtn" onclick="editHotel('${h.id}')">✏️ ערוך</button><button class="hbtn ghost" onclick="deleteHotel('${h.id}')">🗑️ מחק לינה</button></div>`
+    ? `<div class="hactions"><button class="hbtn" onclick="editHotel('${h.id}')">${window.t('h_edit')}</button><button class="hbtn ghost" onclick="deleteHotel('${h.id}')">${window.t('h_delete_stay')}</button></div>`
     : '';
   return `
     <div class="pop">
       <h3>🏨 ${h._num||h.id}. ${esc(h.name)}</h3>
       <div class="r">${esc(h.region||'')}</div>
       <table>
-        <tr><td>צ'ק אין</td><td><b>${fmtLong(h.from)} ${yr}</b></td></tr>
-        <tr><td>צ'ק אאוט</td><td><b>${fmtLong(h.to)} ${yr}</b></td></tr>
-        <tr><td>לילות</td><td><b>${h.nights}</b></td></tr>
-        ${h.thb?`<tr><td>עלות</td><td><b>${TRIP_CUR.sym} ${(+h.thb).toLocaleString()}</b></td></tr>`:''}
-        <tr><td>תשלום</td><td><b>${st.paid?'שולם ✓':'טרם שולם'}</b></td></tr>
+        <tr><td>${window.t('h_checkin')}</td><td><b>${fmtLong(h.from)} ${yr}</b></td></tr>
+        <tr><td>${window.t('h_checkout')}</td><td><b>${fmtLong(h.to)} ${yr}</b></td></tr>
+        <tr><td>${window.t('h_nights')}</td><td><b>${h.nights}</b></td></tr>
+        ${h.thb?`<tr><td>${window.t('h_cost')}</td><td><b>${TRIP_CUR.sym} ${(+h.thb).toLocaleString()}</b></td></tr>`:''}
+        <tr><td>${window.t('h_payment')}</td><td><b>${st.paid?window.t('h_paid'):window.t('h_unpaid')}</b></td></tr>
       </table>
       <div class="hactions">
         ${paidBtn}
         ${bookingRow}
       </div>
       ${editRow}
-      <div class="navrow"><a class="wazebtn" href="${wazeLink(h.lat, h.lng)}" target="_blank" rel="noopener">🧭 נווט ב-Waze</a><a href="${gmapsLink(h.name, rkey, h.lat, h.lng)}" target="_blank" rel="noopener">Google Maps ↗</a></div>
+      <div class="navrow"><a class="wazebtn" href="${wazeLink(h.lat, h.lng)}" target="_blank" rel="noopener">${window.t('nav_waze')}</a><a href="${gmapsLink(h.name, rkey, h.lat, h.lng)}" target="_blank" rel="noopener">Google Maps ↗</a></div>
     </div>`;
 }
 function hotelCardHtml(h){
   const st=hs(h.id);
-  const badge = st.paid ? `<span class="paidbadge ok">שולם ✓</span>` : `<span class="paidbadge no">טרם שולם</span>`;
+  const badge = st.paid ? `<span class="paidbadge ok">${window.t('h_paid')}</span>` : `<span class="paidbadge no">${window.t('h_unpaid')}</span>`;
   const nb=bookingsFor('hotel', h.id).length;
   const doc = nb ? `<span class="paidbadge doc">📄 ${nb} ${nb===1?'אישור':'אישורים'}</span>` : '';
   return `
     <div class="idx">${h._num||h.id}</div>
     <h3>${esc(h.name)}</h3>
     <div class="region">${esc(h.region||'')}</div>
-    <div class="dates"><span class="pill">${fmtLong(h.from)}</span><span>←</span><span class="pill">${fmtLong(h.to)}</span></div>
-    <div class="meta"><span>🌙 ${h.nights} לילות</span>${h.thb?`<span>${TRIP_CUR.sym} ${(+h.thb).toLocaleString()}</span>`:''}</div>
+    <div class="dates"><span class="pill">${fmtLong(h.from)}</span><span>${window.__lang==='en'?'→':'←'}</span><span class="pill">${fmtLong(h.to)}</span></div>
+    <div class="meta"><span>🌙 ${h.nights} ${window.t('h_nights')}</span>${h.thb?`<span>${TRIP_CUR.sym} ${(+h.thb).toLocaleString()}</span>`:''}</div>
     <div class="hbadges">${badge}${doc}</div>`;
 }
 
@@ -1988,7 +2098,7 @@ function openEditBookingModal(id){
     if(b.lat!=null && b.lng!=null) setBkCoords(b.lat, b.lng);
   }
   // keep the existing file unless the user picks a new one
-  if(b.dataUrl){ bkPendingFile={ name:b.name, type:b.type, dataUrl:b.dataUrl }; bkStatus.textContent='✓ קובץ קיים — העלו חדש רק אם רוצים להחליף'; }
+  if(b.url||b.dataUrl){ bkPendingFile={ name:b.name, type:b.type, dataUrl:b.dataUrl, url:b.url, storagePath:b.storagePath }; bkStatus.textContent='✓ קובץ קיים — העלו חדש רק אם רוצים להחליף'; }
   buildBkIconPicker(); updateBookingModalMode();
   bookingModal.classList.add('show');
 }
@@ -2051,6 +2161,21 @@ document.getElementById('bkSave').addEventListener('click',async ()=>{
   const existing = isEdit ? bookings.find(x=>x.id===editingBookingId) : null;
   const id = isEdit ? editingBookingId : ('bk'+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
   const family = normFamily(bkFamily.value);
+  // Prefer Firebase Storage for the file; fall back to inline base64 if Storage isn't enabled.
+  let filePayload;
+  if(bkPendingFile.url && !bkPendingFile.dataUrl){
+    filePayload={ name:bkPendingFile.name, type:bkPendingFile.type, url:bkPendingFile.url, storagePath:bkPendingFile.storagePath||null };
+  } else if(cloud && cloud.enabled && cloud.hasStorage && cloud.hasStorage() && bkPendingFile.dataUrl){
+    bkStatus.textContent='מעלה קובץ…';
+    try{
+      const up=await cloud.uploadBooking(id, dataUrlToBlob(bkPendingFile.dataUrl), bkPendingFile.name);
+      filePayload={ name:bkPendingFile.name, type:bkPendingFile.type, url:up.url, storagePath:up.path };
+      const oldPath=existing&&existing.storagePath;
+      if(oldPath && oldPath!==up.path && cloud.deleteBookingFile) cloud.deleteBookingFile(oldPath);
+    }catch(e){ filePayload={ name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl }; }
+  } else {
+    filePayload={ name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl };
+  }
   let b;
   if(kind==='other'){
     const label=bkLabel.value.trim();
@@ -2064,13 +2189,12 @@ document.getElementById('bkSave').addEventListener('click',async ()=>{
         try{ const res=await nomSearch(q); if(res&&res.length){ setBkCoords(res[0].lat,res[0].lon); bkStatus.textContent=''; } }catch(e){} }
     }
     if(!bkPending){ bkStatus.textContent='⚠ בחרו מיקום: הקלידו שם ולחצו “חפש”, או “בחרו נקודה על המפה”.'; return; }
-    b={ id, kind:'other', family, label, name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl,
+    b={ id, kind:'other', family, label, ...filePayload,
         icon:bkIcon||'📍', date, lat:bkPending.lat, lng:bkPending.lng, region:regionOf(bkPending.lat,bkPending.lng),
         createdAt:(existing&&existing.createdAt)||Date.now() };
   } else {
     if(!refId){ bkStatus.textContent='⚠ בחרו מלון או טיסה'; return; }
-    b={ id, kind, refId, family, label:bkLabel.value.trim()||bkPendingFile.name,
-        name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl,
+    b={ id, kind, refId, family, label:bkLabel.value.trim()||bkPendingFile.name, ...filePayload,
         icon:bkIcon||'', date:entityDate(kind, refId), createdAt:(existing&&existing.createdAt)||Date.now() };
   }
   if(isEdit){ updateBookingItem(b); editingBookingId=null; closeBookingModal(); return; }
@@ -2104,8 +2228,8 @@ function closeFileViewer(){
 function openFileViewer(b){
   if(currentObjUrl){ URL.revokeObjectURL(currentObjUrl); currentObjUrl=null; }
   document.getElementById('fileTitle').textContent=b.label||b.name||'אישור הזמנה';
-  let url=b.dataUrl;
-  try{ currentObjUrl=URL.createObjectURL(dataUrlToBlob(b.dataUrl)); url=currentObjUrl; }catch(e){}
+  let url=b.url||b.dataUrl;
+  if(!b.url && b.dataUrl){ try{ currentObjUrl=URL.createObjectURL(dataUrlToBlob(b.dataUrl)); url=currentObjUrl; }catch(e){} }
   const dl=document.getElementById('fileDownload'); dl.href=url; dl.setAttribute('download', b.name||'booking');
   const openTab=document.getElementById('fileOpenTab'); openTab.href=url;
   fileBody.innerHTML='';
@@ -2148,7 +2272,7 @@ function buildLocSeg(){
   Object.entries(REGIONS).forEach(([k,r])=>{
     const b=document.createElement('div');
     b.className='sbtn'+(k===locFilter?' on':'');
-    b.textContent=r.he;
+    b.textContent=(k==='all')?window.t('reg_all'):r.he;
     b.addEventListener('click',()=>{
       locFilter=k;
       if(nearbyOn){ nearbyOn=false; toggleNearUI(false); }
@@ -2167,7 +2291,7 @@ function buildChips(){
   Object.entries(CATEGORIES).forEach(([k,c])=>{
     const chip=document.createElement('div');
     chip.className='chip on';
-    chip.innerHTML=`<span class="cdot" style="background:${c.color}"></span>${c.he}`;
+    chip.innerHTML=`<span class="cdot" style="background:${c.color}"></span>${catLabel(k)}`;
     chip.addEventListener('click',()=>{ active[k]=!active[k]; chip.classList.toggle('on',active[k]); chip.classList.toggle('off',!active[k]); applyFilters(); });
     chipsEl.appendChild(chip);
   });
@@ -2179,9 +2303,9 @@ const poiTitle=document.getElementById('poiTitle');
 function renderPoiList(){
   let items=poiMeta.filter(withinFilters);
   if(nearbyOn) items=items.slice().sort((a,b)=>a.dist-b.dist);
-  poiTitle.textContent = nearbyOn?'⭐ מקומות סביבי':'⭐ מקומות מומלצים';
+  poiTitle.textContent = nearbyOn?window.t('sec_nearby'):window.t('sec_recommended');
   poiListEl.innerHTML='';
-  if(items.length===0){ poiListEl.innerHTML='<div class="empty">אין מקומות בסינון הנוכחי'+(isAdmin?' · הוסיפו עם ➕':'')+'</div>'; return; }
+  if(items.length===0){ poiListEl.innerHTML='<div class="empty">'+window.t('poi_empty')+(isAdmin?window.t('poi_empty_add'):'')+'</div>'; return; }
   items.forEach(o=>{
     const p=places.find(x=>x.id===o.pid); if(!p) return;
     const c=CATEGORIES[p.cat]||CATEGORIES.other;
@@ -2252,7 +2376,7 @@ radiusSel.addEventListener('change',()=>{ radiusKm=+radiusSel.value; if(nearbyOn
 const banner=document.getElementById('banner');
 const modal=document.getElementById('modal');
 const fCat=document.getElementById('fCat');
-Object.entries(CATEGORIES).forEach(([k,c])=>{ if(k==='hotel')return; const o=document.createElement('option'); o.value=k; o.textContent=`${c.emoji} ${c.he}`; fCat.appendChild(o); });
+Object.entries(CATEGORIES).forEach(([k,c])=>{ if(k==='hotel')return; const o=document.createElement('option'); o.value=k; o.textContent=`${c.emoji} ${catLabel(k)}`; fCat.appendChild(o); });
 let pending=null; // {lat,lng}
 let placing=false;
 let editingPlaceId=null; // set while editing an existing place
@@ -2576,6 +2700,8 @@ document.getElementById('fitBtn').addEventListener('click',()=>{ locFilter='all'
 document.getElementById('footerText').innerHTML = 'טפו על מקום לראותו במפה · הכפתור 🧭 מציג הכל.';
 
 /* ================= Theme ================= */
+const langBtn=document.getElementById('langBtn');
+if(langBtn) langBtn.addEventListener('click',()=>applyLang(window.__lang==='he'?'en':'he'));
 const themeBtn=document.getElementById('themeBtn');
 let theme=(function(){try{return localStorage.getItem('thai_theme')||'dark';}catch(e){return 'dark';}})();
 function applyTheme(t){
@@ -2738,6 +2864,7 @@ async function resolveTripCurrency(d){
     const j=await r.json();
     const cc=j&&j.address&&j.address.country_code;
     if(!cc) return;
+    TRIP_COUNTRY=String(cc).toLowerCase();
     TRIP_CUR=currencyForCountry(cc);
     fxRates=fxLoad(TRIP_CUR.code);
     await refreshFx();
@@ -2779,22 +2906,83 @@ function ccNoteHtml(){
 }
 
 /* ================= Info tab ================= */
+/* ---- Per-country info (for custom trips) ---- */
+const EU_CC='at be cy ee fi fr de gr ie it lv lt lu mt nl pt sk si es hr bg cz dk hu pl ro se'.split(' ');
+const EM_LABEL={general:'em_general',police:'em_police',ambulance:'em_ambulance',fire:'em_fire',tourist:'em_tourist'};
+function emergencyFor(cc){
+  cc=String(cc||'').toLowerCase();
+  const M={
+    th:{tourist:'1155',police:'191',ambulance:'1669'}, il:{police:'100',ambulance:'101',fire:'102'},
+    us:{general:'911'}, ca:{general:'911'}, gb:{general:'999'}, jp:{police:'110',ambulance:'119'},
+    au:{general:'000'}, nz:{general:'111'}, fr:{general:'112',police:'17',ambulance:'15'},
+    de:{general:'112',police:'110'}, in:{police:'100',ambulance:'102'}, cn:{police:'110',ambulance:'120'},
+    ae:{police:'999',ambulance:'998'}, eg:{police:'122',ambulance:'123'}, za:{general:'112',ambulance:'10177'},
+    tr:{general:'112'}, ru:{general:'112'}, mx:{general:'911'}, br:{police:'190',ambulance:'192'},
+    sg:{police:'999',ambulance:'995'}, my:{general:'999'}, id:{police:'110',ambulance:'118'},
+    ph:{general:'911'}, vn:{police:'113',ambulance:'115'}, kr:{police:'112',ambulance:'119'},
+    ma:{police:'19',ambulance:'15'}, jo:{general:'911'}, lk:{general:'119'}
+  };
+  if(M[cc]) return M[cc];
+  if(EU_CC.includes(cc)) return {general:'112'};
+  return {general:'112 / 911'};
+}
+function electricityFor(cc){
+  cc=String(cc||'').toLowerCase();
+  const M={
+    us:{volt:'120V · 60Hz',plugs:'A / B'}, ca:{volt:'120V · 60Hz',plugs:'A / B'},
+    jp:{volt:'100V',plugs:'A / B'}, gb:{volt:'230V',plugs:'G'}, ie:{volt:'230V',plugs:'G'},
+    au:{volt:'230V',plugs:'I'}, nz:{volt:'230V',plugs:'I'}, cn:{volt:'220V',plugs:'A / I / C'},
+    in:{volt:'230V',plugs:'C / D / M'}, th:{volt:'220V',plugs:'A / B / C'}, il:{volt:'230V',plugs:'H / C'},
+    za:{volt:'230V',plugs:'M / N / D'}, ch:{volt:'230V',plugs:'J / C'}, br:{volt:'127/220V',plugs:'N / C'},
+    sg:{volt:'230V',plugs:'G'}, ae:{volt:'230V',plugs:'G'}, tr:{volt:'230V',plugs:'C / F'}
+  };
+  if(M[cc]) return M[cc];
+  if(EU_CC.includes(cc)) return {volt:'230V · 50Hz',plugs:'C / F'};
+  return null;
+}
+function infoCustomHtml(){
+  const em=emergencyFor(TRIP_COUNTRY);
+  const emRows=Object.entries(em).map(([k,v])=>`<div class="inforow"><span>${window.t(EM_LABEL[k]||k)}</span><a href="tel:${String(v).replace(/[^0-9+]/g,'')}">${v}</a></div>`).join('');
+  const el=electricityFor(TRIP_COUNTRY);
+  return `
+    <div class="about-card" id="infoFacts"><h3>${window.t('info_dest')}</h3><div style="color:var(--muted);font-size:12px">${window.t('info_loading')}</div></div>
+    <div class="about-card"><h3>${window.t('info_emergency')}</h3>${emRows}</div>
+    ${el?`<div class="about-card"><h3>${window.t('info_electric')}</h3><div class="inforow"><span>${window.t('info_volt')}</span><b>${el.volt}</b></div><div class="inforow"><span>${window.t('info_plugs')}</span><b>${el.plugs}</b></div></div>`:''}
+    <div class="about-card" style="color:var(--muted);font-size:12px">${window.t('info_esim')}</div>`;
+}
+async function loadCountryInfo(){
+  const el=document.getElementById('infoFacts'); if(!el) return;
+  const H='<h3>'+window.t('info_dest')+'</h3>';
+  if(!TRIP_COUNTRY){ el.innerHTML=H+'<div style="color:var(--muted);font-size:12px">'+window.t('info_no_country')+'</div>'; return; }
+  try{
+    const r=await fetch('https://restcountries.com/v3.1/alpha/'+encodeURIComponent(TRIP_COUNTRY)+'?fields=name,capital,languages,timezones,car,idd,flag');
+    const j=await r.json(); const d=Array.isArray(j)?j[0]:j;
+    if(!d||!d.name) throw 0;
+    const langs=d.languages?Object.values(d.languages).join(', '):'';
+    const tz=(d.timezones&&d.timezones[0])||'';
+    const side=(d.car&&d.car.side==='left')?window.t('drive_left'):window.t('drive_right');
+    const idd=(d.idd&&d.idd.root)?(d.idd.root+((d.idd.suffixes&&d.idd.suffixes.length===1)?d.idd.suffixes[0]:'')):'';
+    el.innerHTML=`<h3>${d.flag||'🌍'} ${esc((d.name&&d.name.common)||'')}</h3>
+      <div class="inforow"><span>${window.t('info_capital')}</span><b>${esc((d.capital&&d.capital[0])||'—')}</b></div>
+      <div class="inforow"><span>${window.t('info_langs')}</span><b>${esc(langs||'—')}</b></div>
+      ${tz?`<div class="inforow"><span>${window.t('info_tz')}</span><b>${esc(tz)}</b></div>`:''}
+      <div class="inforow"><span>${window.t('info_drive')}</span><b>${side}</b></div>
+      ${idd?`<div class="inforow"><span>${window.t('info_dial')}</span><b>${esc(idd)}</b></div>`:''}`;
+  }catch(e){ el.innerHTML=H+'<div style="color:var(--muted);font-size:12px">'+window.t('info_cant_load')+'</div>'; }
+}
 function renderInfo(){
   const host=document.getElementById('view-info');
-  host.innerHTML=`
-    <h2>🧭 מידע שימושי</h2>
-    <div class="lead">כל מה שכדאי שיהיה בהישג יד בטיול.</div>
-
+  const converter=`
     <div class="about-card">
-      <h3>💱 המרת מטבע</h3>
+      <h3>${window.t('cc_title')}</h3>
       <div class="cc-grid">
         <label>${esc(TRIP_CUR.code)} ${esc(TRIP_CUR.sym)}<input id="ccBASE" type="number" inputmode="decimal" value="100" /></label>
         <label>שקל ₪<input id="ccILS" type="number" inputmode="decimal" /></label>
         <label>דולר $<input id="ccUSD" type="number" inputmode="decimal" /></label>
       </div>
       <div class="cc-note" id="ccNote">${ccNoteHtml()}</div>
-    </div>
-
+    </div>`;
+  const thaiCards=`
     <div class="about-card">
       <h3>🆘 חירום</h3>
       <div class="inforow"><span>משטרת תיירות</span><a href="tel:1155">1155</a></div>
@@ -2802,14 +2990,12 @@ function renderInfo(){
       <div class="inforow"><span>אמבולנס / חילוץ</span><a href="tel:1669">1669</a></div>
       <div class="inforow"><span>מכבי אש</span><a href="tel:199">199</a></div>
     </div>
-
     <div class="about-card">
       <h3>🇮🇱 שגרירות ישראל בבנגקוק</h3>
       <div class="inforow"><span>טלפון</span><a href="tel:+6622047600">+66 2 204 7600</a></div>
       <div class="inforow"><span>חירום קונסולרי</span><a href="tel:+66898946800">+66 89 894 6800</a></div>
       <div style="color:var(--muted);font-size:12px;margin-top:6px">Ocean Tower 2, 25th floor, Sukhumvit — בנגקוק</div>
     </div>
-
     <div class="about-card">
       <h3>🔌 חשמל ותקשורת</h3>
       <div class="inforow"><span>מתח</span><b>220V · 50Hz</b></div>
@@ -2818,7 +3004,6 @@ function renderInfo(){
       <div class="inforow"><span>אזור זמן</span><b>+7 (5 שעות לפני ישראל)</b></div>
       <div style="color:var(--muted);font-size:12px;margin-top:6px">שווה eSIM (AIS / TrueMove) לנתונים.</div>
     </div>
-
     <div class="about-card">
       <h3>🗣️ ביטויים בתאית</h3>
       <div class="inforow"><span>שלום (גבר/אישה)</span><b>סָוָואדִי כְׁרַאבּ / כָּה</b></div>
@@ -2830,7 +3015,6 @@ function renderInfo(){
       <div class="inforow"><span>לא חריף</span><b>מַאי פֶּׁט</b></div>
       <div class="inforow"><span>המשקום / שירותים</span><b>הׁוֹנג נָאם</b></div>
     </div>
-
     <div class="about-card">
       <h3>💵 טיפים ומזומן</h3>
       • מסעדות: לרוב 10% שירות כלול; אחרת ~20–50 บาท.<br>
@@ -2838,12 +3022,15 @@ function renderInfo(){
       • ספא/עיסוי: ~50–100 บาท.<br>
       • מזומן עדיף בשווקים ובאיים; כספומטים גובים ~220 บาท עמלה.
     </div>`;
+  const cards = (window.__TEMPLATE==='thailand') ? thaiCards : infoCustomHtml();
+  host.innerHTML=`<h2>${window.t('info_title')}</h2><div class="lead">${window.t('info_lead')}</div>${converter}${cards}`;
   ccRecalc('BASE');
   ['ccBASE','ccILS','ccUSD'].forEach(id=>{
     const el=document.getElementById(id);
     el.addEventListener('input',()=>ccRecalc(id.slice(2)));
   });
   if(fxRates.approx || !fxRates.ts || (Date.now()-fxRates.ts)>12*3600*1000) refreshFx();
+  if(window.__TEMPLATE!=='thailand') loadCountryInfo();
 }
 
 /* ================= Weather ================= */
@@ -2908,7 +3095,7 @@ function renderAttractions(){
     const items=places.filter(p=>p.cat===k && (!q || p.name.toLowerCase().includes(q)) && (!attrStarOnly || p.star));
     if(!items.length) return;
     const h=document.createElement('div'); h.className='attr-h';
-    h.innerHTML=`<span class="cdot" style="background:${c.color}"></span>${c.emoji} ${c.he} · ${items.length}`;
+    h.innerHTML=`<span class="cdot" style="background:${c.color}"></span>${c.emoji} ${catLabel(k)} · ${items.length}`;
     host.appendChild(h);
     items.forEach(p=>{
       total++;
@@ -3024,9 +3211,22 @@ function renderDestinations(){
   if(!wxForecast.ts || (Date.now()-wxForecast.ts)>3*3600*1000) refreshForecast();
 }
 
+function routeAboutHtml(nights){
+  if(window.__TEMPLATE==='thailand'){
+    return `<div class="about-card"><h3>המסלול 🇹🇭</h3>
+      6 באוגוסט – 1 בספטמבר 2026 · טיול של ${nights} לילות בין קוסמוי, קופאנגן ובנגקוק.
+      הגעה בטיסה לקוסמוי, מעבורות בין האיים, וטיסה חזרה לבנגקוק בסוף.</div>`;
+  }
+  const IT=window.__ITINERARY||{};
+  const dests=(IT.destinations||[]).map(d=>esc(d.name)).join(' · ');
+  const range=(IT.startDate&&IT.endDate)?(fmtLong(IT.startDate)+' – '+fmtLong(IT.endDate)):'';
+  return `<div class="about-card"><h3>המסלול 🗺️</h3>
+    <b>${esc(window.__TRIP_NAME||'הטיול')}</b>${range?' · '+range:''}${nights?' · '+nights+' לילות':''}
+    ${dests?'<br>יעדים: '+dests:''}</div>`;
+}
 function renderAbout(){
   const host=document.getElementById('view-about');
-  const nights=hotels.reduce((s,h)=>s+h.nights,0);
+  const nights=hotels.reduce((s,h)=>s+(h.nights||0),0);
   const paidCount=hotels.filter(h=>hs(h.id).paid).length;
   host.innerHTML=`
     <h2>ℹ️ אודות הטיול</h2>
@@ -3043,11 +3243,7 @@ function renderAbout(){
         ${ACCENT_PRESETS.map(p=>`<button class="swatch${p.id===accentPreset?' on':''}" data-acc="${p.id}" title="${p.name}" aria-label="${p.name}" style="--sw:hsl(${p.hue},85%,55%)" onclick="applyAccent('${p.id}')"></button>`).join('')}
       </div>
     </div>
-    <div class="about-card">
-      <h3>המסלול 🇹🇭</h3>
-      6 באוגוסט – 1 בספטמבר 2026 · טיול של ${nights} לילות בין קוסמוי, קופאנגן ובנגקוק.
-      הגעה בטיסה לקוסמוי, מעבורות בין האיים, וטיסה חזרה לבנגקוק בסוף.
-    </div>
+    ${routeAboutHtml(nights)}
     <div class="about-card">
       <h3>איך משתמשים</h3>
       • לשונית <b>מפה</b> — מפה אינטראקטיבית עם מלונות, מסעדות, בתי קפה, חופים ועוד.<br>
@@ -3105,6 +3301,7 @@ function applyItinerary(IT){
   TRIP_CD_LABEL='ל'+name;
   WX_REGIONS=dests.map(d=>({key:d.key, he:d.name, lat:d.lat, lng:d.lng, date:d.date||(IT&&IT.startDate)||''}));
   // Trip currency from the main destination's country.
+  TRIP_COUNTRY = (IT&&IT.mainCountry) ? String(IT.mainCountry).toLowerCase() : '';
   const cur = (IT&&IT.currency) ? IT.currency : ((IT&&IT.mainCountry) ? currencyForCountry(IT.mainCountry) : null);
   if(cur){ TRIP_CUR=cur; }
   fxRates = fxLoad(TRIP_CUR.code);   // cached rates for this currency, else approx → refreshFx() fills in
@@ -3148,6 +3345,8 @@ async function __startApp(){
   applyFilters();
   fitAll();
   applyTheme(theme);
+  window.__appReady=true;
+  applyLang(window.__lang);
   updateNetStatus();
   applyAccent(accentPreset);
   updateCountdown();
@@ -3266,10 +3465,14 @@ window.TripReady.then(()=>__startApp());
       = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js");
     const { getFirestore, collection, doc, setDoc, deleteDoc, getDoc, getDocs, onSnapshot }
       = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
+    // Firebase Storage is optional — only used if the project has it enabled.
+    let ST=null;
+    try{ ST = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js"); }catch(e){}
 
     const app  = initializeApp(cfg);
     const auth = getAuth(app);
     const db   = getFirestore(app);
+    const storage = ST ? ST.getStorage(app) : null;
     const FREE_LIMIT = window.FREE_TRIP_LIMIT || 1;
 
     const userDoc  = uid => doc(db,'users',uid);
@@ -3309,6 +3512,16 @@ window.TripReady.then(()=>__startApp());
         removeHotel(id){ return deleteDoc(doc(hotelsCol(), String(id))); },
         upsertBooking(b){ return setDoc(doc(bookingsCol(), String(b.id)), b); },
         removeBooking(id){ return deleteDoc(doc(bookingsCol(), String(id))); },
+        hasStorage(){ return !!(storage && ST); },
+        async uploadBooking(id, blob, filename){
+          if(!storage||!ST) throw new Error('no-storage');
+          const path = base.join('/')+'/bookings/'+id+'/'+(filename||'file').replace(/[^\w.\-]/g,'_');
+          const sref = ST.ref(storage, path);
+          await ST.uploadBytes(sref, blob);
+          const url = await ST.getDownloadURL(sref);
+          return {url, path};
+        },
+        deleteBookingFile(path){ if(!storage||!ST||!path) return Promise.resolve(); return ST.deleteObject(ST.ref(storage, path)).catch(()=>{}); },
         getMeta(){ return getDoc(doc(db,...base,'meta','info')).then(s=>s.exists()?s.data():null); },
         setMeta(d){ return setDoc(doc(db,...base,'meta','info'), d, {merge:true}); },
       };
@@ -3330,64 +3543,71 @@ window.TripReady.then(()=>__startApp());
       resolveTrip({uid, tripId:trip.id});
     }
 
+    let __gateScreen=null;
+    window.__rerenderGate = ()=>{ if(__gateScreen) try{ __gateScreen(); }catch(e){} };
+    const T = k => window.t ? window.t(k) : k;
+
     function renderLogin(){
+      __gateScreen=renderLogin;
       showGate();
       gateBody.innerHTML = `
         <div class="g-card">
           <div class="g-logo">🧭</div>
-          <h2>מתכנן הטיולים</h2>
-          <p>התחברו כדי ליצור ולנהל את הטיולים שלכם. הנתונים נשמרים בענן ופרטיים לחשבונכם.</p>
-          <button class="g-btn primary" id="gGoogle">התחברות עם Google</button>
+          <h2>${T('gate_title')}</h2>
+          <p>${T('gate_login_sub')}</p>
+          <button class="g-btn primary" id="gGoogle">${T('gate_login_google')}</button>
         </div>`;
       document.getElementById('gGoogle').onclick = ()=>
-        signInWithPopup(auth, new GoogleAuthProvider()).catch(e=>alert('התחברות נכשלה: '+e.message));
+        signInWithPopup(auth, new GoogleAuthProvider()).catch(e=>alert(T('gate_login_fail')+e.message));
     }
 
     async function renderTrips(user){
+      __gateScreen=()=>renderTrips(user);
       showGate();
-      gateBody.innerHTML = '<div class="g-card"><p>טוען…</p></div>';
+      gateBody.innerHTML = '<div class="g-card"><p>…</p></div>';
       const [profile, trips] = await Promise.all([getProfile(user.uid), listTrips(user.uid)]);
-      const tier = profile.tier==='pro' ? 'pro' : 'free';
+      const isOwner = (window.OWNER_EMAILS||[]).map(e=>String(e).toLowerCase()).includes(String(user.email||'').toLowerCase());
+      const tier = (profile.tier==='pro' || isOwner) ? 'pro' : 'free';
       const atLimit = tier==='free' && trips.length >= FREE_LIMIT;
 
       const rows = trips.map(t=>`
         <div class="g-trip">
-          <span class="g-trip-name">${esc(t.name)||'טיול'}</span>
+          <span class="g-trip-name">${esc(t.name)||T('gate_trip')}</span>
           <span class="g-trip-actions">
-            <button class="g-mini" data-open="${t.id}">פתח ›</button>
-            <button class="g-mini danger" data-del="${t.id}">🗑 מחק</button>
+            <button class="g-mini" data-open="${t.id}">${T('gate_open')}</button>
+            <button class="g-mini danger" data-del="${t.id}">${T('gate_delete')}</button>
           </span>
-        </div>`).join('') || '<p class="g-empty">אין עדיין טיולים. צרו את הראשון 👇</p>';
+        </div>`).join('') || `<p class="g-empty">${T('gate_no_trips')}</p>`;
 
       gateBody.innerHTML = `
         <div class="g-card wide">
           <div class="g-top">
-            <div><h2>הטיולים שלי</h2><span class="g-plan">${tier==='pro'?'⭐ Pro · ללא הגבלה':'תוכנית חינם · עד '+FREE_LIMIT+' טיול'}</span></div>
-            <button class="g-mini" id="gOut">התנתקות</button>
+            <div><h2>${T('gate_my_trips')}</h2><span class="g-plan">${tier==='pro'?T('gate_plan_pro'):T('gate_plan_free')+FREE_LIMIT}</span></div>
+            <button class="g-mini" id="gOut">${T('gate_logout')}</button>
           </div>
           <div class="g-trips">${rows}</div>
           <div class="g-new" ${atLimit?'style="opacity:.5;pointer-events:none"':''}>
-            <div class="g-new-title">➕ טיול חדש</div>
-            <input id="gName" class="g-input" placeholder="שם הטיול (למשל: יפן 2027)"/>
+            <div class="g-new-title">${T('gate_new_trip')}</div>
+            <input id="gName" class="g-input" placeholder="${T('gate_name_ph')}"/>
             <div class="g-dates">
-              <label class="g-lbl">מתאריך<input id="gStart" type="date" class="g-input"/></label>
-              <label class="g-lbl">עד תאריך<input id="gEnd" type="date" class="g-input"/></label>
+              <label class="g-lbl">${T('gate_from')}<input id="gStart" type="date" class="g-input"/></label>
+              <label class="g-lbl">${T('gate_to')}<input id="gEnd" type="date" class="g-input"/></label>
             </div>
             <div class="g-dest-add">
-              <input id="gDestSearch" class="g-input" placeholder="הקלידו יעד (עיר / אזור), למשל: אתונה"/>
-              <button class="g-mini" id="gDestSearchBtn" type="button">חפש</button>
+              <input id="gDestSearch" class="g-input" placeholder="${T('gate_dest_ph')}"/>
+              <button class="g-mini" id="gDestSearchBtn" type="button">${T('gate_search')}</button>
             </div>
             <div id="gDestResults" class="g-results"></div>
             <div id="gDestStatus" class="g-status"></div>
             <div id="gDestList" class="g-destlist"></div>
-            <button class="g-btn primary" id="gCreate" disabled>צור טיול</button>
-            <button class="g-mini" id="gSample" type="button" style="margin-top:2px">או נסו תבנית לדוגמה: תאילנד 2026</button>
+            <button class="g-btn primary" id="gCreate" disabled>${T('gate_create')}</button>
+            <button class="g-mini" id="gSample" type="button" style="margin-top:2px">${T('gate_sample')}</button>
           </div>
           ${atLimit ? `<div class="g-paywall">
-              <p>הגעתם למכסת התוכנית החינמית. שדרגו ל-Pro לטיולים ללא הגבלה.</p>
+              <p>${T('gate_paywall')}</p>
               ${window.STRIPE_PAYMENT_LINK
-                 ? `<a class="g-btn pro" href="${window.STRIPE_PAYMENT_LINK}" target="_blank" rel="noopener">⭐ שדרוג ל-Pro</a>`
-                 : `<button class="g-btn pro" disabled title="הגדירו STRIPE_PAYMENT_LINK בקוד">⭐ שדרוג ל-Pro (דורש הגדרה)</button>`}
+                 ? `<a class="g-btn pro" href="${window.STRIPE_PAYMENT_LINK}" target="_blank" rel="noopener">${T('gate_upgrade')}</a>`
+                 : `<button class="g-btn pro" disabled>${T('gate_upgrade_cfg')}</button>`}
             </div>` : ''}
         </div>`;
 
@@ -3398,7 +3618,7 @@ window.TripReady.then(()=>__startApp());
       });
       gateBody.querySelectorAll('[data-del]').forEach(el=>el.onclick=async ev=>{
         ev.stopPropagation();
-        if(confirm('למחוק את הטיול הזה לצמיתות?')){ await removeTrip(user.uid, el.getAttribute('data-del')); renderTrips(user); }
+        if(confirm(T('gate_confirm_del'))){ await removeTrip(user.uid, el.getAttribute('data-del')); renderTrips(user); }
       });
       // ----- Skeleton itinerary funnel: name + dates + destinations (via Maps link) -----
       const funnelDests = [];
@@ -3422,10 +3642,10 @@ window.TripReady.then(()=>__startApp());
       async function runDestSearch(){
         const inp=$('gDestSearch'), rz=$('gDestResults'), btn=$('gDestSearchBtn');
         const q=inp.value.trim(); if(!q) return;
-        btn.disabled=true; rz.innerHTML='<div class="g-status">מחפש…</div>';
+        btn.disabled=true; rz.innerHTML=`<div class="g-status">${T('gate_searching')}</div>`;
         let res=[]; try{ res = window.__nomSearch ? await window.__nomSearch(q) : []; }catch(e){}
         btn.disabled=false;
-        if(!res || !res.length){ rz.innerHTML='<div class="g-status">לא נמצאו תוצאות. נסו שם באנגלית.</div>'; return; }
+        if(!res || !res.length){ rz.innerHTML=`<div class="g-status">${T('gate_no_results')}</div>`; return; }
         rz.innerHTML='';
         res.slice(0,6).forEach(r=>{
           const main=String(r.display_name||'').split(',')[0];
@@ -3445,7 +3665,7 @@ window.TripReady.then(()=>__startApp());
       $('gCreate').onclick = async()=>{
         const name=$('gName').value.trim();
         const startDate=$('gStart').value, endDate=$('gEnd').value;
-        const btn=$('gCreate'); btn.disabled=true; btn.textContent='יוצר…';
+        const btn=$('gCreate'); btn.disabled=true; btn.textContent=T('gate_creating');
         const mainCountry=(funnelDests[0]&&funnelDests[0].country)||'';
         const itinerary = { startDate, endDate, destinations: funnelDests.map(d=>({...d, date:startDate})) };
         if(mainCountry){ itinerary.mainCountry=mainCountry; itinerary.currency=window.__currencyForCountry(mainCountry); }
@@ -3455,7 +3675,7 @@ window.TripReady.then(()=>__startApp());
       };
 
       $('gSample').onclick = async()=>{
-        const btn=$('gSample'); btn.disabled=true; btn.textContent='יוצר…';
+        const btn=$('gSample'); btn.disabled=true; btn.textContent=T('gate_creating');
         const nm='תאילנד 2026 (לדוגמה)';
         const id=await createTrip(user.uid, nm, 'thailand');
         localStorage.setItem(LS_ACTIVE, id);

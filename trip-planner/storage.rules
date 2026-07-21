@@ -1,0 +1,13 @@
+rules_version = '2';
+
+// Security rules for Firebase Storage (booking file uploads).
+// Paste into Firebase Console → Storage → Rules → Publish.
+// Each user can only read/write files under their own users/{uid}/ path.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /users/{uid}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    // Everything else denied by default.
+  }
+}
