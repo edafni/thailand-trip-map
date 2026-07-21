@@ -1047,7 +1047,17 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .g-trip-name{font-weight:600}
   .g-trip-actions{display:flex;gap:6px}
   .g-empty{color:#8698b0;text-align:center;padding:10px}
-  .g-new{display:flex;flex-direction:column;gap:8px}
+  .g-new{display:flex;flex-direction:column;gap:8px;margin-top:6px;padding-top:12px;border-top:1px solid #22314a}
+  .g-new-title{font-weight:700;font-size:14px;color:#cdd9e8}
+  .g-dates{display:flex;gap:8px}
+  .g-lbl{flex:1;display:flex;flex-direction:column;gap:3px;font-size:12px;color:#9fb0c6}
+  .g-dest-add{display:flex;gap:8px}
+  .g-dest-add .g-input{flex:1}
+  .g-status{font-size:12px;color:#9fb0c6;min-height:0}
+  .g-destlist{display:flex;flex-wrap:wrap;gap:6px}
+  .g-dest{display:inline-flex;align-items:center;gap:6px;background:#15243c;border:1px solid #294066;
+    border-radius:999px;padding:5px 10px;font-size:13px}
+  .g-dest button{background:none;border:0;color:#8fa5c2;cursor:pointer;font-size:13px;padding:0}
   .g-input{background:#0f1930;border:1px solid #26364e;color:#e5edf5;border-radius:10px;padding:11px 12px;font-size:14px;font-family:inherit}
   .g-paywall{margin-top:14px;padding:14px;border:1px dashed #4a5a30;border-radius:12px;background:#1a2213}
   .g-paywall p{color:#d7e6b6;margin:0 0 10px}
@@ -1317,7 +1327,7 @@ const CATEGORIES = {
   spa:        {he:'ספא ועיסוי', emoji:'💆', color:'#d946ef'},
   other:      {he:'אחר',      emoji:'📍', color:'#94a3b8'},
 };
-const REGIONS = {
+let REGIONS = {
   all:     {he:'כל היעדים', eng:''},
   samui:   {he:'קוסמוי',    eng:'Koh Samui',  center:[9.512,100.013]},
   phangan: {he:'קופאנגן',   eng:'Koh Phangan',center:[9.735,100.020]},
@@ -1332,10 +1342,10 @@ function regionOf(lat,lng){
   if(best==='bangkok') return bd<1.3?'bangkok':'other';
   return bd<0.24?best:'other';
 }
-const areaToRegion={s:'samui',p:'phangan',b:'bangkok'};
+let areaToRegion={s:'samui',p:'phangan',b:'bangkok'};
 
 /* ================= Itinerary ================= */
-const hotels = [
+let hotels = [
   { id:1, name:"Bandara Resort Koh Samui", region:"קוסמוי · Bophut Beach", area:"s",
     from:"2026-08-06", to:"2026-08-11", nights:5, thb:59544, lat:9.56107, lng:100.02343,
     leg:{ic:"✈️", txt:"טיסה מבנגקוק לקוסמוי · תחילת הטיול"} },
@@ -1352,14 +1362,14 @@ const hotels = [
     from:"2026-08-29", to:"2026-09-01", nights:3, thb:17465, lat:13.72462, lng:100.54762,
     leg:{ic:"✈️", txt:"טיסה מקוסמוי לבנגקוק"} },
 ];
-const segs = [
+let segs = [
   { from:1, to:2, type:"ferry",  ic:"⛴️" },
   { from:2, to:3, type:"car",    ic:"🚗" },
   { from:3, to:4, type:"ferry",  ic:"⛴️" },
   { from:4, to:5, type:"flight", ic:"✈️" },
 ];
 /* ================= Flights (for booking uploads) ================= */
-const flights = [
+let flights = [
   { id:"fl1", title:"טיסה בינלאומית · ישראל → בנגקוק", route:"TLV → BKK", date:"2026-08-05", ic:"🛫" },
   { id:"fl2", title:"טיסה פנימית · בנגקוק → קוסמוי",   route:"BKK → USM", date:"2026-08-06", ic:"✈️" },
   { id:"fl3", title:"טיסה פנימית · קוסמוי → בנגקוק",   route:"USM → BKK", date:"2026-08-29", ic:"✈️" },
@@ -1459,7 +1469,7 @@ function gmapsLink(name, regionKey, lat, lng){
     const eng=(REGIONS[regionKey]&&REGIONS[regionKey].eng)||'';
     let q=name;
     if(eng && !name.toLowerCase().includes(eng.toLowerCase())) q+=' '+eng;
-    if(!/thailand/i.test(q)) q+=' Thailand';
+    if(window.__TEMPLATE==='thailand' && !/thailand/i.test(q)) q+=' Thailand';
     return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);
   }
   return 'https://www.google.com/maps/search/?api=1&query='+lat+','+lng;
@@ -1482,16 +1492,19 @@ function loadPlaces(){
   const hp=getHashParams();
   let hashPlaces=null;
   if(hp.places){ try{ hashPlaces=JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(hp.places))))); }catch(e){} }
+  // Only the Thailand sample trip seeds the built-in places; custom/blank trips
+  // start empty and get their (per-trip) places from cloud sync.
+  const defaults = (window.__TEMPLATE==='thailand') ? DEFAULT_PLACES.map(p=>({...p})) : [];
   if(isAdmin){
     let stored=null; try{ stored=JSON.parse(localStorage.getItem(LS_PLACES)); }catch(e){}
-    places = Array.isArray(stored)? stored : DEFAULT_PLACES.map(p=>({...p}));
+    places = Array.isArray(stored)? stored : defaults;
     if(Array.isArray(hashPlaces)){
       const ids=new Set(places.map(p=>p.id));
       hashPlaces.forEach(p=>{ if(p&&p.id&&!ids.has(p.id)){ places.push(p); ids.add(p.id);} });
     }
     savePlaces();
   } else {
-    places = Array.isArray(hashPlaces)? hashPlaces : DEFAULT_PLACES.map(p=>({...p}));
+    places = Array.isArray(hashPlaces)? hashPlaces : defaults;
   }
   places.forEach(p=>{ if(!p.region) p.region=regionOf(p.lat,p.lng); });
 }
@@ -2326,6 +2339,9 @@ async function resolveLink(text){
   }
   return null;
 }
+/* Expose the resolver so the trip-creation funnel (product gate module) can
+   reuse the exact same Google-Maps-link → coordinates logic. */
+window.__resolveLink = resolveLink;
 const fLinkStatus=document.getElementById('fLinkStatus');
 document.getElementById('fLinkBtn').addEventListener('click',async()=>{
   const v=document.getElementById('fLink').value.trim(); if(!v) return;
@@ -2530,17 +2546,21 @@ function switchView(name){
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchView(t.dataset.view)));
 
 /* ================= Countdown ================= */
-const TRIP_START='2026-08-05', TRIP_END='2026-09-01';
+let TRIP_START='2026-08-05', TRIP_END='2026-09-01';
+let SUBTITLE_BASE='6 באוגוסט – 1 בספטמבר · 26 לילות';
+let TRIP_CD_LABEL='לתאילנד 🇹🇭';
 function updateCountdown(){
   const el=document.getElementById('tripSub'); if(!el) return;
+  const base=SUBTITLE_BASE||'';
+  if(!TRIP_START||!TRIP_END){ el.textContent=base; return; }
   const today=new Date(); today.setHours(0,0,0,0);
   const start=new Date(TRIP_START+'T00:00:00'), end=new Date(TRIP_END+'T00:00:00');
-  const dayMs=86400000, base='6 באוגוסט – 1 בספטמבר · 26 לילות';
+  const dayMs=86400000;
   let cd;
-  if(today<start){ const d=Math.round((start-today)/dayMs); cd=(d===1?'עוד יום':'עוד '+d+' ימים')+' לתאילנד 🇹🇭'; }
+  if(today<start){ const d=Math.round((start-today)/dayMs); cd=(d===1?'עוד יום':'עוד '+d+' ימים')+' '+TRIP_CD_LABEL; }
   else if(today<=end){ const d=Math.round((today-start)/dayMs)+1; cd='יום '+d+' בטיול 🌴'; }
   else cd='הטיול הסתיים 🎉';
-  el.innerHTML=`${base} · <b class="cd">${cd}</b>`;
+  el.innerHTML=`${base}${base?' · ':''}<b class="cd">${cd}</b>`;
 }
 
 /* ================= Visited toggle (123-gated) ================= */
@@ -2664,7 +2684,7 @@ function renderInfo(){
 }
 
 /* ================= Weather ================= */
-const WX_REGIONS=[
+let WX_REGIONS=[
   {key:'samui',   he:'קוסמוי',  lat:9.512,  lng:100.013, date:'2026-08-06'},
   {key:'phangan', he:'קופאנגן', lat:9.735,  lng:100.020, date:'2026-08-11'},
   {key:'bangkok', he:'בנגקוק',  lat:13.740, lng:100.530, date:'2026-08-29'},
@@ -2691,6 +2711,7 @@ function regionStripHtml(key){
     return `<div class="wxstrip-inner">${cells}</div>`;
   }
   const t=WX_TYPICAL[key];
+  if(!t) return `<div class="wxstrip-fallback">התחזית תיטען בקרוב…</div>`;
   return `<div class="wxstrip-fallback">${t.em} ממוצע אוגוסט · ${t.hi}° / ${t.lo}° · ${t.txt}</div>`;
 }
 async function refreshForecast(){
@@ -2809,15 +2830,17 @@ document.querySelectorAll('#bkTypeTabs .subtab').forEach(t=>t.addEventListener('
 function renderDestinations(){
   const host=document.getElementById('destList'); host.innerHTML='';
   const areaKey={samui:'s',phangan:'p',bangkok:'b'};
-  ['samui','phangan','bangkok'].forEach(rk=>{
+  const regionKeys=Object.keys(REGIONS).filter(k=>k!=='all');
+  if(!regionKeys.length){ host.innerHTML='<div class="about-card" style="color:var(--muted)">עדיין אין יעדים בטיול הזה. הוסיפו יעדים כשיוצרים טיול חדש.</div>'; return; }
+  regionKeys.forEach(rk=>{
     const r=REGIONS[rk];
-    const hs=hotels.filter(h=>areaToRegion[h.area]===rk);
+    const hs=hotels.filter(h=>(areaToRegion[h.area]||h.region)===rk);
     const ps=places.filter(p=>(p.region||regionOf(p.lat,p.lng))===rk);
     let dr=''; if(hs.length){ dr=fmtLong(hs[0].from)+' – '+fmtLong(hs[hs.length-1].to); }
     const counts={}; ps.forEach(p=>counts[p.cat]=(counts[p.cat]||0)+1);
     const countsHtml=Object.keys(counts).map(k=>`<span class="catcount">${CATEGORIES[k].emoji} ${counts[k]}</span>`).join('') || '<span class="catcount">אין מקומות עדיין</span>';
     const hotelsHtml=hs.map(h=>`<div class="dest-hotel"><span>🏨 ${esc(h.name)}</span><span>${fmtLong(h.from)}–${fmtLong(h.to)}</span></div>`).join('');
-    const card=document.createElement('div'); card.className='dest-card '+areaKey[rk];
+    const card=document.createElement('div'); card.className='dest-card '+(areaKey[rk]||'');
     card.innerHTML=`
       <h3>${esc(r.he)}</h3>
       <div class="eng">${esc(r.eng)}${dr?' · '+dr:''} · ${ps.length} מקומות</div>
@@ -2889,10 +2912,54 @@ function renderAbout(){
     </div>`;
 }
 
+/* ================= Per-trip itinerary =================
+   For custom trips, the itinerary (destinations, dates, weather) comes from
+   what the user entered in the create funnel — not the hardcoded Thailand data.
+   The Thailand sample trip has no stored itinerary, so it keeps its defaults. */
+let destMarkers=[];
+function applyItinerary(IT){
+  const dests=(IT&&Array.isArray(IT.destinations))?IT.destinations:[];
+  // Custom/blank trips carry no baked-in stays or flights. The Thailand hotel
+  // pins and route are built into layers at load time, so clear them too.
+  hotels=[]; flights=[]; segs=[]; areaToRegion={};
+  hotelMeta.forEach(m=>{ try{ map.removeLayer(m.marker); }catch(e){} }); hotelMeta.length=0;
+  try{ routeLayer.clearLayers(); }catch(e){}
+  const R={ all:{he:'כל היעדים',eng:''} };
+  dests.forEach(d=>{ R[d.key]={he:d.name, eng:d.eng||'', center:[d.lat,d.lng]}; });
+  REGIONS=R;
+  regionOf=function(lat,lng){
+    let best='other', bd=1e9;
+    dests.forEach(d=>{ const dd=Math.hypot(lat-d.lat,lng-d.lng); if(dd<bd){bd=dd;best=d.key;} });
+    return best;
+  };
+  if(IT&&IT.startDate) TRIP_START=IT.startDate;
+  if(IT&&IT.endDate)   TRIP_END=IT.endDate;
+  const name=window.__TRIP_NAME||'הטיול';
+  if(IT&&IT.startDate&&IT.endDate){
+    const nights=Math.max(0,Math.round((new Date(IT.endDate)-new Date(IT.startDate))/86400000));
+    SUBTITLE_BASE=fmtLong(IT.startDate)+' – '+fmtLong(IT.endDate)+' · '+nights+' לילות';
+  } else { SUBTITLE_BASE=name; TRIP_START=''; TRIP_END=''; }
+  TRIP_CD_LABEL='ל'+name;
+  WX_REGIONS=dests.map(d=>({key:d.key, he:d.name, lat:d.lat, lng:d.lng, date:d.date||(IT&&IT.startDate)||''}));
+}
+function buildDestMarkers(){
+  destMarkers.forEach(m=>{ try{ map.removeLayer(m); }catch(e){} }); destMarkers=[];
+  Object.entries(REGIONS).forEach(([k,r])=>{
+    if(k==='all'||!r.center) return;
+    const icon=L.divIcon({className:'',html:`<div class="poi-pin" style="--pc:#2563eb"><span class="emoji">📍</span></div>`,
+      iconSize:[32,32],iconAnchor:[16,32],popupAnchor:[0,-30]});
+    const m=L.marker(r.center,{icon,title:r.he}).addTo(map).bindPopup('<b>'+esc(r.he)+'</b>');
+    destMarkers.push(m);
+  });
+}
+
 /* ================= Init ================= */
 /* Deferred: the app boots only after the user signs in and selects a trip
    (see the product gate module at the bottom of the file). */
 async function __startApp(){
+  // Custom & blank trips replace the hardcoded Thailand itinerary with the
+  // user's own; only the Thailand sample keeps the built-in data.
+  if(window.__TEMPLATE!=='thailand') applyItinerary(window.__ITINERARY||{destinations:[]});
   await initAdmin();
   loadPlaces();
   loadHotelState();
@@ -2900,6 +2967,7 @@ async function __startApp(){
   buildLocSeg();
   buildChips();
   buildPoiMarkers();
+  buildDestMarkers();
   buildBookingMarkers();
   refreshHotels();
   applyFilters();
@@ -3023,12 +3091,14 @@ window.TripReady.then(()=>__startApp());
     const getProfile = async uid => { try{ const s=await getDoc(userDoc(uid)); return s.exists()?s.data():{}; }catch(e){ return {}; } };
     const listTrips  = async uid => (await getDocs(tripsCol(uid))).docs
       .map(d=>({id:d.id, ...d.data()})).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
-    async function createTrip(uid, name, template){
+    async function createTrip(uid, name, template, itinerary){
       const id = 't_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-      await setDoc(tripDoc(uid,id), {name:name||'טיול חדש', template:template||'blank', createdAt:Date.now()});
-      // Blank trips are pre-marked seeded so the Thailand sample doesn't load into them.
+      const trip = {name:name||'טיול חדש', template:template||'custom', createdAt:Date.now()};
+      if(itinerary) trip.itinerary = itinerary;   // {startDate,endDate,destinations:[...]}
+      await setDoc(tripDoc(uid,id), trip);
+      // Non-Thailand trips are pre-marked seeded so the sample places don't load.
       await setDoc(doc(db,'users',uid,'trips',id,'meta','info'),
-        template==='thailand' ? {template:'thailand'} : {template:'blank', seeded:true}, {merge:true});
+        template==='thailand' ? {template:'thailand'} : {template:template||'custom', seeded:true}, {merge:true});
       return id;
     }
     const removeTrip = (uid,id) => deleteDoc(tripDoc(uid,id));
@@ -3060,6 +3130,9 @@ window.TripReady.then(()=>__startApp());
       if(booted) return; booted=true;
       window.TRIP_ID = trip.id;
       window.__ACTIVE_UID = uid;
+      window.__TEMPLATE = trip.template || 'custom';
+      window.__ITINERARY = trip.itinerary || null;
+      window.__TRIP_NAME = trip.name || 'הטיול';
       const h=document.getElementById('tripTitle'); if(h && trip.name) h.textContent=trip.name;
       document.body.classList.add('booted');
       hideGate();
@@ -3103,13 +3176,21 @@ window.TripReady.then(()=>__startApp());
             <button class="g-mini" id="gOut">התנתקות</button>
           </div>
           <div class="g-trips">${rows}</div>
-          <div class="g-new">
-            <input id="gName" class="g-input" placeholder="שם הטיול (למשל: יפן 2027)" ${atLimit?'disabled':''}/>
-            <select id="gTpl" class="g-input" ${atLimit?'disabled':''}>
-              <option value="blank">התחל ריק</option>
-              <option value="thailand">תבנית לדוגמה: תאילנד 2026</option>
-            </select>
-            <button class="g-btn primary" id="gCreate" ${atLimit?'disabled':''}>+ צור טיול</button>
+          <div class="g-new" ${atLimit?'style="opacity:.5;pointer-events:none"':''}>
+            <div class="g-new-title">➕ טיול חדש</div>
+            <input id="gName" class="g-input" placeholder="שם הטיול (למשל: יפן 2027)"/>
+            <div class="g-dates">
+              <label class="g-lbl">מתאריך<input id="gStart" type="date" class="g-input"/></label>
+              <label class="g-lbl">עד תאריך<input id="gEnd" type="date" class="g-input"/></label>
+            </div>
+            <div class="g-dest-add">
+              <input id="gDestLink" class="g-input" placeholder="הדביקו קישור Google Maps של יעד (עיר / אזור)"/>
+              <button class="g-mini" id="gDestBtn" type="button">+ יעד</button>
+            </div>
+            <div id="gDestStatus" class="g-status"></div>
+            <div id="gDestList" class="g-destlist"></div>
+            <button class="g-btn primary" id="gCreate" disabled>צור טיול</button>
+            <button class="g-mini" id="gSample" type="button" style="margin-top:2px">או נסו תבנית לדוגמה: תאילנד 2026</button>
           </div>
           ${atLimit ? `<div class="g-paywall">
               <p>הגעתם למכסת התוכנית החינמית. שדרגו ל-Pro לטיולים ללא הגבלה.</p>
@@ -3128,14 +3209,56 @@ window.TripReady.then(()=>__startApp());
         ev.stopPropagation();
         if(confirm('למחוק את הטיול הזה לצמיתות?')){ await removeTrip(user.uid, el.getAttribute('data-del')); renderTrips(user); }
       });
-      const createBtn=document.getElementById('gCreate');
-      if(createBtn) createBtn.onclick = async()=>{
-        const name=document.getElementById('gName').value.trim();
-        const tpl=document.getElementById('gTpl').value;
-        createBtn.disabled=true; createBtn.textContent='יוצר…';
-        const id=await createTrip(user.uid, name, tpl);
+      // ----- Skeleton itinerary funnel: name + dates + destinations (via Maps link) -----
+      const funnelDests = [];
+      const slug = s => 'd_' + String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,10) + Math.random().toString(36).slice(2,5);
+      const $ = id => document.getElementById(id);
+
+      function renderDestList(){
+        const host=$('gDestList');
+        host.innerHTML = funnelDests.map((d,i)=>
+          `<span class="g-dest">📍 ${esc(d.name)} <button data-rm="${i}" title="הסר">✕</button></span>`).join('');
+        host.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{
+          funnelDests.splice(+b.getAttribute('data-rm'),1); renderDestList(); refreshCreate();
+        });
+      }
+      function refreshCreate(){
+        const ok = $('gName').value.trim() && $('gStart').value && $('gEnd').value && funnelDests.length;
+        $('gCreate').disabled = !ok;
+      }
+      ['gName','gStart','gEnd'].forEach(id=>$(id).addEventListener('input', refreshCreate));
+
+      $('gDestBtn').onclick = async()=>{
+        const inp=$('gDestLink'), st=$('gDestStatus'), btn=$('gDestBtn');
+        const v=inp.value.trim(); if(!v) return;
+        btn.disabled=true; st.textContent='מזהה מיקום…';
+        let r=null; try{ r = window.__resolveLink ? await window.__resolveLink(v) : null; }catch(e){}
+        btn.disabled=false;
+        if(r && r.lat!=null){
+          const nm = r.name || ('יעד '+(funnelDests.length+1));
+          funnelDests.push({key:slug(nm), name:nm, eng:r.name||'', lat:r.lat, lng:r.lng});
+          inp.value=''; st.textContent='✓ נוסף: '+nm; renderDestList(); refreshCreate();
+        } else {
+          st.innerHTML='לא זוהה מיקום. פתחו את היעד ב-Google Maps והדביקו את הקישור, או הדביקו קואורדינטות (למשל 35.01, 135.76).';
+        }
+      };
+
+      $('gCreate').onclick = async()=>{
+        const name=$('gName').value.trim();
+        const startDate=$('gStart').value, endDate=$('gEnd').value;
+        const btn=$('gCreate'); btn.disabled=true; btn.textContent='יוצר…';
+        const itinerary = { startDate, endDate, destinations: funnelDests.map(d=>({...d, date:startDate})) };
+        const id=await createTrip(user.uid, name, 'custom', itinerary);
         localStorage.setItem(LS_ACTIVE, id);
-        bootTrip(user.uid, {id, name:name||'טיול חדש', template:tpl});
+        bootTrip(user.uid, {id, name, template:'custom', itinerary});
+      };
+
+      $('gSample').onclick = async()=>{
+        const btn=$('gSample'); btn.disabled=true; btn.textContent='יוצר…';
+        const nm='תאילנד 2026 (לדוגמה)';
+        const id=await createTrip(user.uid, nm, 'thailand');
+        localStorage.setItem(LS_ACTIVE, id);
+        bootTrip(user.uid, {id, name:nm, template:'thailand'});
       };
     }
 

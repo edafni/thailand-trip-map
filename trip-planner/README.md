@@ -12,7 +12,7 @@ for auth and per-user cloud storage). No build step.
 
 | | Personal app | This product |
 |---|---|---|
-| Trips | One hardcoded Thailand trip | Each user creates their own trips |
+| Trips | One hardcoded Thailand trip | Each user creates their own trips, entering the itinerary (name, dates, destinations) in the create funnel |
 | Users | Anyone with the link edits the same data | Sign-in required; data private per account |
 | Data path | `trips/thailand-2026/…` (public) | `users/{uid}/trips/{tripId}/…` (owner-only) |
 | Plans | — | Free (1 trip) / Pro (unlimited) with a paywall |

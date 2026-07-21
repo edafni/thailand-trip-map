@@ -51,10 +51,14 @@ Everything is keyed to a signed-in account, so each customer's data is private.
      the trusted path. This is the single most important next step.
 
 2. **Itinerary content is still Thailand-shaped.** Places, bookings, and hotel
-   paid-state are fully per-trip and private. But the *static itinerary* (the 5
-   hotels, 4 flights, and Samui/Phangan/Bangkok regions) is still hardcoded and
-   shows for every trip. Making that per-trip data is the next content refactor so
-   a user planning Japan doesn't see Thailand hotels.
+   paid-state are fully per-trip and private. The **create funnel** now also
+   captures the itinerary skeleton — trip name, start/end dates, and destinations
+   (each added by pasting a Google Maps link) — and the app renders regions, the
+   location filter, the map destination pins, the date countdown, and the weather
+   from that per-trip data. A user planning Japan no longer sees Thailand.
+   **Still to do here:** let users add *dated hotels and transport legs* inside a
+   trip (the funnel is intentionally minimal; today hotels/flights are empty for
+   custom trips and only the Thailand sample ships with them).
 
 3. **UI is Hebrew/RTL only.** A global paid product needs at least English. The
    sign-in gate is isolated, so this can be added incrementally.
