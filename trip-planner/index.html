@@ -1220,7 +1220,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
       <label>צ'ק אין<input id="hFrom" type="date" /></label>
       <label>צ'ק אאוט<input id="hTo" type="date" /></label>
     </div>
-    <div class="field"><label>עלות ฿ (לא חובה)</label><input id="hThb" type="number" inputmode="numeric" placeholder="0" /></div>
+    <div class="field"><label id="hThbLbl">עלות ฿ (לא חובה)</label><input id="hThb" type="number" inputmode="numeric" placeholder="0" /></div>
     <div class="modal-actions">
       <button class="btn primary" id="hSave">שמור</button>
       <button class="btn cancel" id="hCancel">ביטול</button>
@@ -1373,6 +1373,7 @@ function regionOf(lat,lng){
   return bd<0.24?best:'other';
 }
 let areaToRegion={s:'samui',p:'phangan',b:'bangkok'};
+let TRIP_CUR={code:'THB',sym:'฿'};   // trip currency (Thailand default; set per-trip from destination)
 
 /* ================= Itinerary ================= */
 let hotels = [
@@ -1674,7 +1675,7 @@ function hotelPopupHtml(h, rkey){
         <tr><td>צ'ק אין</td><td><b>${fmtLong(h.from)} ${yr}</b></td></tr>
         <tr><td>צ'ק אאוט</td><td><b>${fmtLong(h.to)} ${yr}</b></td></tr>
         <tr><td>לילות</td><td><b>${h.nights}</b></td></tr>
-        ${h.thb?`<tr><td>עלות</td><td><b>฿ ${(+h.thb).toLocaleString()}</b></td></tr>`:''}
+        ${h.thb?`<tr><td>עלות</td><td><b>${TRIP_CUR.sym} ${(+h.thb).toLocaleString()}</b></td></tr>`:''}
         <tr><td>תשלום</td><td><b>${st.paid?'שולם ✓':'טרם שולם'}</b></td></tr>
       </table>
       <div class="hactions">
@@ -1695,7 +1696,7 @@ function hotelCardHtml(h){
     <h3>${esc(h.name)}</h3>
     <div class="region">${esc(h.region||'')}</div>
     <div class="dates"><span class="pill">${fmtLong(h.from)}</span><span>←</span><span class="pill">${fmtLong(h.to)}</span></div>
-    <div class="meta"><span>🌙 ${h.nights} לילות</span>${h.thb?`<span>฿ ${(+h.thb).toLocaleString()}</span>`:''}</div>
+    <div class="meta"><span>🌙 ${h.nights} לילות</span>${h.thb?`<span>${TRIP_CUR.sym} ${(+h.thb).toLocaleString()}</span>`:''}</div>
     <div class="hbadges">${badge}${doc}</div>`;
 }
 
@@ -2285,6 +2286,7 @@ function openHotelModal(id){
   document.getElementById('hFrom').value=h?h.from:'';
   document.getElementById('hTo').value=h?h.to:'';
   document.getElementById('hThb').value=(h&&h.thb)?h.thb:'';
+  const _tl=document.getElementById('hThbLbl'); if(_tl) _tl.textContent='עלות '+TRIP_CUR.sym+' (לא חובה)';
   if(h){ sel.value=h.regionKey||regionOf(h.lat,h.lng); hCoords={lat:h.lat,lng:h.lng}; }
   document.getElementById('hLink').value=''; document.getElementById('hLinkStatus').textContent='';
   hotelModal.classList.add('show');
@@ -2361,7 +2363,7 @@ function switchPane(name){
 
 /* search via Nominatim */
 async function nomSearch(q){
-  const url='https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=he&q='+encodeURIComponent(q);
+  const url='https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&accept-language=he&q='+encodeURIComponent(q);
   const r=await fetch(url,{headers:{'Accept':'application/json'}}); return await r.json();
 }
 /* Expose the geocoder so the create funnel can offer free-text destination search. */
@@ -2707,36 +2709,73 @@ window.toggleStar=function(id){
   if(document.body.dataset.view==='attractions') renderAttractions();
 };
 
-/* ================= Currency (฿ ↔ ₪ ↔ $) ================= */
-let fxRates=(function(){ try{ const c=JSON.parse(localStorage.getItem('thai_fx')); if(c&&c.ILS&&c.USD) return c; }catch(e){} return {ILS:0.105, USD:0.028, approx:true}; })();
+/* ================= Currency (trip currency ↔ ₪ ↔ $) =================
+   The trip's currency comes from its main destination's country. The Thailand
+   sample stays on ฿. Rates are fetched relative to the trip currency.
+   (TRIP_CUR itself is declared near the top so load-time hotel rendering can use it.) */
+const CURRENCY_BY_COUNTRY = (()=>{
+  const eur='at be cy ee fi fr de gr ie it lv lt lu mt nl pt sk si es hr'.split(' ');
+  const m={ th:{code:'THB',sym:'฿'}, il:{code:'ILS',sym:'₪'}, us:{code:'USD',sym:'$'},
+    gb:{code:'GBP',sym:'£'}, jp:{code:'JPY',sym:'¥'}, ch:{code:'CHF',sym:'CHF'}, tr:{code:'TRY',sym:'₺'},
+    in:{code:'INR',sym:'₹'}, cn:{code:'CNY',sym:'¥'}, kr:{code:'KRW',sym:'₩'}, au:{code:'AUD',sym:'A$'},
+    ca:{code:'CAD',sym:'C$'}, nz:{code:'NZD',sym:'NZ$'}, mx:{code:'MXN',sym:'MX$'}, br:{code:'BRL',sym:'R$'},
+    ae:{code:'AED',sym:'د.إ'}, eg:{code:'EGP',sym:'E£'}, za:{code:'ZAR',sym:'R'}, sg:{code:'SGD',sym:'S$'},
+    my:{code:'MYR',sym:'RM'}, id:{code:'IDR',sym:'Rp'}, ph:{code:'PHP',sym:'₱'}, vn:{code:'VND',sym:'₫'},
+    hk:{code:'HKD',sym:'HK$'}, tw:{code:'TWD',sym:'NT$'}, cz:{code:'CZK',sym:'Kč'}, pl:{code:'PLN',sym:'zł'},
+    hu:{code:'HUF',sym:'Ft'}, se:{code:'SEK',sym:'kr'}, no:{code:'NOK',sym:'kr'}, dk:{code:'DKK',sym:'kr'},
+    ro:{code:'RON',sym:'lei'}, ma:{code:'MAD',sym:'DH'}, jo:{code:'JOD',sym:'JD'}, lk:{code:'LKR',sym:'Rs'} };
+  eur.forEach(c=>m[c]={code:'EUR',sym:'€'});
+  return m;
+})();
+function currencyForCountry(cc){ return CURRENCY_BY_COUNTRY[String(cc||'').toLowerCase()] || {code:'USD',sym:'$'}; }
+window.__currencyForCountry = currencyForCountry;
+/* Fallback for trips created before we captured the destination country:
+   reverse-geocode the main destination once, set the currency, refresh displays. */
+async function resolveTripCurrency(d){
+  if(!d) return;
+  try{
+    const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat='+d.lat+'&lon='+d.lng+'&accept-language=he');
+    const j=await r.json();
+    const cc=j&&j.address&&j.address.country_code;
+    if(!cc) return;
+    TRIP_CUR=currencyForCountry(cc);
+    fxRates=fxLoad(TRIP_CUR.code);
+    await refreshFx();
+    buildHotels(); refreshHotels();
+    if(document.body.dataset.view==='info') renderInfo();
+  }catch(e){}
+}
+
+function fxLoad(code){ try{ const c=JSON.parse(localStorage.getItem('fx_'+code)); if(c&&c.ILS&&c.USD) return c; }catch(e){} return {ILS:0,USD:0,approx:true}; }
+let fxRates=(function(){ const c=fxLoad('THB'); return (c.ILS?c:{ILS:0.105,USD:0.028,approx:true}); })();
 async function refreshFx(){
   try{
-    const r=await fetch('https://open.er-api.com/v6/latest/THB');
+    const r=await fetch('https://open.er-api.com/v6/latest/'+encodeURIComponent(TRIP_CUR.code));
     const d=await r.json();
     if(d&&d.rates&&d.rates.ILS&&d.rates.USD){
-      fxRates={ILS:d.rates.ILS, USD:d.rates.USD, ts:Date.now()};
-      try{ localStorage.setItem('thai_fx', JSON.stringify(fxRates)); }catch(e){}
-      if(document.body.dataset.view==='info') ccRecalc('THB');
+      fxRates={ILS:d.rates.ILS, USD:d.rates.USD, ts:Date.now(), base:TRIP_CUR.code};
+      try{ localStorage.setItem('fx_'+TRIP_CUR.code, JSON.stringify(fxRates)); }catch(e){}
+      if(document.body.dataset.view==='info') ccRecalc('BASE');
       const n=document.getElementById('ccNote'); if(n) n.innerHTML=ccNoteHtml();
     }
   }catch(e){}
 }
 const ccRound=v=>{ if(!isFinite(v)) return ''; return (Math.round(v*100)/100).toString(); };
 function ccRecalc(src){
-  const thb=document.getElementById('ccTHB'), ils=document.getElementById('ccILS'), usd=document.getElementById('ccUSD');
-  if(!thb) return;
-  let base;
-  if(src==='ILS') base=(parseFloat(ils.value)||0)/fxRates.ILS;
-  else if(src==='USD') base=(parseFloat(usd.value)||0)/fxRates.USD;
-  else base=parseFloat(thb.value)||0;
-  if(src!=='THB') thb.value=ccRound(base);
-  if(src!=='ILS') ils.value=ccRound(base*fxRates.ILS);
-  if(src!=='USD') usd.value=ccRound(base*fxRates.USD);
+  const base=document.getElementById('ccBASE'), ils=document.getElementById('ccILS'), usd=document.getElementById('ccUSD');
+  if(!base) return;
+  let b;
+  if(src==='ILS') b=(parseFloat(ils.value)||0)/(fxRates.ILS||1);
+  else if(src==='USD') b=(parseFloat(usd.value)||0)/(fxRates.USD||1);
+  else b=parseFloat(base.value)||0;
+  if(src!=='BASE') base.value=ccRound(b);
+  if(src!=='ILS') ils.value=ccRound(b*fxRates.ILS);
+  if(src!=='USD') usd.value=ccRound(b*fxRates.USD);
 }
 function ccNoteHtml(){
-  const perThbIls=ccRound(fxRates.ILS), perThbUsd=ccRound(fxRates.USD);
+  const perIls=ccRound(fxRates.ILS), perUsd=ccRound(fxRates.USD);
   const when = fxRates.approx ? 'שער משוער' : ('עודכן '+(fxRates.ts?new Date(fxRates.ts).toLocaleDateString('he-IL'):''));
-  return `1 ฿ ≈ ${perThbIls} ₪ · ≈ ${perThbUsd} $ &nbsp;·&nbsp; ${when}`;
+  return `1 ${TRIP_CUR.sym} ≈ ${perIls} ₪ · ≈ ${perUsd} $ &nbsp;·&nbsp; ${when}`;
 }
 
 /* ================= Info tab ================= */
@@ -2749,7 +2788,7 @@ function renderInfo(){
     <div class="about-card">
       <h3>💱 המרת מטבע</h3>
       <div class="cc-grid">
-        <label>บาท ฿<input id="ccTHB" type="number" inputmode="decimal" value="100" /></label>
+        <label>${esc(TRIP_CUR.code)} ${esc(TRIP_CUR.sym)}<input id="ccBASE" type="number" inputmode="decimal" value="100" /></label>
         <label>שקל ₪<input id="ccILS" type="number" inputmode="decimal" /></label>
         <label>דולר $<input id="ccUSD" type="number" inputmode="decimal" /></label>
       </div>
@@ -2799,8 +2838,8 @@ function renderInfo(){
       • ספא/עיסוי: ~50–100 บาท.<br>
       • מזומן עדיף בשווקים ובאיים; כספומטים גובים ~220 บาท עמלה.
     </div>`;
-  ccRecalc('THB');
-  ['ccTHB','ccILS','ccUSD'].forEach(id=>{
+  ccRecalc('BASE');
+  ['ccBASE','ccILS','ccUSD'].forEach(id=>{
     const el=document.getElementById(id);
     el.addEventListener('input',()=>ccRecalc(id.slice(2)));
   });
@@ -3065,6 +3104,10 @@ function applyItinerary(IT){
   } else { SUBTITLE_BASE=name; TRIP_START=''; TRIP_END=''; }
   TRIP_CD_LABEL='ל'+name;
   WX_REGIONS=dests.map(d=>({key:d.key, he:d.name, lat:d.lat, lng:d.lng, date:d.date||(IT&&IT.startDate)||''}));
+  // Trip currency from the main destination's country.
+  const cur = (IT&&IT.currency) ? IT.currency : ((IT&&IT.mainCountry) ? currencyForCountry(IT.mainCountry) : null);
+  if(cur){ TRIP_CUR=cur; }
+  fxRates = fxLoad(TRIP_CUR.code);   // cached rates for this currency, else approx → refreshFx() fills in
 }
 function buildDestMarkers(){
   destMarkers.forEach(m=>{ try{ map.removeLayer(m); }catch(e){} }); destMarkers=[];
@@ -3085,6 +3128,13 @@ async function __startApp(){
   // user's own; only the Thailand sample keeps the built-in data.
   if(window.__TEMPLATE!=='thailand') applyItinerary(window.__ITINERARY||{destinations:[]});
   const _ahb=document.getElementById('addHotelBtn'); if(_ahb) _ahb.style.display=(window.__TEMPLATE==='thailand')?'none':'';
+  // Older custom trips (created before currency capture) — resolve it from the main destination.
+  (function(){
+    const IT=window.__ITINERARY;
+    if(window.__TEMPLATE!=='thailand' && IT && !IT.currency && !IT.mainCountry && IT.destinations && IT.destinations[0]){
+      resolveTripCurrency(IT.destinations[0]);
+    }
+  })();
   await initAdmin();
   loadPlaces();
   loadHotelState();
@@ -3383,7 +3433,7 @@ window.TripReady.then(()=>__startApp());
           opt.type='button'; opt.className='g-res';
           opt.innerHTML=`<b>${esc(main)}</b><small>${esc(r.display_name||'')}</small>`;
           opt.onclick=()=>{
-            funnelDests.push({key:slug(main), name:main, eng:main, lat:+r.lat, lng:+r.lon});
+            funnelDests.push({key:slug(main), name:main, eng:main, lat:+r.lat, lng:+r.lon, country:(r.address&&r.address.country_code)||''});
             inp.value=''; rz.innerHTML=''; renderDestList(); refreshCreate();
           };
           rz.appendChild(opt);
@@ -3396,7 +3446,9 @@ window.TripReady.then(()=>__startApp());
         const name=$('gName').value.trim();
         const startDate=$('gStart').value, endDate=$('gEnd').value;
         const btn=$('gCreate'); btn.disabled=true; btn.textContent='יוצר…';
+        const mainCountry=(funnelDests[0]&&funnelDests[0].country)||'';
         const itinerary = { startDate, endDate, destinations: funnelDests.map(d=>({...d, date:startDate})) };
+        if(mainCountry){ itinerary.mainCountry=mainCountry; itinerary.currency=window.__currencyForCountry(mainCountry); }
         const id=await createTrip(user.uid, name, 'custom', itinerary);
         localStorage.setItem(LS_ACTIVE, id);
         bootTrip(user.uid, {id, name, template:'custom', itinerary});
