@@ -1056,6 +1056,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .g-dest-add{display:flex;gap:8px}
   .g-dest-add .g-input{flex:1}
   .g-status{font-size:12px;color:#9fb0c6;min-height:0}
+  .g-results{display:flex;flex-direction:column;gap:4px;max-height:180px;overflow:auto}
+  .g-res{text-align:right;background:#0f1930;border:1px solid #26364e;border-radius:9px;padding:8px 10px;cursor:pointer;color:#e5edf5;display:flex;flex-direction:column;gap:1px}
+  .g-res:hover{border-color:#3a5a86;background:#13203a}
+  .g-res small{color:#8fa5c2;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .g-destlist{display:flex;flex-wrap:wrap;gap:6px}
   .g-dest{display:inline-flex;align-items:center;gap:6px;background:#15243c;border:1px solid #294066;
     border-radius:999px;padding:5px 10px;font-size:13px}
@@ -2360,6 +2364,8 @@ async function nomSearch(q){
   const url='https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=he&q='+encodeURIComponent(q);
   const r=await fetch(url,{headers:{'Accept':'application/json'}}); return await r.json();
 }
+/* Expose the geocoder so the create funnel can offer free-text destination search. */
+window.__nomSearch = nomSearch;
 const fResults=document.getElementById('fResults');
 async function doSearch(){
   const q=document.getElementById('fSearch').value.trim(); if(!q) return;
@@ -3299,7 +3305,7 @@ window.TripReady.then(()=>__startApp());
           <span class="g-trip-name">${esc(t.name)||'טיול'}</span>
           <span class="g-trip-actions">
             <button class="g-mini" data-open="${t.id}">פתח ›</button>
-            <button class="g-mini danger" data-del="${t.id}">🗑</button>
+            <button class="g-mini danger" data-del="${t.id}">🗑 מחק</button>
           </span>
         </div>`).join('') || '<p class="g-empty">אין עדיין טיולים. צרו את הראשון 👇</p>';
 
@@ -3318,9 +3324,10 @@ window.TripReady.then(()=>__startApp());
               <label class="g-lbl">עד תאריך<input id="gEnd" type="date" class="g-input"/></label>
             </div>
             <div class="g-dest-add">
-              <input id="gDestLink" class="g-input" placeholder="הדביקו קישור Google Maps של יעד (עיר / אזור)"/>
-              <button class="g-mini" id="gDestBtn" type="button">+ יעד</button>
+              <input id="gDestSearch" class="g-input" placeholder="הקלידו יעד (עיר / אזור), למשל: אתונה"/>
+              <button class="g-mini" id="gDestSearchBtn" type="button">חפש</button>
             </div>
+            <div id="gDestResults" class="g-results"></div>
             <div id="gDestStatus" class="g-status"></div>
             <div id="gDestList" class="g-destlist"></div>
             <button class="g-btn primary" id="gCreate" disabled>צור טיול</button>
@@ -3362,20 +3369,28 @@ window.TripReady.then(()=>__startApp());
       }
       ['gName','gStart','gEnd'].forEach(id=>$(id).addEventListener('input', refreshCreate));
 
-      $('gDestBtn').onclick = async()=>{
-        const inp=$('gDestLink'), st=$('gDestStatus'), btn=$('gDestBtn');
-        const v=inp.value.trim(); if(!v) return;
-        btn.disabled=true; st.textContent='מזהה מיקום…';
-        let r=null; try{ r = window.__resolveLink ? await window.__resolveLink(v) : null; }catch(e){}
+      async function runDestSearch(){
+        const inp=$('gDestSearch'), rz=$('gDestResults'), btn=$('gDestSearchBtn');
+        const q=inp.value.trim(); if(!q) return;
+        btn.disabled=true; rz.innerHTML='<div class="g-status">מחפש…</div>';
+        let res=[]; try{ res = window.__nomSearch ? await window.__nomSearch(q) : []; }catch(e){}
         btn.disabled=false;
-        if(r && r.lat!=null){
-          const nm = r.name || ('יעד '+(funnelDests.length+1));
-          funnelDests.push({key:slug(nm), name:nm, eng:r.name||'', lat:r.lat, lng:r.lng});
-          inp.value=''; st.textContent='✓ נוסף: '+nm; renderDestList(); refreshCreate();
-        } else {
-          st.innerHTML='לא זוהה מיקום. פתחו את היעד ב-Google Maps והדביקו את הקישור, או הדביקו קואורדינטות (למשל 35.01, 135.76).';
-        }
-      };
+        if(!res || !res.length){ rz.innerHTML='<div class="g-status">לא נמצאו תוצאות. נסו שם באנגלית.</div>'; return; }
+        rz.innerHTML='';
+        res.slice(0,6).forEach(r=>{
+          const main=String(r.display_name||'').split(',')[0];
+          const opt=document.createElement('button');
+          opt.type='button'; opt.className='g-res';
+          opt.innerHTML=`<b>${esc(main)}</b><small>${esc(r.display_name||'')}</small>`;
+          opt.onclick=()=>{
+            funnelDests.push({key:slug(main), name:main, eng:main, lat:+r.lat, lng:+r.lon});
+            inp.value=''; rz.innerHTML=''; renderDestList(); refreshCreate();
+          };
+          rz.appendChild(opt);
+        });
+      }
+      $('gDestSearchBtn').onclick = runDestSearch;
+      $('gDestSearch').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); runDestSearch(); } });
 
       $('gCreate').onclick = async()=>{
         const name=$('gName').value.trim();
