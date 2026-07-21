@@ -874,8 +874,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
   #banner.show{display:flex}
   #banner button{background:#0b2233;border:1px solid #1d5f83;color:#fff;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer}
 
-  #modal,#bookingModal{position:fixed;inset:0;z-index:1500;background:#0009;display:none;align-items:center;justify-content:center;padding:16px}
-  #modal.show,#bookingModal.show{display:flex}
+  #modal,#bookingModal,#hotelModal{position:fixed;inset:0;z-index:1500;background:#0009;display:none;align-items:center;justify-content:center;padding:16px}
+  #modal.show,#bookingModal.show,#hotelModal.show{display:flex}
+  #hotelModal .hrow{display:flex;gap:10px}
+  #hotelModal .hrow label{flex:1;display:flex;flex-direction:column;gap:4px}
   body.light #bookingModal{background:#0006}
   .modal-card{background:#0f1b36;border:1px solid var(--line);border-radius:16px;padding:16px;width:100%;max-width:380px;max-height:88vh;overflow-y:auto}
   .modal-card h3{margin:0 0 12px;font-size:16px}
@@ -1102,6 +1104,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   <div class="sheet-head">
     <div class="toolbar admin-only">
       <button class="btn primary" id="addBtn">➕ הוסף מקום</button>
+      <button class="btn" id="addHotelBtn">🏨 הוסף לינה</button>
       <button class="btn" id="shareBtn">🔗 שתף</button>
       <button class="btn small" id="lockBtn" title="יציאה ממצב מנהל">🔒</button>
     </div>
@@ -1194,6 +1197,29 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <div class="modal-actions">
       <button class="btn primary" id="fSave">שמור מקום</button>
       <button class="btn cancel" id="fCancel">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add / edit stay (hotel) modal — custom trips -->
+<div id="hotelModal">
+  <div class="modal-card">
+    <h3 id="hotelModalTitle">🏨 הוספת לינה</h3>
+    <div class="field"><label>שם המלון / הלינה</label><input id="hName" type="text" placeholder="לדוגמה: Park Hyatt Tokyo" /></div>
+    <div class="field"><label>יעד</label><select id="hDest"></select></div>
+    <div class="field">
+      <label>מיקום מדויק (לא חובה)</label>
+      <div class="row"><input id="hLink" type="text" placeholder="קישור Google Maps של המלון" /><button class="btn small primary" id="hLinkBtn">המר</button></div>
+      <div class="status" id="hLinkStatus"></div>
+    </div>
+    <div class="field hrow">
+      <label>צ'ק אין<input id="hFrom" type="date" /></label>
+      <label>צ'ק אאוט<input id="hTo" type="date" /></label>
+    </div>
+    <div class="field"><label>עלות ฿ (לא חובה)</label><input id="hThb" type="number" inputmode="numeric" placeholder="0" /></div>
+    <div class="modal-actions">
+      <button class="btn primary" id="hSave">שמור</button>
+      <button class="btn cancel" id="hCancel">ביטול</button>
     </div>
   </div>
 </div>
@@ -1632,21 +1658,26 @@ function hotelPopupHtml(h, rkey){
      </div>`).join('');
   const bookingRow = `${bookingList}
        <button class="hbtn" onclick="addBookingFor('hotel',${h.id})">📎 הוסף אישור הזמנה</button>`;
+  const yr=(String(h.from||'').slice(0,4))||'';
+  const editRow = (window.__TEMPLATE!=='thailand')
+    ? `<div class="hactions"><button class="hbtn" onclick="editHotel('${h.id}')">✏️ ערוך</button><button class="hbtn ghost" onclick="deleteHotel('${h.id}')">🗑️ מחק לינה</button></div>`
+    : '';
   return `
     <div class="pop">
-      <h3>🏨 ${h.id}. ${esc(h.name)}</h3>
-      <div class="r">${esc(h.region)}</div>
+      <h3>🏨 ${h._num||h.id}. ${esc(h.name)}</h3>
+      <div class="r">${esc(h.region||'')}</div>
       <table>
-        <tr><td>צ'ק אין</td><td><b>${fmtLong(h.from)} 2026</b></td></tr>
-        <tr><td>צ'ק אאוט</td><td><b>${fmtLong(h.to)} 2026</b></td></tr>
+        <tr><td>צ'ק אין</td><td><b>${fmtLong(h.from)} ${yr}</b></td></tr>
+        <tr><td>צ'ק אאוט</td><td><b>${fmtLong(h.to)} ${yr}</b></td></tr>
         <tr><td>לילות</td><td><b>${h.nights}</b></td></tr>
-        <tr><td>עלות</td><td><b>฿ ${h.thb.toLocaleString()}</b></td></tr>
+        ${h.thb?`<tr><td>עלות</td><td><b>฿ ${(+h.thb).toLocaleString()}</b></td></tr>`:''}
         <tr><td>תשלום</td><td><b>${st.paid?'שולם ✓':'טרם שולם'}</b></td></tr>
       </table>
       <div class="hactions">
         ${paidBtn}
         ${bookingRow}
       </div>
+      ${editRow}
       <div class="navrow"><a class="wazebtn" href="${wazeLink(h.lat, h.lng)}" target="_blank" rel="noopener">🧭 נווט ב-Waze</a><a href="${gmapsLink(h.name, rkey, h.lat, h.lng)}" target="_blank" rel="noopener">Google Maps ↗</a></div>
     </div>`;
 }
@@ -1656,32 +1687,44 @@ function hotelCardHtml(h){
   const nb=bookingsFor('hotel', h.id).length;
   const doc = nb ? `<span class="paidbadge doc">📄 ${nb} ${nb===1?'אישור':'אישורים'}</span>` : '';
   return `
-    <div class="idx">${h.id}</div>
+    <div class="idx">${h._num||h.id}</div>
     <h3>${esc(h.name)}</h3>
-    <div class="region">${esc(h.region)}</div>
+    <div class="region">${esc(h.region||'')}</div>
     <div class="dates"><span class="pill">${fmtLong(h.from)}</span><span>←</span><span class="pill">${fmtLong(h.to)}</span></div>
-    <div class="meta"><span>🌙 ${h.nights} לילות</span><span>฿ ${h.thb.toLocaleString()}</span></div>
+    <div class="meta"><span>🌙 ${h.nights} לילות</span>${h.thb?`<span>฿ ${(+h.thb).toLocaleString()}</span>`:''}</div>
     <div class="hbadges">${badge}${doc}</div>`;
 }
 
-hotels.forEach(h=>{
-  const legRow=document.createElement('div');
-  legRow.className='leg';
-  legRow.innerHTML=`<span class="ic">${h.leg.ic}</span><span>${h.leg.txt}</span>`;
-  listEl.appendChild(legRow);
-  const card=document.createElement('div');
-  card.className=`card ${h.area}`;
-  card.innerHTML=hotelCardHtml(h);
-  card.addEventListener('click',()=>focusLatLng([h.lat,h.lng], h.id===5?12:14, hotelMeta.find(m=>m.hid===h.id).marker));
-  listEl.appendChild(card);
-  h._card=card;
+/* Build hotel itinerary cards + map markers from the `hotels` array. Reusable
+   so custom trips can (re)build after loading their stays from the cloud. */
+function buildHotels(){
+  hotelMeta.forEach(m=>{ if(map.hasLayer(m.marker)) map.removeLayer(m.marker); });
+  hotelMeta.length=0;
+  listEl.innerHTML='';
+  hotels.forEach((h,i)=>{
+    h._num = i+1;
+    if(h.leg){
+      const legRow=document.createElement('div');
+      legRow.className='leg';
+      legRow.innerHTML=`<span class="ic">${h.leg.ic}</span><span>${esc(h.leg.txt)}</span>`;
+      listEl.appendChild(legRow);
+    }
+    const card=document.createElement('div');
+    card.className='card '+(h.area||'');
+    card.innerHTML=hotelCardHtml(h);
+    card.addEventListener('click',()=>{ const meta=hotelMeta.find(m=>m.hid===h.id); focusLatLng([h.lat,h.lng], h.area==='b'?12:14, meta&&meta.marker); });
+    listEl.appendChild(card);
+    h._card=card;
 
-  const rkey=areaToRegion[h.area];
-  const icon=L.divIcon({className:'',html:`<div class="poi-pin" style="--pc:${areaColor(h.area)}"><span class="emoji">🏨</span></div>`,iconSize:[32,32],iconAnchor:[16,32],popupAnchor:[0,-30]});
-  const m=L.marker([h.lat,h.lng],{icon});
-  m.bindPopup(hotelPopupHtml(h, rkey), {maxWidth:280});
-  hotelMeta.push({hid:h.id, marker:m, cat:'hotel', region:rkey, latlng:[h.lat,h.lng], dist:Infinity});
-});
+    const rkey=areaToRegion[h.area]||h.regionKey;
+    const color=h.area?areaColor(h.area):'#0ea5a4';
+    const icon=L.divIcon({className:'',html:`<div class="poi-pin" style="--pc:${color}"><span class="emoji">🏨</span></div>`,iconSize:[32,32],iconAnchor:[16,32],popupAnchor:[0,-30]});
+    const m=L.marker([h.lat,h.lng],{icon});
+    m.bindPopup(hotelPopupHtml(h, rkey), {maxWidth:280});
+    hotelMeta.push({hid:h.id, marker:m, cat:'hotel', region:rkey, latlng:[h.lat,h.lng], dist:Infinity});
+  });
+}
+buildHotels();
 
 function refreshHotels(){
   hotels.forEach(h=>{
@@ -1693,14 +1736,19 @@ function refreshHotels(){
   });
 }
 
-/* ---- Route segments ---- */
-segs.forEach(s=>{
-  const a=byId(s.from), b=byId(s.to);
-  const pts=[[a.lat,a.lng],[b.lat,b.lng]];
-  L.polyline(pts,{color:segColor(s.type),weight:3.2,opacity:.9,dashArray:s.type==="car"?'2 8':'7 9'}).addTo(routeLayer);
-  const mid=[(a.lat+b.lat)/2,(a.lng+b.lng)/2];
-  L.marker(mid,{interactive:false,icon:L.divIcon({className:'',html:`<div class="trans-marker">${s.ic}</div>`,iconSize:[20,20],iconAnchor:[10,10]})}).addTo(routeLayer);
-});
+/* ---- Route segments (reusable; connects stays in `segs`) ---- */
+function buildRoute(){
+  routeLayer.clearLayers();
+  segs.forEach(s=>{
+    const a=byId(s.from), b=byId(s.to);
+    if(!a||!b) return;
+    const pts=[[a.lat,a.lng],[b.lat,b.lng]];
+    L.polyline(pts,{color:segColor(s.type),weight:3.2,opacity:.9,dashArray:s.type==="car"?'2 8':'7 9'}).addTo(routeLayer);
+    const mid=[(a.lat+b.lat)/2,(a.lng+b.lng)/2];
+    L.marker(mid,{interactive:false,icon:L.divIcon({className:'',html:`<div class="trans-marker">${s.ic}</div>`,iconSize:[20,20],iconAnchor:[10,10]})}).addTo(routeLayer);
+  });
+}
+buildRoute();
 
 /* ---- POI markers ---- */
 let poiMeta=[];
@@ -2206,6 +2254,76 @@ let editingPlaceId=null; // set while editing an existing place
 
 function openModal(){ modal.classList.add('show'); }
 function closeModal(){ modal.classList.remove('show'); }
+
+/* ================= Add / edit stay (hotel) — custom trips ================= */
+const hotelModal=document.getElementById('hotelModal');
+let hotelEditId=null, hCoords=null;
+/* Re-sort stays by check-in, auto-connect them into a route, and re-render. */
+function rebuildCustomHotels(){
+  hotels.sort((a,b)=>String(a.from||'').localeCompare(String(b.from||'')));
+  segs=[];
+  for(let i=0;i+1<hotels.length;i++){
+    const a=hotels[i], b=hotels[i+1];
+    const far=haversine([a.lat,a.lng],[b.lat,b.lng])>300;   // >300km ⇒ assume a flight
+    segs.push({from:a.id, to:b.id, type:far?'flight':'car', ic:far?'✈️':'🚗'});
+  }
+  buildHotels(); buildRoute(); refreshHotels(); applyFilters();
+  if(document.body.dataset.view==='destinations') renderDestinations();
+}
+function openHotelModal(id){
+  if(!hotelModal) return;
+  hotelEditId=id||null; hCoords=null;
+  const sel=document.getElementById('hDest'); sel.innerHTML='';
+  Object.entries(REGIONS).forEach(([k,r])=>{ if(k==='all')return; const o=document.createElement('option'); o.value=k; o.textContent=r.he; sel.appendChild(o); });
+  const h=id?hotels.find(x=>x.id===id):null;
+  document.getElementById('hotelModalTitle').textContent=h?'✏️ עריכת לינה':'🏨 הוספת לינה';
+  document.getElementById('hName').value=h?h.name:'';
+  document.getElementById('hFrom').value=h?h.from:'';
+  document.getElementById('hTo').value=h?h.to:'';
+  document.getElementById('hThb').value=(h&&h.thb)?h.thb:'';
+  if(h){ sel.value=h.regionKey||regionOf(h.lat,h.lng); hCoords={lat:h.lat,lng:h.lng}; }
+  document.getElementById('hLink').value=''; document.getElementById('hLinkStatus').textContent='';
+  hotelModal.classList.add('show');
+}
+function closeHotelModal(){ if(hotelModal) hotelModal.classList.remove('show'); }
+window.editHotel=id=>openHotelModal(id);
+window.deleteHotel=async id=>{
+  if(!confirm('למחוק את הלינה?'))return;
+  if(cloud&&cloud.enabled&&cloud.removeHotel){ try{ await cloud.removeHotel(id); }catch(e){} }
+  else { hotels=hotels.filter(h=>h.id!==id); delete hotelState[id]; rebuildCustomHotels(); }
+  map.closePopup();
+};
+if(document.getElementById('hLinkBtn')) document.getElementById('hLinkBtn').addEventListener('click',async()=>{
+  const v=document.getElementById('hLink').value.trim(); if(!v)return;
+  const st=document.getElementById('hLinkStatus'); st.textContent='ממיר… (קישור מקוצר עשוי לקחת כמה שניות)';
+  let r=null; try{ r=await resolveLink(v); }catch(e){}
+  if(r&&r.lat!=null){ hCoords={lat:+r.lat,lng:+r.lng}; st.textContent='✓ מיקום זוהה'+(r.name?': '+r.name:'');
+    if(r.name&&!document.getElementById('hName').value.trim()) document.getElementById('hName').value=r.name; }
+  else st.textContent='לא זוהה מיקום מהקישור. אפשר גם להשאיר ריק — נשתמש במרכז היעד.';
+});
+if(document.getElementById('hCancel')) document.getElementById('hCancel').addEventListener('click',closeHotelModal);
+if(document.getElementById('hSave')) document.getElementById('hSave').addEventListener('click',async()=>{
+  const name=document.getElementById('hName').value.trim();
+  const from=document.getElementById('hFrom').value, to=document.getElementById('hTo').value;
+  const regionKey=document.getElementById('hDest').value;
+  const thb=+document.getElementById('hThb').value||0;
+  if(!name||!from||!to){ alert('נא למלא שם, צ׳ק אין וצ׳ק אאוט'); return; }
+  if(to<from){ alert('צ׳ק אאוט חייב להיות אחרי צ׳ק אין'); return; }
+  let coords=hCoords;
+  if(!coords){ const r=REGIONS[regionKey]; coords=(r&&r.center)?{lat:r.center[0],lng:r.center[1]}:{lat:0,lng:0}; }
+  const id=hotelEditId||('h_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
+  const nights=Math.max(0,Math.round((new Date(to)-new Date(from))/86400000));
+  const def={ id, name, from, to, lat:coords.lat, lng:coords.lng, regionKey,
+    region:(REGIONS[regionKey]||{}).he||'', nights, thb };
+  const paid=hotelState[id]?!!hotelState[id].paid:false;
+  const btn=document.getElementById('hSave'); btn.disabled=true; btn.textContent='שומר…';
+  if(cloud&&cloud.enabled){ try{ await cloud.setHotel(id,{...def,paid}); }catch(e){ alert('שמירה נכשלה'); } }
+  else { const i=hotels.findIndex(x=>x.id===id); if(i>=0) hotels[i]={...hotels[i],...def}; else hotels.push(def); hotelState[id]={paid}; rebuildCustomHotels(); }
+  btn.disabled=false; btn.textContent='שמור';
+  closeHotelModal();
+});
+const addHotelBtn=document.getElementById('addHotelBtn');
+if(addHotelBtn) addHotelBtn.addEventListener('click',()=>openHotelModal(null));
 function setCoords(lat,lng){ pending={lat:+(+lat).toFixed(6),lng:+(+lng).toFixed(6)}; document.getElementById('fCoords').textContent=`📍 נבחר: ${pending.lat}, ${pending.lng}`; }
 function resetForm(){ editingPlaceId=null; pending=null; document.getElementById('fName').value=''; document.getElementById('fNote').value=''; document.getElementById('fInsta').value=''; fCat.value='restaurant';
   document.getElementById('modalTitle').textContent='הוספת מקום';
@@ -2922,8 +3040,8 @@ function applyItinerary(IT){
   // Custom/blank trips carry no baked-in stays or flights. The Thailand hotel
   // pins and route are built into layers at load time, so clear them too.
   hotels=[]; flights=[]; segs=[]; areaToRegion={};
-  hotelMeta.forEach(m=>{ try{ map.removeLayer(m.marker); }catch(e){} }); hotelMeta.length=0;
-  try{ routeLayer.clearLayers(); }catch(e){}
+  buildHotels();   // clears the built-in Thailand cards + markers
+  buildRoute();    // clears the built-in route
   const R={ all:{he:'כל היעדים',eng:''} };
   dests.forEach(d=>{ R[d.key]={he:d.name, eng:d.eng||'', center:[d.lat,d.lng]}; });
   REGIONS=R;
@@ -2960,6 +3078,7 @@ async function __startApp(){
   // Custom & blank trips replace the hardcoded Thailand itinerary with the
   // user's own; only the Thailand sample keeps the built-in data.
   if(window.__TEMPLATE!=='thailand') applyItinerary(window.__ITINERARY||{destinations:[]});
+  const _ahb=document.getElementById('addHotelBtn'); if(_ahb) _ahb.style.display=(window.__TEMPLATE==='thailand')?'none':'';
   await initAdmin();
   loadPlaces();
   loadHotelState();
@@ -3010,8 +3129,22 @@ async function __startApp(){
       else if(v==='about') renderAbout();
     });
     cloud.onHotels(obj=>{
-      Object.keys(obj||{}).forEach(id=>{
-        const d=obj[id]||{};
+      const docs=obj||{};
+      if(window.__TEMPLATE!=='thailand'){
+        // Custom trips: hotel docs are the stay definitions themselves.
+        hotels = Object.keys(docs).map(id=>({id, ...docs[id]})).filter(h=>h.name);
+        hotels.forEach(h=>{
+          hotelState[h.id]={paid:!!docs[h.id].paid};
+          if((!h.nights||h.nights<0) && h.from && h.to) h.nights=Math.max(0,Math.round((new Date(h.to)-new Date(h.from))/86400000));
+          if(!h.regionKey) h.regionKey=regionOf(h.lat,h.lng);
+          if(!h.region) h.region=(REGIONS[h.regionKey]||{}).he||'';
+        });
+        saveHotelState(); rebuildCustomHotels();
+        if(document.body.dataset.view==='about') renderAbout();
+        return;
+      }
+      Object.keys(docs).forEach(id=>{
+        const d=docs[id]||{};
         hotelState[id]={paid:!!d.paid};
         /* migrate a legacy single booking stored on the hotel doc into the bookings collection */
         if(d.booking){
@@ -3117,6 +3250,7 @@ window.TripReady.then(()=>__startApp());
         upsertPlace(p){ return setDoc(doc(placesCol(), String(p.id)), p); },
         removePlace(id){ return deleteDoc(doc(placesCol(), String(id))); },
         setHotel(id,data){ return setDoc(doc(hotelsCol(), String(id)), data, {merge:true}); },
+        removeHotel(id){ return deleteDoc(doc(hotelsCol(), String(id))); },
         upsertBooking(b){ return setDoc(doc(bookingsCol(), String(b.id)), b); },
         removeBooking(id){ return deleteDoc(doc(bookingsCol(), String(id))); },
         getMeta(){ return getDoc(doc(db,...base,'meta','info')).then(s=>s.exists()?s.data():null); },

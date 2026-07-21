@@ -56,9 +56,12 @@ Everything is keyed to a signed-in account, so each customer's data is private.
    (each added by pasting a Google Maps link) — and the app renders regions, the
    location filter, the map destination pins, the date countdown, and the weather
    from that per-trip data. A user planning Japan no longer sees Thailand.
-   **Still to do here:** let users add *dated hotels and transport legs* inside a
-   trip (the funnel is intentionally minimal; today hotels/flights are empty for
-   custom trips and only the Thailand sample ships with them).
+   Users can also add **dated stays (hotels)** inside a trip — an in-trip editor
+   captures name, destination, exact location (paste a Maps link), check-in/out,
+   and cost; stays sync live per-trip, show as cards + map pins, and are
+   **auto-connected into a route** (a leg over ~300 km is drawn as a flight, else
+   a drive). **Still to do here:** let users hand-pick each transport leg's type,
+   and add standalone flights not tied to two stays.
 
 3. **UI is Hebrew/RTL only.** A global paid product needs at least English. The
    sign-in gate is isolated, so this can be added incrementally.
