@@ -1030,7 +1030,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   #gate.on{display:flex}
   .g-card{background:rgba(17,28,44,.92);border:1px solid #26364e;border-radius:18px;
     padding:26px 24px;max-width:420px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.5);text-align:center}
-  .g-card.wide{max-width:520px;text-align:right}
+  .g-card.wide{max-width:520px;text-align:start}
   .g-logo{font-size:44px;margin-bottom:6px}
   .g-card h2{margin:0 0 8px;font-size:22px}
   .g-card p{margin:0 0 18px;color:#a9b8cc;font-size:14px;line-height:1.6}
@@ -3548,7 +3548,7 @@ window.TripReady.then(()=>__startApp());
 
   const gate = document.getElementById('gate');
   const gateBody = document.getElementById('gateBody');
-  const showGate = ()=> gate && gate.classList.add('on');
+  const showGate = ()=>{ if(gate){ gate.style.direction = (window.__lang==='en')?'ltr':'rtl'; gate.classList.add('on'); } };
   const hideGate = ()=> gate && gate.classList.remove('on');
   const LS_ACTIVE = 'planner_active_trip';
 
@@ -3712,8 +3712,8 @@ window.TripReady.then(()=>__startApp());
 
       document.getElementById('gOut').onclick = ()=>{ localStorage.removeItem(LS_ACTIVE); signOut(auth); };
       gateBody.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>{
-        const id=el.getAttribute('data-open'), t=trips.find(x=>x.id===id);
-        if(t){ localStorage.setItem(LS_ACTIVE, id); bootTrip(user.uid, t); }
+        const id=el.getAttribute('data-open');
+        localStorage.setItem(LS_ACTIVE, id); location.reload();  // open via the reliable auto-open-on-load path
       });
       gateBody.querySelectorAll('[data-del]').forEach(el=>el.onclick=async ev=>{
         ev.stopPropagation();
@@ -3762,17 +3762,23 @@ window.TripReady.then(()=>__startApp());
       $('gDestSearchBtn').onclick = runDestSearch;
       $('gDestSearch').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); runDestSearch(); } });
 
+      // Keep check-out on/after check-in.
+      $('gStart').addEventListener('change', ()=>{ const s=$('gStart').value; if(s){ $('gEnd').min=s; if($('gEnd').value && $('gEnd').value < s) $('gEnd').value=s; } refreshCreate(); });
+
       $('gCreate').onclick = async()=>{
         const name=$('gName').value.trim();
         const startDate=$('gStart').value, endDate=$('gEnd').value;
+        if(startDate && endDate && endDate < startDate){
+          alert(window.__lang==='en'?'The end date can’t be before the start date.':'תאריך הסיום לא יכול להיות לפני תאריך ההתחלה.');
+          return;
+        }
         const btn=$('gCreate'); btn.disabled=true; btn.textContent=T('gate_creating');
         try{
           const mainCountry=(funnelDests[0]&&funnelDests[0].country)||'';
           const itinerary = { startDate, endDate, destinations: funnelDests.map(d=>({...d, date:startDate})) };
           if(mainCountry){ itinerary.mainCountry=mainCountry; itinerary.currency=window.__currencyForCountry(mainCountry); }
           const id=await createTrip(user.uid, name, 'custom', itinerary);
-          localStorage.setItem(LS_ACTIVE, id);
-          bootTrip(user.uid, {id, name, template:'custom', itinerary});
+          localStorage.setItem(LS_ACTIVE, id); location.reload();   // open the new trip via auto-open-on-load
         }catch(e){
           btn.disabled=false; btn.textContent=T('gate_create');
           alert((window.__lang==='en'?'Could not create the trip: ':'לא ניתן ליצור את הטיול: ')+(e&&e.message||e)+
@@ -3785,8 +3791,7 @@ window.TripReady.then(()=>__startApp());
         try{
           const nm='תאילנד 2026 (לדוגמה)';
           const id=await createTrip(user.uid, nm, 'thailand');
-          localStorage.setItem(LS_ACTIVE, id);
-          bootTrip(user.uid, {id, name:nm, template:'thailand'});
+          localStorage.setItem(LS_ACTIVE, id); location.reload();
         }catch(e){ btn.disabled=false; btn.textContent=T('gate_sample'); alert((window.__lang==='en'?'Could not create: ':'שגיאה: ')+(e&&e.message||e)); }
       };
     }
