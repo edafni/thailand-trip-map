@@ -1,0 +1,32 @@
+rules_version = '2';
+
+// Security rules for the multi-user Trip Planner.
+// Paste these into Firebase Console → Firestore Database → Rules → Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- Each user owns their profile and all trips beneath it ----
+    match /users/{uid} {
+
+      // Anyone signed in can read their own profile.
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      // A user may create/update their own profile, but MAY NOT change the
+      // `tier` field — that is the paid entitlement and must only be set by
+      // trusted server code (a Stripe webhook via the Admin SDK) or manually
+      // in the console. This line rejects any client write that would alter it.
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.get('tier', 'free') == resource.data.get('tier', 'free');
+
+      allow delete: if request.auth != null && request.auth.uid == uid;
+
+      // A user has full access to everything under their own trips.
+      match /trips/{tripId}/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // Everything else is denied by default.
+  }
+}
