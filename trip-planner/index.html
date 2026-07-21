@@ -1084,6 +1084,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     </div>
     <span class="tb-spacer"></span>
     <span class="netstat" id="netStatus" title=""><span class="netdot"></span><span class="nettext"></span></span>
+    <button id="tripsBtnTop" class="iconbtn" title="הטיולים שלי / My trips">🧳</button>
     <button id="langBtn" class="iconbtn" title="Language / שפה">EN</button>
     <button id="themeBtn" class="iconbtn" title="מצב כהה / בהיר">🌙</button>
   </div>
@@ -1132,38 +1133,38 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <div id="list"></div>
     <div class="section-title" id="poiTitle" data-i18n="sec_recommended">⭐ מקומות מומלצים</div>
     <div id="poiList"></div>
-    <footer id="footerText"></footer>
+    <footer id="footerText" data-i18n="footer_tip"></footer>
   </div>
 </div>
 
 <!-- Tab views -->
 <div class="view" id="view-attractions">
-  <h2>⭐ אטרקציות ומקומות</h2>
-  <div class="lead">כל המקומות השמורים, מקובצים לפי סוג. טפו על מקום כדי לראותו במפה.</div>
-  <input id="attrSearch" class="vsearch" placeholder="🔎 חיפוש לפי שם..." />
-  <button class="btn small" id="attrStarBtn" style="margin:2px 2px 10px">⭐ רק מומלצים</button>
+  <h2 data-i18n="v_attr_title">⭐ אטרקציות ומקומות</h2>
+  <div class="lead" data-i18n="v_attr_lead">כל המקומות השמורים, מקובצים לפי סוג. טפו על מקום כדי לראותו במפה.</div>
+  <input id="attrSearch" class="vsearch" data-i18n-ph="v_attr_search_ph" placeholder="🔎 חיפוש לפי שם..." />
+  <button class="btn small" id="attrStarBtn" style="margin:2px 2px 10px" data-i18n="btn_star_only">⭐ רק מומלצים</button>
   <div id="attrList"></div>
 </div>
 <div class="view" id="view-bookings">
-  <h2>🧾 ההזמנות שלי</h2>
-  <div class="lead">כל אישורי ההזמנה, מסודרים לפי תאריך ומחולקים לפי משפחה. בחרו משפחה בלשוניות למטה.</div>
-  <button class="btn primary" id="bkAddBtn" style="margin-bottom:12px">➕ הוסף הזמנה</button>
+  <h2 data-i18n="v_book_title">🧾 ההזמנות שלי</h2>
+  <div class="lead" data-i18n="v_book_lead">כל אישורי ההזמנה, מסודרים לפי תאריך ומחולקים לפי משפחה. בחרו משפחה בלשוניות למטה.</div>
+  <button class="btn primary" id="bkAddBtn" style="margin-bottom:12px" data-i18n="v_book_add">➕ הוסף הזמנה</button>
   <div class="subtabs" id="bkFamilyTabs" style="margin-bottom:8px">
-    <div class="subtab on" data-fam="all">הכל</div>
+    <div class="subtab on" data-fam="all" data-i18n="v_all">הכל</div>
     <div class="subtab" data-fam="f1">משפחת דפני</div>
     <div class="subtab" data-fam="f2">משפחת בן חמו</div>
   </div>
   <div class="subtabs" id="bkTypeTabs" style="margin-bottom:12px">
-    <div class="subtab on" data-type="all">הכל</div>
-    <div class="subtab" data-type="hotel">🏨 מלונות</div>
-    <div class="subtab" data-type="flight">✈️ טיסות</div>
-    <div class="subtab" data-type="other">🚗 אחר</div>
+    <div class="subtab on" data-type="all" data-i18n="v_all">הכל</div>
+    <div class="subtab" data-type="hotel" data-i18n="v_hotels">🏨 מלונות</div>
+    <div class="subtab" data-type="flight" data-i18n="v_flights">✈️ טיסות</div>
+    <div class="subtab" data-type="other" data-i18n="v_other">🚗 אחר</div>
   </div>
   <div id="bookingsList"></div>
 </div>
 <div class="view" id="view-destinations">
-  <h2>📍 יעדים</h2>
-  <div class="lead">שלושת היעדים בטיול. טפו על "הצג במפה" כדי למקד את המפה על היעד.</div>
+  <h2 data-i18n="v_dest_title">📍 יעדים</h2>
+  <div class="lead" data-i18n="v_dest_lead">שלושת היעדים בטיול. טפו על "הצג במפה" כדי למקד את המפה על היעד.</div>
   <div id="destList"></div>
 </div>
 <div class="view" id="view-info"></div>
@@ -1173,35 +1174,35 @@ svg.leaflet-image-layer.leaflet-interactive path {
 <div id="modal">
   <div class="modal-card">
     <h3 id="modalTitle">הוספת מקום</h3>
-    <div class="field"><label>שם המקום</label><input id="fName" type="text" placeholder="לדוגמה: מסעדת פיש מרקט" /></div>
-    <div class="field"><label>קטגוריה</label><select id="fCat"></select></div>
-    <div class="field"><label>הערה (לא חובה)</label><textarea id="fNote" placeholder="שעות פתיחה, המלצה, מחיר..."></textarea></div>
-    <div class="field"><label>📸 קישור אינסטגרם (לא חובה)</label><input id="fInsta" type="url" inputmode="url" placeholder="https://www.instagram.com/p/..." /></div>
+    <div class="field"><label data-i18n="m_place_name">שם המקום</label><input id="fName" type="text" data-i18n-ph="m_place_name_ph" placeholder="לדוגמה: מסעדת פיש מרקט" /></div>
+    <div class="field"><label data-i18n="m_category">קטגוריה</label><select id="fCat"></select></div>
+    <div class="field"><label data-i18n="m_note">הערה (לא חובה)</label><textarea id="fNote" data-i18n-ph="m_note_ph" placeholder="שעות פתיחה, המלצה, מחיר..."></textarea></div>
+    <div class="field"><label data-i18n="m_insta">📸 קישור אינסטגרם (לא חובה)</label><input id="fInsta" type="url" inputmode="url" placeholder="https://www.instagram.com/p/..." /></div>
 
     <div class="field">
-      <label>מיקום</label>
+      <label data-i18n="m_location">מיקום</label>
       <div class="subtabs">
-        <div class="subtab on" data-pane="search">🔎 חיפוש</div>
-        <div class="subtab" data-pane="link">🔗 קישור</div>
-        <div class="subtab" data-pane="map">🗺️ במפה</div>
+        <div class="subtab on" data-pane="search" data-i18n="m_tab_search">🔎 חיפוש</div>
+        <div class="subtab" data-pane="link" data-i18n="m_tab_link">🔗 קישור</div>
+        <div class="subtab" data-pane="map" data-i18n="m_tab_map">🗺️ במפה</div>
       </div>
       <div class="pane on" id="paneSearch">
-        <div class="row"><input id="fSearch" type="text" placeholder="שם מקום / כתובת (למשל: Big Buddha Samui)" /><button class="btn small primary" id="fSearchBtn">חפש</button></div>
+        <div class="row"><input id="fSearch" type="text" data-i18n-ph="m_search_ph" placeholder="שם מקום / כתובת (למשל: Big Buddha Samui)" /><button class="btn small primary" id="fSearchBtn" data-i18n="m_btn_search">חפש</button></div>
         <div class="results" id="fResults"></div>
       </div>
       <div class="pane" id="paneLink">
-        <div class="row"><input id="fLink" type="text" placeholder="הדביקו קישור Google Maps או קואורדינטות" /><button class="btn small primary" id="fLinkBtn">המר</button></div>
+        <div class="row"><input id="fLink" type="text" data-i18n-ph="m_link_ph" placeholder="הדביקו קישור Google Maps או קואורדינטות" /><button class="btn small primary" id="fLinkBtn" data-i18n="m_btn_convert">המר</button></div>
         <div class="status" id="fLinkStatus"></div>
       </div>
       <div class="pane" id="paneMap">
-        <button class="btn primary" id="fMapPick">בחרו נקודה על המפה</button>
+        <button class="btn primary" id="fMapPick" data-i18n="m_pick_map">בחרו נקודה על המפה</button>
       </div>
       <div class="coordsBox" id="fCoords"></div>
     </div>
 
     <div class="modal-actions">
-      <button class="btn primary" id="fSave">שמור מקום</button>
-      <button class="btn cancel" id="fCancel">ביטול</button>
+      <button class="btn primary" id="fSave" data-i18n="m_save_place">שמור מקום</button>
+      <button class="btn cancel" id="fCancel" data-i18n="m_cancel">ביטול</button>
     </div>
   </div>
 </div>
@@ -1210,21 +1211,21 @@ svg.leaflet-image-layer.leaflet-interactive path {
 <div id="hotelModal">
   <div class="modal-card">
     <h3 id="hotelModalTitle">🏨 הוספת לינה</h3>
-    <div class="field"><label>שם המלון / הלינה</label><input id="hName" type="text" placeholder="לדוגמה: Park Hyatt Tokyo" /></div>
-    <div class="field"><label>יעד</label><select id="hDest"></select></div>
+    <div class="field"><label data-i18n="m_stay_name">שם המלון / הלינה</label><input id="hName" type="text" data-i18n-ph="m_stay_name_ph" placeholder="לדוגמה: Park Hyatt Tokyo" /></div>
+    <div class="field"><label data-i18n="m_dest">יעד</label><select id="hDest"></select></div>
     <div class="field">
-      <label>מיקום מדויק (לא חובה)</label>
-      <div class="row"><input id="hLink" type="text" placeholder="קישור Google Maps של המלון" /><button class="btn small primary" id="hLinkBtn">המר</button></div>
+      <label data-i18n="m_exact">מיקום מדויק (לא חובה)</label>
+      <div class="row"><input id="hLink" type="text" data-i18n-ph="m_hlink_ph" placeholder="קישור Google Maps של המלון" /><button class="btn small primary" id="hLinkBtn" data-i18n="m_btn_convert">המר</button></div>
       <div class="status" id="hLinkStatus"></div>
     </div>
     <div class="field hrow">
-      <label>צ'ק אין<input id="hFrom" type="date" /></label>
-      <label>צ'ק אאוט<input id="hTo" type="date" /></label>
+      <label><span data-i18n="h_checkin">צ'ק אין</span><input id="hFrom" type="date" /></label>
+      <label><span data-i18n="h_checkout">צ'ק אאוט</span><input id="hTo" type="date" /></label>
     </div>
     <div class="field"><label id="hThbLbl">עלות ฿ (לא חובה)</label><input id="hThb" type="number" inputmode="numeric" placeholder="0" /></div>
     <div class="modal-actions">
-      <button class="btn primary" id="hSave">שמור</button>
-      <button class="btn cancel" id="hCancel">ביטול</button>
+      <button class="btn primary" id="hSave" data-i18n="m_save">שמור</button>
+      <button class="btn cancel" id="hCancel" data-i18n="m_cancel">ביטול</button>
     </div>
   </div>
 </div>
@@ -1233,31 +1234,31 @@ svg.leaflet-image-layer.leaflet-interactive path {
 <div id="bookingModal">
   <div class="modal-card">
     <h3 id="bkModalTitle">🧾 הוספת אישור הזמנה</h3>
-    <div class="field"><label>משפחה</label><select id="bkFamily"></select></div>
-    <div class="field"><label>שיוך</label><select id="bkEntity"></select></div>
-    <div class="field"><label id="bkLabelLbl">שם ההזמנה / של מי (לא חובה)</label><input id="bkLabel" type="text" placeholder="למשל: משפחת דפני" /></div>
+    <div class="field"><label data-i18n="bk_family">משפחה</label><select id="bkFamily"></select></div>
+    <div class="field"><label data-i18n="bk_assign">שיוך</label><select id="bkEntity"></select></div>
+    <div class="field"><label id="bkLabelLbl" data-i18n="bk_label">שם ההזמנה / של מי (לא חובה)</label><input id="bkLabel" type="text" /></div>
 
     <div class="field" id="bkOtherFields" style="display:none">
-      <label>תאריך</label>
+      <label data-i18n="bk_date">תאריך</label>
       <input id="bkDate" type="date" />
-      <label style="margin-top:8px">מיקום במפה</label>
-      <div class="row"><input id="bkSearch" type="text" placeholder="שם מקום / כתובת (למשל: Raja Ferry Pier)" /><button type="button" class="btn small primary" id="bkSearchBtn">חפש</button></div>
+      <label style="margin-top:8px" data-i18n="bk_map_loc">מיקום במפה</label>
+      <div class="row"><input id="bkSearch" type="text" data-i18n-ph="bk_search_ph" placeholder="שם מקום / כתובת (למשל: Raja Ferry Pier)" /><button type="button" class="btn small primary" id="bkSearchBtn" data-i18n="m_btn_search">חפש</button></div>
       <div class="results" id="bkResults"></div>
-      <button type="button" class="btn small" id="bkMapPick" style="margin-top:6px">🗺️ בחרו נקודה על המפה</button>
+      <button type="button" class="btn small" id="bkMapPick" style="margin-top:6px" data-i18n="bk_pick_map">🗺️ בחרו נקודה על המפה</button>
       <div class="coordsBox" id="bkCoords"></div>
     </div>
 
     <div class="field">
-      <label>אייקון</label>
+      <label data-i18n="bk_icon">אייקון</label>
       <div class="icon-picker" id="bkIconPicker"></div>
-      <input id="bkIconCustom" type="text" maxlength="4" placeholder="או הדביקו אימוג'י משלכם" style="margin-top:6px;max-width:220px" />
+      <input id="bkIconCustom" type="text" maxlength="4" data-i18n-ph="bk_icon_ph" placeholder="או הדביקו אימוג'י משלכם" style="margin-top:6px;max-width:220px" />
     </div>
 
-    <div class="field"><label>קובץ אישור (תמונה או PDF)</label><input id="bkFile" type="file" accept="image/*,application/pdf" /></div>
+    <div class="field"><label data-i18n="bk_file">קובץ אישור (תמונה או PDF)</label><input id="bkFile" type="file" accept="image/*,application/pdf" /></div>
     <div class="status" id="bkStatus"></div>
     <div class="modal-actions">
-      <button type="button" class="btn primary" id="bkSave">שמור הזמנה</button>
-      <button type="button" class="btn cancel" id="bkCancel">ביטול</button>
+      <button type="button" class="btn primary" id="bkSave" data-i18n="bk_save">שמור הזמנה</button>
+      <button type="button" class="btn cancel" id="bkCancel" data-i18n="m_cancel">ביטול</button>
     </div>
   </div>
 </div>
@@ -1382,7 +1383,24 @@ window.I18N = {
     info_esim:'שווה לשקול eSIM מקומי (Airalo) לנתונים בחו"ל.',
     info_loading:'טוען מידע…', info_no_country:'היעד יזוהה אוטומטית; אם לא — צרו את הטיול מחדש עם חיפוש יעד.', info_cant_load:'לא ניתן לטעון מידע על היעד כרגע.',
     em_general:'חירום כללי (SOS)', em_police:'משטרה', em_ambulance:'אמבולנס', em_fire:'מכבי אש', em_tourist:'משטרת תיירות',
-    drive_left:'שמאל 🚗', drive_right:'ימין 🚗'
+    drive_left:'שמאל 🚗', drive_right:'ימין 🚗',
+    m_place_name:'שם המקום', m_place_name_ph:'לדוגמה: מסעדת פיש מרקט', m_category:'קטגוריה',
+    m_note:'הערה (לא חובה)', m_note_ph:'שעות פתיחה, המלצה, מחיר...', m_insta:'📸 קישור אינסטגרם (לא חובה)',
+    m_location:'מיקום', m_tab_search:'🔎 חיפוש', m_tab_link:'🔗 קישור', m_tab_map:'🗺️ במפה',
+    m_search_ph:'שם מקום / כתובת (למשל: Big Buddha Samui)', m_btn_search:'חפש',
+    m_link_ph:'הדביקו קישור Google Maps או קואורדינטות', m_btn_convert:'המר', m_pick_map:'בחרו נקודה על המפה',
+    m_save_place:'שמור מקום', m_cancel:'ביטול',
+    m_stay_name:'שם המלון / הלינה', m_stay_name_ph:'לדוגמה: Park Hyatt Tokyo', m_dest:'יעד',
+    m_exact:'מיקום מדויק (לא חובה)', m_hlink_ph:'קישור Google Maps של המלון', m_save:'שמור',
+    v_attr_title:'⭐ אטרקציות ומקומות', v_attr_lead:'כל המקומות השמורים, מקובצים לפי סוג. טפו על מקום כדי לראותו במפה.', v_attr_search_ph:'🔎 חיפוש לפי שם...',
+    v_book_title:'🧾 ההזמנות שלי', v_book_lead:'כל אישורי ההזמנה, מסודרים לפי תאריך ומחולקים לפי משפחה.', v_book_add:'➕ הוסף הזמנה',
+    v_all:'הכל', v_hotels:'🏨 מלונות', v_flights:'✈️ טיסות', v_other:'🚗 אחר',
+    v_dest_title:'📍 יעדים', v_dest_lead:'היעדים בטיול. טפו על "הצג במפה" כדי למקד את המפה על היעד.',
+    wx_soon:'התחזית תיטען בקרוב…', map_show_all:'✖ הצג הכל',
+    bk_family:'משפחה', bk_assign:'שיוך', bk_label:'שם ההזמנה / של מי (לא חובה)', bk_date:'תאריך',
+    bk_map_loc:'מיקום במפה', bk_search_ph:'שם מקום / כתובת', bk_pick_map:'🗺️ בחרו נקודה על המפה',
+    bk_icon:'אייקון', bk_icon_ph:"או הדביקו אימוג'י משלכם", bk_file:'קובץ אישור (תמונה או PDF)', bk_save:'שמור הזמנה',
+    footer_tip:'טפו על מקום לראותו במפה · הכפתור 🧭 מציג הכל.'
   },
   en:{
     tab_map:'🗺️ Map', tab_attractions:'⭐ Attractions', tab_bookings:'🧾 Bookings',
@@ -1416,7 +1434,24 @@ window.I18N = {
     info_esim:'Consider a local eSIM (Airalo, etc.) for data abroad.',
     info_loading:'Loading…', info_no_country:'The destination is detected automatically; if not, recreate the trip using destination search.', info_cant_load:'Could not load destination info right now.',
     em_general:'General emergency (SOS)', em_police:'Police', em_ambulance:'Ambulance', em_fire:'Fire', em_tourist:'Tourist police',
-    drive_left:'Left 🚗', drive_right:'Right 🚗'
+    drive_left:'Left 🚗', drive_right:'Right 🚗',
+    m_place_name:'Place name', m_place_name_ph:'e.g. Fish Market Restaurant', m_category:'Category',
+    m_note:'Note (optional)', m_note_ph:'Hours, tip, price…', m_insta:'📸 Instagram link (optional)',
+    m_location:'Location', m_tab_search:'🔎 Search', m_tab_link:'🔗 Link', m_tab_map:'🗺️ On map',
+    m_search_ph:'Place name / address (e.g. Big Buddha Samui)', m_btn_search:'Search',
+    m_link_ph:'Paste a Google Maps link or coordinates', m_btn_convert:'Convert', m_pick_map:'Pick a point on the map',
+    m_save_place:'Save place', m_cancel:'Cancel',
+    m_stay_name:'Hotel / stay name', m_stay_name_ph:'e.g. Park Hyatt Tokyo', m_dest:'Destination',
+    m_exact:'Exact location (optional)', m_hlink_ph:'Google Maps link of the hotel', m_save:'Save',
+    v_attr_title:'⭐ Attractions & places', v_attr_lead:'All saved places, grouped by type. Tap a place to see it on the map.', v_attr_search_ph:'🔎 Search by name…',
+    v_book_title:'🧾 My bookings', v_book_lead:'All booking files, sorted by date and grouped by family.', v_book_add:'➕ Add booking',
+    v_all:'All', v_hotels:'🏨 Hotels', v_flights:'✈️ Flights', v_other:'🚗 Other',
+    v_dest_title:'📍 Destinations', v_dest_lead:'The destinations in your trip. Tap "Show on map" to focus the map.',
+    wx_soon:'Forecast loading soon…', map_show_all:'✖ Show all',
+    bk_family:'Family', bk_assign:'Assignment', bk_label:'Booking name / whose (optional)', bk_date:'Date',
+    bk_map_loc:'Map location', bk_search_ph:'Place name / address', bk_pick_map:'🗺️ Pick a point on the map',
+    bk_icon:'Icon', bk_icon_ph:'or paste your own emoji', bk_file:'Booking file (image or PDF)', bk_save:'Save booking',
+    footer_tip:'Tap a place to see it on the map · the 🧭 button shows everything.'
   }
 };
 window.__lang = (function(){ try{ return localStorage.getItem('planner_lang')||'he'; }catch(e){ return 'he'; } })();
@@ -1428,11 +1463,13 @@ function applyLang(l){
   html.setAttribute('lang', window.__lang);
   html.setAttribute('dir', window.__lang==='he'?'rtl':'ltr');
   document.querySelectorAll('[data-i18n]').forEach(el=>{ const v=window.t(el.getAttribute('data-i18n')); if(v) el.textContent=v; });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ const v=window.t(el.getAttribute('data-i18n-ph')); if(v) el.setAttribute('placeholder',v); });
+  document.querySelectorAll('[data-i18n-title]').forEach(el=>{ const v=window.t(el.getAttribute('data-i18n-title')); if(v) el.title=v; });
   const lb=document.getElementById('langBtn'); if(lb) lb.textContent = window.__lang==='he'?'EN':'עב';
   if(window.__rerenderGate) try{ window.__rerenderGate(); }catch(e){}
   // Re-render dynamic content that contains translated strings.
   if(window.__appReady) try{
-    buildChips(); buildLocSeg(); buildHotels(); buildRoute(); applyFilters();
+    buildChips(); buildLocSeg(); buildHotels(); buildRoute(); buildPoiMarkers(); applyFilters(); updateCountdown(); updateNetStatus();
     const v=document.body.dataset.view;
     if(v==='attractions') renderAttractions();
     else if(v==='destinations') renderDestinations();
@@ -1458,6 +1495,9 @@ const CATEGORIES = {
   other:      {he:'אחר',      en:'Other',       emoji:'📍', color:'#94a3b8'},
 };
 const catLabel = k => { const c=CATEGORIES[k]||CATEGORIES.other; return (window.__lang==='en'&&c.en)?c.en:c.he; };
+const regName = rk => { const r=REGIONS[rk]; if(!r) return ''; return (window.__lang==='en'&&r.en)?r.en:(r.he||''); };
+/* True if the text contains Hebrew/Greek/Cyrillic/Arabic letters (i.e. not a Latin/English name). */
+const isNonLatin = s => /[\u0590-\u05FF\u0370-\u03FF\u0400-\u04FF\u0600-\u06FF]/.test(String(s||''));
 let REGIONS = {
   all:     {he:'כל היעדים', eng:''},
   samui:   {he:'קוסמוי',    eng:'Koh Samui',  center:[9.512,100.013]},
@@ -1780,7 +1820,7 @@ function hotelPopupHtml(h, rkey){
   return `
     <div class="pop">
       <h3>🏨 ${h._num||h.id}. ${esc(h.name)}</h3>
-      <div class="r">${esc(h.region||'')}</div>
+      <div class="r">${esc((h.regionKey&&REGIONS[h.regionKey])?regName(h.regionKey):(h.region||''))}</div>
       <table>
         <tr><td>${window.t('h_checkin')}</td><td><b>${fmtLong(h.from)} ${yr}</b></td></tr>
         <tr><td>${window.t('h_checkout')}</td><td><b>${fmtLong(h.to)} ${yr}</b></td></tr>
@@ -1804,7 +1844,7 @@ function hotelCardHtml(h){
   return `
     <div class="idx">${h._num||h.id}</div>
     <h3>${esc(h.name)}</h3>
-    <div class="region">${esc(h.region||'')}</div>
+    <div class="region">${esc((h.regionKey&&REGIONS[h.regionKey])?regName(h.regionKey):(h.region||''))}</div>
     <div class="dates"><span class="pill">${fmtLong(h.from)}</span><span>${window.__lang==='en'?'→':'←'}</span><span class="pill">${fmtLong(h.to)}</span></div>
     <div class="meta"><span>🌙 ${h.nights} ${window.t('h_nights')}</span>${h.thb?`<span>${TRIP_CUR.sym} ${(+h.thb).toLocaleString()}</span>`:''}</div>
     <div class="hbadges">${badge}${doc}</div>`;
@@ -1870,6 +1910,7 @@ let poiMeta=[];
 function buildPoiMarkers(){
   poiMeta.forEach(o=>{ if(map.hasLayer(o.marker)) map.removeLayer(o.marker); });
   poiMeta=[];
+  const en=window.__lang==='en';
   places.forEach(p=>{
     const c=CATEGORIES[p.cat]||CATEGORIES.other;
     const rkey=p.region||regionOf(p.lat,p.lng);
@@ -1877,12 +1918,12 @@ function buildPoiMarkers(){
     m.bindPopup(`
       <div class="pop">
         <h3>${p.star?'⭐ ':''}${c.emoji} ${esc(p.name)}</h3>
-        <div class="r">${esc(c.he)}${REGIONS[rkey]&&REGIONS[rkey].eng?' · '+REGIONS[rkey].eng:''}${p.visited?' · <b style="color:#22c55e">✓ ביקרנו</b>':''}</div>
+        <div class="r">${esc(catLabel(p.cat))}${REGIONS[rkey]&&REGIONS[rkey].eng?' · '+REGIONS[rkey].eng:''}${p.visited?` · <b style="color:#22c55e">✓ ${en?'Visited':'ביקרנו'}</b>`:''}</div>
         ${p.note?`<div class="note">${esc(p.note)}</div>`:''}
         ${instaHtml(p)}
-        <div class="navrow"><a class="wazebtn" href="${wazeLink(p.lat, p.lng)}" target="_blank" rel="noopener">🧭 נווט ב-Waze</a><a href="${gmapsLink(p.name, rkey, p.lat, p.lng)}" target="_blank" rel="noopener">Google Maps ↗</a></div>
-        <div class="hactions"><button class="hbtn${p.star?' starred':''}" onclick="toggleStar('${p.id}')">${p.star?'⭐ מומלץ — הסר':'☆ סמן כמומלץ'}</button></div>
-        ${isAdmin?`<div class="hactions"><button class="hbtn" onclick="toggleVisited('${p.id}')">${p.visited?'↩︎ בטל ביקור':'✓ ביקרנו'}</button><button class="hbtn" onclick="editPlace('${p.id}')">✏️ ערוך</button><button class="delbtn" onclick="deletePlace('${p.id}')">🗑️ מחק</button></div>`:''}
+        <div class="navrow"><a class="wazebtn" href="${wazeLink(p.lat, p.lng)}" target="_blank" rel="noopener">${window.t('nav_waze')}</a><a href="${gmapsLink(p.name, rkey, p.lat, p.lng)}" target="_blank" rel="noopener">Google Maps ↗</a></div>
+        <div class="hactions"><button class="hbtn${p.star?' starred':''}" onclick="toggleStar('${p.id}')">${p.star?(en?'⭐ Must-see — remove':'⭐ מומלץ — הסר'):(en?'☆ Mark must-see':'☆ סמן כמומלץ')}</button></div>
+        ${isAdmin?`<div class="hactions"><button class="hbtn" onclick="toggleVisited('${p.id}')">${p.visited?(en?'↩︎ Unmark visited':'↩︎ בטל ביקור'):(en?'✓ Visited':'✓ ביקרנו')}</button><button class="hbtn" onclick="editPlace('${p.id}')">${en?'✏️ Edit':'✏️ ערוך'}</button><button class="delbtn" onclick="deletePlace('${p.id}')">${en?'🗑️ Delete':'🗑️ מחק'}</button></div>`:''}
       </div>`);
     poiMeta.push({pid:p.id, marker:m, cat:p.cat, region:rkey, latlng:[p.lat,p.lng], name:p.name, note:p.note, star:!!p.star, dist:Infinity});
   });
@@ -2058,7 +2099,7 @@ function setDefaultBkIcon(){
 function updateBookingModalMode(){
   const isOther=(bkEntity.value||'').startsWith('other:');
   document.getElementById('bkOtherFields').style.display=isOther?'':'none';
-  document.getElementById('bkLabelLbl').textContent=isOther?'שם ההזמנה (למשל: השכרת רכב)':'שם ההזמנה / של מי (לא חובה)';
+  document.getElementById('bkLabelLbl').textContent=(window.__lang==='en')?(isOther?'Booking name (e.g. car rental)':'Booking name / whose (optional)'):(isOther?'שם ההזמנה (למשל: השכרת רכב)':'שם ההזמנה / של מי (לא חובה)');
 }
 function setBkCoords(lat,lng){
   bkPending={lat:+(+lat).toFixed(6),lng:+(+lng).toFixed(6)};
@@ -2066,7 +2107,7 @@ function setBkCoords(lat,lng){
 }
 function openBookingModal(kind, refId){
   editingBookingId=null;
-  document.getElementById('bkModalTitle').textContent='🧾 הוספת אישור הזמנה';
+  document.getElementById('bkModalTitle').textContent=window.__lang==='en'?'🧾 Add booking file':'🧾 הוספת אישור הזמנה';
   document.getElementById('bkSave').textContent='שמור הזמנה';
   fillEntitySelect(); fillFamilySelect();
   if(kind&&refId!=null) bkEntity.value=kind+':'+refId;
@@ -2086,7 +2127,7 @@ function openEditBookingModal(id){
   const b=bookings.find(x=>x.id===id); if(!b) return;
   openBookingModal();                       // reset to a clean state first
   editingBookingId=id;
-  document.getElementById('bkModalTitle').textContent='✏️ עריכת הזמנה';
+  document.getElementById('bkModalTitle').textContent=window.__lang==='en'?'✏️ Edit booking':'✏️ עריכת הזמנה';
   document.getElementById('bkSave').textContent='שמור שינויים';
   bkEntity.value = b.kind==='other' ? 'other:new' : (b.kind+':'+b.refId);
   bkFamily.value = normFamily(b.family);
@@ -2272,7 +2313,7 @@ function buildLocSeg(){
   Object.entries(REGIONS).forEach(([k,r])=>{
     const b=document.createElement('div');
     b.className='sbtn'+(k===locFilter?' on':'');
-    b.textContent=(k==='all')?window.t('reg_all'):r.he;
+    b.textContent=(k==='all')?window.t('reg_all'):regName(k);
     b.addEventListener('click',()=>{
       locFilter=k;
       if(nearbyOn){ nearbyOn=false; toggleNearUI(false); }
@@ -2313,9 +2354,9 @@ function renderPoiList(){
     row.className='poi';
     row.innerHTML=`
       <div class="pemoji" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</div>
-      <div class="pinfo"><h4>${esc(p.name)}</h4><small>${esc(c.he)}${normInsta(p.insta)?' · 📸':''}${p.note?' · '+esc(p.note):''}</small></div>
-      ${nearbyOn?`<span class="dist">${o.dist<1?Math.round(o.dist*1000)+' מ׳':o.dist.toFixed(1)+' ק״מ'}</span>`:''}
-      ${isAdmin?`<button class="del" title="מחק" data-del="${p.id}">🗑️</button>`:''}`;
+      <div class="pinfo"><h4>${esc(p.name)}</h4><small>${esc(catLabel(p.cat))}${normInsta(p.insta)?' · 📸':''}${p.note?' · '+esc(p.note):''}</small></div>
+      ${nearbyOn?`<span class="dist">${o.dist<1?Math.round(o.dist*1000)+(window.__lang==='en'?' m':' מ׳'):o.dist.toFixed(1)+(window.__lang==='en'?' km':' ק״מ')}</span>`:''}
+      ${isAdmin?`<button class="del" title="${window.__lang==='en'?'Delete':'מחק'}" data-del="${p.id}">🗑️</button>`:''}`;
     row.addEventListener('click',e=>{ if(e.target.closest('[data-del]')) return; focusLatLng(o.latlng,15,o.marker); });
     poiListEl.appendChild(row);
   });
@@ -2337,7 +2378,7 @@ const mapStarBtn=document.getElementById('mapStarBtn');
 mapStarBtn.addEventListener('click',()=>{
   mapStarOnly=!mapStarOnly;
   mapStarBtn.classList.toggle('primary', mapStarOnly);
-  mapStarBtn.textContent = mapStarOnly ? '✖ הצג הכל' : '⭐ רק מומלצים';
+  mapStarBtn.textContent = mapStarOnly ? window.t('map_show_all') : window.t('btn_star_only');
   applyFilters();
 });
 
@@ -2405,12 +2446,12 @@ function openHotelModal(id){
   const sel=document.getElementById('hDest'); sel.innerHTML='';
   Object.entries(REGIONS).forEach(([k,r])=>{ if(k==='all')return; const o=document.createElement('option'); o.value=k; o.textContent=r.he; sel.appendChild(o); });
   const h=id?hotels.find(x=>x.id===id):null;
-  document.getElementById('hotelModalTitle').textContent=h?'✏️ עריכת לינה':'🏨 הוספת לינה';
+  document.getElementById('hotelModalTitle').textContent=(window.__lang==='en')?(h?'✏️ Edit stay':'🏨 Add stay'):(h?'✏️ עריכת לינה':'🏨 הוספת לינה');
   document.getElementById('hName').value=h?h.name:'';
   document.getElementById('hFrom').value=h?h.from:'';
   document.getElementById('hTo').value=h?h.to:'';
   document.getElementById('hThb').value=(h&&h.thb)?h.thb:'';
-  const _tl=document.getElementById('hThbLbl'); if(_tl) _tl.textContent='עלות '+TRIP_CUR.sym+' (לא חובה)';
+  const _tl=document.getElementById('hThbLbl'); if(_tl) _tl.textContent=(window.__lang==='en'?'Cost ':'עלות ')+TRIP_CUR.sym+(window.__lang==='en'?' (optional)':' (לא חובה)');
   if(h){ sel.value=h.regionKey||regionOf(h.lat,h.lng); hCoords={lat:h.lat,lng:h.lng}; }
   document.getElementById('hLink').value=''; document.getElementById('hLinkStatus').textContent='';
   hotelModal.classList.add('show');
@@ -2454,17 +2495,17 @@ if(document.getElementById('hSave')) document.getElementById('hSave').addEventLi
 });
 const addHotelBtn=document.getElementById('addHotelBtn');
 if(addHotelBtn) addHotelBtn.addEventListener('click',()=>openHotelModal(null));
-function setCoords(lat,lng){ pending={lat:+(+lat).toFixed(6),lng:+(+lng).toFixed(6)}; document.getElementById('fCoords').textContent=`📍 נבחר: ${pending.lat}, ${pending.lng}`; }
+function setCoords(lat,lng){ pending={lat:+(+lat).toFixed(6),lng:+(+lng).toFixed(6)}; document.getElementById('fCoords').textContent=`📍 ${window.__lang==='en'?'Selected':'נבחר'}: ${pending.lat}, ${pending.lng}`; }
 function resetForm(){ editingPlaceId=null; pending=null; document.getElementById('fName').value=''; document.getElementById('fNote').value=''; document.getElementById('fInsta').value=''; fCat.value='restaurant';
-  document.getElementById('modalTitle').textContent='הוספת מקום';
-  document.getElementById('fSave').textContent='שמור מקום';
+  document.getElementById('modalTitle').textContent=window.__lang==='en'?'Add place':'הוספת מקום';
+  document.getElementById('fSave').textContent=window.t('m_save_place');
   document.getElementById('fSearch').value=''; document.getElementById('fResults').innerHTML=''; document.getElementById('fLink').value=''; document.getElementById('fLinkStatus').textContent=''; document.getElementById('fCoords').textContent=''; switchPane('search'); }
 function openEditModal(id){
   const p=places.find(x=>x.id===id); if(!p) return;
   resetForm();
   editingPlaceId=id;
-  document.getElementById('modalTitle').textContent='עריכת מקום';
-  document.getElementById('fSave').textContent='שמור שינויים';
+  document.getElementById('modalTitle').textContent=window.__lang==='en'?'Edit place':'עריכת מקום';
+  document.getElementById('fSave').textContent=window.__lang==='en'?'Save changes':'שמור שינויים';
   document.getElementById('fName').value=p.name||'';
   fCat.value=p.cat||'other';
   document.getElementById('fNote').value=p.note||'';
@@ -2487,7 +2528,7 @@ function switchPane(name){
 
 /* search via Nominatim */
 async function nomSearch(q){
-  const url='https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&accept-language=he&q='+encodeURIComponent(q);
+  const url='https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&namedetails=1&limit=6&accept-language='+(window.__lang||'he')+'&q='+encodeURIComponent(q);
   const r=await fetch(url,{headers:{'Accept':'application/json'}}); return await r.json();
 }
 /* Expose the geocoder so the create funnel can offer free-text destination search. */
@@ -2697,7 +2738,7 @@ sheet.addEventListener('touchend',e=>{ if(startY===null)return; const dy=e.chang
   if(dy>40) sheet.classList.add('collapsed'); else if(dy<-40) sheet.classList.remove('collapsed'); startY=null; });
 document.getElementById('fitBtn').addEventListener('click',()=>{ locFilter='all'; buildLocSeg(); if(nearbyOn){nearbyOn=false;toggleNearUI(false);if(nearCircle){map.removeLayer(nearCircle);nearCircle=null;}} applyFilters(); fitAll(); map.closePopup(); if(isMobile()) sheet.classList.add('collapsed'); });
 
-document.getElementById('footerText').innerHTML = 'טפו על מקום לראותו במפה · הכפתור 🧭 מציג הכל.';
+document.getElementById('footerText').textContent = window.t('footer_tip');
 
 /* ================= Theme ================= */
 const langBtn=document.getElementById('langBtn');
@@ -2719,8 +2760,9 @@ function updateNetStatus(){
   const el=document.getElementById('netStatus'); if(!el) return;
   const online=navigator.onLine;
   el.classList.toggle('off', !online);
-  el.title = online ? 'מחובר לאינטרנט' : 'לא מקוון';
-  const txt=el.querySelector('.nettext'); if(txt) txt.textContent = online ? 'מקוון' : 'לא מקוון';
+  const en=window.__lang==='en';
+  el.title = online ? (en?'Connected':'מחובר לאינטרנט') : (en?'Offline':'לא מקוון');
+  const txt=el.querySelector('.nettext'); if(txt) txt.textContent = online ? (en?'Online':'מקוון') : (en?'Offline':'לא מקוון');
 }
 window.addEventListener('online', updateNetStatus);
 window.addEventListener('offline', updateNetStatus);
@@ -2803,15 +2845,26 @@ let SUBTITLE_BASE='6 באוגוסט – 1 בספטמבר · 26 לילות';
 let TRIP_CD_LABEL='לתאילנד 🇹🇭';
 function updateCountdown(){
   const el=document.getElementById('tripSub'); if(!el) return;
-  const base=SUBTITLE_BASE||'';
+  const en=window.__lang==='en';
+  let base;
+  if(window.__TEMPLATE==='thailand'){ base=SUBTITLE_BASE||''; }
+  else if(TRIP_START&&TRIP_END){
+    const nights=Math.max(0,Math.round((new Date(TRIP_END)-new Date(TRIP_START))/86400000));
+    base=fmtLong(TRIP_START)+' – '+fmtLong(TRIP_END)+' · '+nights+' '+(en?'nights':'לילות');
+  } else { base=window.__TRIP_NAME||''; }
   if(!TRIP_START||!TRIP_END){ el.textContent=base; return; }
   const today=new Date(); today.setHours(0,0,0,0);
   const start=new Date(TRIP_START+'T00:00:00'), end=new Date(TRIP_END+'T00:00:00');
   const dayMs=86400000;
+  const name=window.__TRIP_NAME||(en?'the trip':'הטיול');
   let cd;
-  if(today<start){ const d=Math.round((start-today)/dayMs); cd=(d===1?'עוד יום':'עוד '+d+' ימים')+' '+TRIP_CD_LABEL; }
-  else if(today<=end){ const d=Math.round((today-start)/dayMs)+1; cd='יום '+d+' בטיול 🌴'; }
-  else cd='הטיול הסתיים 🎉';
+  if(today<start){ const d=Math.round((start-today)/dayMs);
+    if(window.__TEMPLATE==='thailand'){ cd=(d===1?'עוד יום':'עוד '+d+' ימים')+' '+TRIP_CD_LABEL; }
+    else if(en){ cd='in '+d+' day'+(d===1?'':'s')+' to '+name; }
+    else { cd=(d===1?'עוד יום':'עוד '+d+' ימים')+' ל'+name; }
+  }
+  else if(today<=end){ const d=Math.round((today-start)/dayMs)+1; cd=en?('Day '+d+' of the trip 🌴'):('יום '+d+' בטיול 🌴'); }
+  else cd=en?'Trip ended 🎉':'הטיול הסתיים 🎉';
   el.innerHTML=`${base}${base?' · ':''}<b class="cd">${cd}</b>`;
 }
 
@@ -2871,6 +2924,44 @@ async function resolveTripCurrency(d){
     buildHotels(); refreshHotels();
     if(document.body.dataset.view==='info') renderInfo();
   }catch(e){}
+}
+/* Give each destination a Latin/English name, for trips created before name
+   capture (or where an earlier attempt stored a non-Latin local name). We
+   forward-search the stored name in English (more reliable than reverse
+   geocoding a point, which returns the nearest village), and fall back to the
+   English country name. */
+async function migrateDestNames(){
+  const IT=window.__ITINERARY; if(!IT||!Array.isArray(IT.destinations)) return;
+  const good = s => s && !isNonLatin(s);
+  let changed=false;
+  for(const d of IT.destinations){
+    if(good(d.name_en)) continue;                 // already has a Latin name
+    let nm='';
+    try{
+      const q=d.name||d.name_en||'';
+      if(q){
+        const r=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&accept-language=en&limit=1&q='+encodeURIComponent(q));
+        const j=await r.json();
+        if(j&&j[0]&&j[0].display_name){ const first=j[0].display_name.split(',')[0].trim(); if(good(first)) nm=first; }
+      }
+    }catch(e){}
+    if(!nm){
+      try{
+        const r2=await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&accept-language=en&lat='+d.lat+'&lon='+d.lng);
+        const j2=await r2.json(); const a=j2.address||{};
+        nm=[a.city,a.town,a.village,a.state,a.country].find(good) || '';
+      }catch(e){}
+    }
+    if(good(nm)){ d.name_en=nm; d.eng=nm; if(REGIONS[d.key]){ REGIONS[d.key].en=nm; REGIONS[d.key].eng=nm; } changed=true; }
+  }
+  if(changed){
+    try{ if(cloud&&cloud.enabled&&cloud.updateItinerary) await cloud.updateItinerary(IT); }catch(e){}
+    if(window.__lang==='en'){
+      buildLocSeg(); buildHotels(); applyFilters();
+      const v=document.body.dataset.view;
+      if(v==='destinations') renderDestinations(); else if(v==='about') renderAbout();
+    }
+  }
 }
 
 function fxLoad(code){ try{ const c=JSON.parse(localStorage.getItem('fx_'+code)); if(c&&c.ILS&&c.USD) return c; }catch(e){} return {ILS:0,USD:0,approx:true}; }
@@ -2977,8 +3068,8 @@ function renderInfo(){
       <h3>${window.t('cc_title')}</h3>
       <div class="cc-grid">
         <label>${esc(TRIP_CUR.code)} ${esc(TRIP_CUR.sym)}<input id="ccBASE" type="number" inputmode="decimal" value="100" /></label>
-        <label>שקל ₪<input id="ccILS" type="number" inputmode="decimal" /></label>
-        <label>דולר $<input id="ccUSD" type="number" inputmode="decimal" /></label>
+        <label>${window.__lang==='en'?'ILS':'שקל'} ₪<input id="ccILS" type="number" inputmode="decimal" /></label>
+        <label>${window.__lang==='en'?'USD':'דולר'} $<input id="ccUSD" type="number" inputmode="decimal" /></label>
       </div>
       <div class="cc-note" id="ccNote">${ccNoteHtml()}</div>
     </div>`;
@@ -3049,6 +3140,7 @@ function wxSunEmoji(code){ return (code<=1)?'☀️':'⛅'; }
 
 /* ---- 5-day forecast strips for the Destinations cards ---- */
 const WX_DOW=['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
+const WX_DOW_EN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 let wxForecast=(function(){ try{ return JSON.parse(localStorage.getItem('thai_wx5v3'))||{}; }catch(e){ return {}; } })();
 function regionStripHtml(key){
   const days=wxForecast[key];
@@ -3056,12 +3148,12 @@ function regionStripHtml(key){
     const cells=days.slice(0,5).map(d=>{
       const dt=new Date(d.date+'T00:00:00');
       const pop=(d.pop!=null)?`<span class="wxp">💧${d.pop}%</span>`:'';
-      return `<div class="wxday"><span class="wxd">${WX_DOW[dt.getDay()]}</span><span class="wxe">${wxSunEmoji(d.code)}</span><span class="wxt">${d.hi}°<small>${d.lo}°</small></span>${pop}</div>`;
+      return `<div class="wxday"><span class="wxd">${(window.__lang==='en'?WX_DOW_EN:WX_DOW)[dt.getDay()]}</span><span class="wxe">${wxSunEmoji(d.code)}</span><span class="wxt">${d.hi}°<small>${d.lo}°</small></span>${pop}</div>`;
     }).join('');
     return `<div class="wxstrip-inner">${cells}</div>`;
   }
   const t=WX_TYPICAL[key];
-  if(!t) return `<div class="wxstrip-fallback">התחזית תיטען בקרוב…</div>`;
+  if(!t) return `<div class="wxstrip-fallback">${window.t('wx_soon')}</div>`;
   return `<div class="wxstrip-fallback">${t.em} ממוצע אוגוסט · ${t.hi}° / ${t.lo}° · ${t.txt}</div>`;
 }
 async function refreshForecast(){
@@ -3087,6 +3179,7 @@ async function refreshForecast(){
 }
 
 function renderAttractions(){
+  const en=window.__lang==='en';
   const q=(document.getElementById('attrSearch').value||'').trim().toLowerCase();
   const host=document.getElementById('attrList'); host.innerHTML='';
   let total=0;
@@ -3103,17 +3196,17 @@ function renderAttractions(){
       const u=normInsta(p.insta);
       const row=document.createElement('div'); row.className='poi'+(p.visited?' visited':'');
       row.innerHTML=`<div class="pemoji" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</div>
-        <div class="pinfo"><h4>${p.star?'⭐ ':''}${esc(p.name)}</h4><small>${p.visited?'<span class="vtag">✓ ביקרנו</span> · ':''}${REGIONS[rkey]?esc(REGIONS[rkey].he):''}${p.note?' · '+esc(p.note):''}</small></div>
-        <button class="starbtn${p.star?' on':''}" title="${p.star?'הסר מהמומלצים':'סמן כמומלץ'}" onclick="toggleStar('${p.id}')">${p.star?'⭐':'☆'}</button>
-        <a class="wazelink iglink" href="${wazeLink(p.lat,p.lng)}" target="_blank" rel="noopener" title="נווט ב-Waze">🧭</a>
-        ${u?`<a class="insta iglink" href="${esc(u)}" target="_blank" rel="noopener" title="אינסטגרם">📸</a>`:''}
-        ${isAdmin?`<button class="visbtn" title="${p.visited?'בטל ביקור':'סמן שביקרנו'}" onclick="toggleVisited('${p.id}')">${p.visited?'↩︎':'✓'}</button>`:''}
-        ${isAdmin?`<button class="editbtn" title="ערוך" onclick="editPlace('${p.id}')">✏️</button>`:''}`;
+        <div class="pinfo"><h4>${p.star?'⭐ ':''}${esc(p.name)}</h4><small>${p.visited?`<span class="vtag">✓ ${en?'Visited':'ביקרנו'}</span> · `:''}${REGIONS[rkey]?esc(regName(rkey)):''}${p.note?' · '+esc(p.note):''}</small></div>
+        <button class="starbtn${p.star?' on':''}" title="${p.star?(en?'Remove from must-see':'הסר מהמומלצים'):(en?'Mark as must-see':'סמן כמומלץ')}" onclick="toggleStar('${p.id}')">${p.star?'⭐':'☆'}</button>
+        <a class="wazelink iglink" href="${wazeLink(p.lat,p.lng)}" target="_blank" rel="noopener" title="${en?'Navigate with Waze':'נווט ב-Waze'}">🧭</a>
+        ${u?`<a class="insta iglink" href="${esc(u)}" target="_blank" rel="noopener" title="Instagram">📸</a>`:''}
+        ${isAdmin?`<button class="visbtn" title="${p.visited?(en?'Unmark visited':'בטל ביקור'):(en?'Mark visited':'סמן שביקרנו')}" onclick="toggleVisited('${p.id}')">${p.visited?'↩︎':'✓'}</button>`:''}
+        ${isAdmin?`<button class="editbtn" title="${en?'Edit':'ערוך'}" onclick="editPlace('${p.id}')">✏️</button>`:''}`;
       row.addEventListener('click',e=>{ if(e.target.closest('.iglink')||e.target.closest('.editbtn')||e.target.closest('.visbtn')||e.target.closest('.starbtn')) return; const o=poiMeta.find(x=>x.pid===p.id); switchView('map'); if(o) focusLatLng(o.latlng,15,o.marker); });
       host.appendChild(row);
     });
   });
-  if(total===0) host.innerHTML='<div class="empty">'+(attrStarOnly?'עדיין אין מקומות מומלצים ⭐. סמנו מקומות בכוכב.':'לא נמצאו מקומות')+'</div>';
+  if(total===0) host.innerHTML='<div class="empty">'+(attrStarOnly?(en?'No must-see places yet ⭐. Star some places.':'עדיין אין מקומות מומלצים ⭐. סמנו מקומות בכוכב.'):(en?'No places found':'לא נמצאו מקומות'))+'</div>';
 }
 document.getElementById('attrSearch').addEventListener('input',renderAttractions);
 let attrStarOnly=false;
@@ -3124,6 +3217,7 @@ document.getElementById('attrStarBtn').addEventListener('click',()=>{
 });
 
 function renderBookings(){
+  const en=window.__lang==='en';
   const host=document.getElementById('bookingsList'); host.innerHTML='';
   const items=bookings
     .filter(b=> bkFamilyFilter==='all' || normFamily(b.family)===bkFamilyFilter)
@@ -3136,26 +3230,26 @@ function renderBookings(){
   if(!items.length){
     const bits=[];
     if(bkFamilyFilter!=='all') bits.push(familyName(bkFamilyFilter));
-    const typeName={hotel:'מלונות',flight:'טיסות',other:'אחר'}[bkTypeFilter];
+    const typeName=(en?{hotel:'Hotels',flight:'Flights',other:'Other'}:{hotel:'מלונות',flight:'טיסות',other:'אחר'})[bkTypeFilter];
     if(typeName) bits.push(typeName);
     const who = bits.length ? ' ('+bits.join(' · ')+')' : '';
-    host.innerHTML='<div class="empty">אין הזמנות בסינון הנוכחי'+who+'. לחצו על ➕ כדי להוסיף.</div>'; return;
+    host.innerHTML='<div class="empty">'+(en?'No bookings in the current filter':'אין הזמנות בסינון הנוכחי')+who+'. '+(en?'Tap ➕ to add.':'לחצו על ➕ כדי להוסיף.')+'</div>'; return;
   }
   items.forEach(b=>{
     const isFlight=b.kind==='flight';
     const defIc=isFlight?(flightById(b.refId)&&flightById(b.refId).ic||'✈️'):(b.kind==='other'?'📍':'🏨');
     const ic=b.icon||defIc;
     const dateTxt=b.date?fmtLong(b.date):'';
-    const sub=(b.kind==='other') ? ((REGIONS[b.region]&&REGIONS[b.region].he)?('📍 '+REGIONS[b.region].he):'הזמנה כללית') : entityName(b.kind, b.refId);
+    const sub=(b.kind==='other') ? ((REGIONS[b.region]&&REGIONS[b.region].he)?('📍 '+REGIONS[b.region].he):(en?'General booking':'הזמנה כללית')) : entityName(b.kind, b.refId);
     const famTxt=familyName(normFamily(b.family));
     const row=document.createElement('div'); row.className='bkcard';
     row.innerHTML=`
       <div class="bkic">${ic}</div>
       <div class="bkinfo">
-        <h4>${esc(b.label||b.name||'הזמנה')}</h4>
+        <h4>${esc(b.label||b.name||(en?'Booking':'הזמנה'))}</h4>
         <small>👪 ${esc(famTxt)} · ${esc(sub)}${dateTxt?' · '+dateTxt:''}</small>
       </div>
-      <button class="bkbtn view" data-view="${esc(b.id)}">📄 הצג</button>
+      <button class="bkbtn view" data-view="${esc(b.id)}">📄 ${en?'View':'הצג'}</button>
       <button class="bkbtn edit" data-edit="${esc(b.id)}">✏️</button>
       <button class="bkbtn del" data-del="${esc(b.id)}">🗑️</button>`;
     host.appendChild(row);
@@ -3178,26 +3272,27 @@ document.querySelectorAll('#bkTypeTabs .subtab').forEach(t=>t.addEventListener('
 }));
 
 function renderDestinations(){
+  const en=window.__lang==='en';
   const host=document.getElementById('destList'); host.innerHTML='';
   const areaKey={samui:'s',phangan:'p',bangkok:'b'};
   const regionKeys=Object.keys(REGIONS).filter(k=>k!=='all');
-  if(!regionKeys.length){ host.innerHTML='<div class="about-card" style="color:var(--muted)">עדיין אין יעדים בטיול הזה. הוסיפו יעדים כשיוצרים טיול חדש.</div>'; return; }
+  if(!regionKeys.length){ host.innerHTML='<div class="about-card" style="color:var(--muted)">'+(en?'No destinations in this trip yet. Add destinations when creating a new trip.':'עדיין אין יעדים בטיול הזה. הוסיפו יעדים כשיוצרים טיול חדש.')+'</div>'; return; }
   regionKeys.forEach(rk=>{
     const r=REGIONS[rk];
     const hs=hotels.filter(h=>(areaToRegion[h.area]||h.region)===rk);
     const ps=places.filter(p=>(p.region||regionOf(p.lat,p.lng))===rk);
     let dr=''; if(hs.length){ dr=fmtLong(hs[0].from)+' – '+fmtLong(hs[hs.length-1].to); }
     const counts={}; ps.forEach(p=>counts[p.cat]=(counts[p.cat]||0)+1);
-    const countsHtml=Object.keys(counts).map(k=>`<span class="catcount">${CATEGORIES[k].emoji} ${counts[k]}</span>`).join('') || '<span class="catcount">אין מקומות עדיין</span>';
+    const countsHtml=Object.keys(counts).map(k=>`<span class="catcount">${CATEGORIES[k].emoji} ${counts[k]}</span>`).join('') || `<span class="catcount">${en?'No places yet':'אין מקומות עדיין'}</span>`;
     const hotelsHtml=hs.map(h=>`<div class="dest-hotel"><span>🏨 ${esc(h.name)}</span><span>${fmtLong(h.from)}–${fmtLong(h.to)}</span></div>`).join('');
     const card=document.createElement('div'); card.className='dest-card '+(areaKey[rk]||'');
     card.innerHTML=`
-      <h3>${esc(r.he)}</h3>
-      <div class="eng">${esc(r.eng)}${dr?' · '+dr:''} · ${ps.length} מקומות</div>
+      <h3>${esc(regName(rk))}</h3>
+      <div class="eng">${esc(r.eng)}${dr?' · '+dr:''} · ${ps.length} ${en?'places':'מקומות'}</div>
       ${hotelsHtml}
       <div class="wxstrip" data-wxstrip="${rk}">${regionStripHtml(rk)}</div>
       <div class="catcounts">${countsHtml}</div>
-      <button class="btn primary" data-region="${rk}">🗺️ הצג במפה</button>`;
+      <button class="btn primary" data-region="${rk}">${en?'🗺️ Show on map':'🗺️ הצג במפה'}</button>`;
     card.querySelector('[data-region]').addEventListener('click',()=>{
       switchView('map');
       locFilter=rk; buildLocSeg();
@@ -3217,57 +3312,57 @@ function routeAboutHtml(nights){
       6 באוגוסט – 1 בספטמבר 2026 · טיול של ${nights} לילות בין קוסמוי, קופאנגן ובנגקוק.
       הגעה בטיסה לקוסמוי, מעבורות בין האיים, וטיסה חזרה לבנגקוק בסוף.</div>`;
   }
+  const en=window.__lang==='en';
   const IT=window.__ITINERARY||{};
-  const dests=(IT.destinations||[]).map(d=>esc(d.name)).join(' · ');
+  const dests=(IT.destinations||[]).map(d=>esc((REGIONS[d.key]?regName(d.key):'')||d.name_en||d.name)).join(' · ');
   const range=(IT.startDate&&IT.endDate)?(fmtLong(IT.startDate)+' – '+fmtLong(IT.endDate)):'';
-  return `<div class="about-card"><h3>המסלול 🗺️</h3>
-    <b>${esc(window.__TRIP_NAME||'הטיול')}</b>${range?' · '+range:''}${nights?' · '+nights+' לילות':''}
-    ${dests?'<br>יעדים: '+dests:''}</div>`;
+  return `<div class="about-card"><h3>${en?'Itinerary 🗺️':'המסלול 🗺️'}</h3>
+    <b>${esc(window.__TRIP_NAME||(en?'The trip':'הטיול'))}</b>${range?' · '+range:''}${nights?' · '+nights+' '+(en?'nights':'לילות'):''}
+    ${dests?'<br>'+(en?'Destinations: ':'יעדים: ')+dests:''}</div>`;
 }
 function renderAbout(){
+  const en=window.__lang==='en';
   const host=document.getElementById('view-about');
   const nights=hotels.reduce((s,h)=>s+(h.nights||0),0);
   const paidCount=hotels.filter(h=>hs(h.id).paid).length;
+  const howto = en
+    ? `<h3>How to use</h3>
+      • <b>Map</b> tab — interactive map with hotels, restaurants, cafés, beaches and more.<br>
+      • <b>Attractions</b> — all places by category, with free-text search.<br>
+      • <b>Destinations</b> — a summary per destination with its hotels and places.<br>
+      • On the map: filter by destination and category, or <b>📍 Near me</b> to show places around you.<br>
+      • The 🌙/☀️ button switches between dark and light mode.`
+    : `<h3>איך משתמשים</h3>
+      • לשונית <b>מפה</b> — מפה אינטראקטיבית עם מלונות, מסעדות, בתי קפה, חופים ועוד.<br>
+      • <b>אטרקציות</b> — כל המקומות לפי קטגוריה, עם חיפוש חופשי.<br>
+      • <b>יעדים</b> — סיכום לכל יעד עם המלונות והמקומות בו.<br>
+      • במפה: סננו לפי יעד וקטגוריה, או <b>📍 קרוב אליי</b> להצגת מקומות סביבכם.<br>
+      • כפתור 🌙/☀️ מחליף בין מצב כהה לבהיר.`;
+  const cloudCard = en
+    ? `<h3>${cloud.enabled?'Live sync active ✅':'Live sync ☁️'}</h3>
+       ${cloud.enabled?'The app is connected to the cloud. Every change syncs automatically and privately to your account.':'Changes are saved on this device only right now.'}`
+    : `<h3>${cloud.enabled?'שיתוף חי פעיל ✅':'שיתוף חי לכולם ☁️'}</h3>
+       ${cloud.enabled?'האפליקציה מחוברת לענן. כל השינויים (מקומות, תשלומים, אישורי הזמנה) מסתנכרנים אוטומטית לכל מי שפתח את הקישור.':'כרגע כל שינוי נשמר במכשיר הזה בלבד.'}`;
   host.innerHTML=`
-    <h2>ℹ️ אודות הטיול</h2>
+    <h2>${en?'ℹ️ About the trip':'ℹ️ אודות הטיול'}</h2>
     <div class="stat-grid">
-      <div class="stat-box"><div class="n">${hotels.length}</div><div class="l">מלונות</div></div>
-      <div class="stat-box"><div class="n">${nights}</div><div class="l">לילות</div></div>
-      <div class="stat-box"><div class="n">${places.length}</div><div class="l">מקומות</div></div>
-      <div class="stat-box"><div class="n">${paidCount}/${hotels.length}</div><div class="l">שולמו</div></div>
+      <div class="stat-box"><div class="n">${hotels.length}</div><div class="l">${en?'hotels':'מלונות'}</div></div>
+      <div class="stat-box"><div class="n">${nights}</div><div class="l">${en?'nights':'לילות'}</div></div>
+      <div class="stat-box"><div class="n">${places.length}</div><div class="l">${en?'places':'מקומות'}</div></div>
+      <div class="stat-box"><div class="n">${paidCount}/${hotels.length}</div><div class="l">${en?'paid':'שולמו'}</div></div>
     </div>
     <div class="about-card">
-      <h3>🎨 צבע האפליקציה</h3>
-      <div style="color:var(--muted);font-size:12px;margin-bottom:8px">בחרו צבע לאפליקציה (נשמר במכשיר זה בלבד).</div>
+      <h3>${en?'🎨 App color':'🎨 צבע האפליקציה'}</h3>
+      <div style="color:var(--muted);font-size:12px;margin-bottom:8px">${en?'Pick an app color (saved on this device only).':'בחרו צבע לאפליקציה (נשמר במכשיר זה בלבד).'}</div>
       <div id="accentSwatches" class="accent-swatches">
         ${ACCENT_PRESETS.map(p=>`<button class="swatch${p.id===accentPreset?' on':''}" data-acc="${p.id}" title="${p.name}" aria-label="${p.name}" style="--sw:hsl(${p.hue},85%,55%)" onclick="applyAccent('${p.id}')"></button>`).join('')}
       </div>
     </div>
     ${routeAboutHtml(nights)}
-    <div class="about-card">
-      <h3>איך משתמשים</h3>
-      • לשונית <b>מפה</b> — מפה אינטראקטיבית עם מלונות, מסעדות, בתי קפה, חופים ועוד.<br>
-      • <b>אטרקציות</b> — כל המקומות לפי קטגוריה, עם חיפוש חופשי.<br>
-      • <b>יעדים</b> — סיכום לכל יעד עם המלונות והמקומות בו.<br>
-      • במפה: סננו לפי יעד וקטגוריה, או <b>📍 קרוב אליי</b> להצגת מקומות סביבכם.<br>
-      • כפתור 🌙/☀️ מחליף בין מצב כהה לבהיר.
-    </div>
-    <div class="about-card">
-      <h3>מה חדש ✨</h3>
-      • <b>אטרקציות מאינסטגרם</b> — בהוספת מקום (➕) הדביקו קישור אינסטגרם. הוא יופיע במפה ובלשונית האטרקציות עם כפתור 📸.<br>
-      • <b>סטטוס תשלום למלון</b> — טפו על מלון במפה וסמנו "שולם / טרם שולם". הסטטוס מוצג גם בכרטיס המלון.<br>
-      • <b>אישורי הזמנה</b> — אפשר להעלות כמה אישורי הזמנה לכל מלון וגם לטיסות, ולתת שם לכל אחד (למשל שם המשפחה) כדי לדעת של מי הוא.<br>
-      • <b>לשונית הזמנות 🧾</b> — כל ההזמנות (מלונות וטיסות) במקום אחד, מסודרות לפי תאריך.<br>
-      • <b>עריכה לכולם</b> — כל מי שמקבל את הקישור יכול להוסיף, לערוך ולסמן.
-    </div>
-    <div class="about-card">
-      <h3>${cloud.enabled?'שיתוף חי פעיל ✅':'שיתוף חי לכולם ☁️'}</h3>
-      ${cloud.enabled
-        ? 'האפליקציה מחוברת לענן. כל השינויים (מקומות, תשלומים, אישורי הזמנה) מסתנכרנים אוטומטית לכל מי שפתח את הקישור.'
-        : 'כרגע כל שינוי נשמר במכשיר הזה בלבד, וכפתור השיתוף (🔗) שולח "צילום מצב". כדי שכולם יראו וישנו את אותם הנתונים בזמן אמת, בצעו הגדרה חד-פעמית וחינמית של Firebase והדביקו את פרטי החיבור בקובץ (חפשו FIREBASE_CONFIG בקוד — יש שם הסבר צעד-אחר-צעד).'}
-    </div>
+    <div class="about-card">${howto}</div>
+    <div class="about-card">${cloudCard}</div>
     <div class="about-card" style="color:var(--muted);font-size:12px">
-      המקומות מבוססים על הרשימות השמורות ב-Google Maps. מיקומי המלונות מקורבים לפי כתובת.
+      ${en?'Places are based on your saved Google Maps lists. Hotel locations are approximate.':'המקומות מבוססים על הרשימות השמורות ב-Google Maps. מיקומי המלונות מקורבים לפי כתובת.'}
     </div>`;
 }
 
@@ -3283,8 +3378,8 @@ function applyItinerary(IT){
   hotels=[]; flights=[]; segs=[]; areaToRegion={};
   buildHotels();   // clears the built-in Thailand cards + markers
   buildRoute();    // clears the built-in route
-  const R={ all:{he:'כל היעדים',eng:''} };
-  dests.forEach(d=>{ R[d.key]={he:d.name, eng:d.eng||'', center:[d.lat,d.lng]}; });
+  const R={ all:{he:'כל היעדים',en:'All destinations',eng:''} };
+  dests.forEach(d=>{ R[d.key]={he:d.name, en:d.name_en||d.eng||d.name, eng:d.name_en||d.eng||'', center:[d.lat,d.lng]}; });
   REGIONS=R;
   regionOf=function(lat,lng){
     let best='other', bd=1e9;
@@ -3330,6 +3425,9 @@ async function __startApp(){
     const IT=window.__ITINERARY;
     if(window.__TEMPLATE!=='thailand' && IT && !IT.currency && !IT.mainCountry && IT.destinations && IT.destinations[0]){
       resolveTripCurrency(IT.destinations[0]);
+    }
+    if(window.__TEMPLATE!=='thailand' && IT && Array.isArray(IT.destinations) && IT.destinations.some(d=>!d.name_en || isNonLatin(d.name_en))){
+      migrateDestNames();
     }
   })();
   await initAdmin();
@@ -3524,6 +3622,7 @@ window.TripReady.then(()=>__startApp());
         deleteBookingFile(path){ if(!storage||!ST||!path) return Promise.resolve(); return ST.deleteObject(ST.ref(storage, path)).catch(()=>{}); },
         getMeta(){ return getDoc(doc(db,...base,'meta','info')).then(s=>s.exists()?s.data():null); },
         setMeta(d){ return setDoc(doc(db,...base,'meta','info'), d, {merge:true}); },
+        updateItinerary(it){ return setDoc(doc(db,'users',uid,'trips',TRIP), {itinerary:it}, {merge:true}); },
       };
     }
 
@@ -3653,7 +3752,8 @@ window.TripReady.then(()=>__startApp());
           opt.type='button'; opt.className='g-res';
           opt.innerHTML=`<b>${esc(main)}</b><small>${esc(r.display_name||'')}</small>`;
           opt.onclick=()=>{
-            funnelDests.push({key:slug(main), name:main, eng:main, lat:+r.lat, lng:+r.lon, country:(r.address&&r.address.country_code)||''});
+            const nameEn=(r.namedetails&&(r.namedetails['name:en']||r.namedetails.name))||'';
+            funnelDests.push({key:slug(nameEn||main), name:main, name_en:nameEn, eng:nameEn, lat:+r.lat, lng:+r.lon, country:(r.address&&r.address.country_code)||''});
             inp.value=''; rz.innerHTML=''; renderDestList(); refreshCreate();
           };
           rz.appendChild(opt);
@@ -3683,9 +3783,10 @@ window.TripReady.then(()=>__startApp());
       };
     }
 
-    // "My trips" button (shown after boot): switch trips by returning to the picker.
-    const tb=document.getElementById('tripsBtn');
-    if(tb) tb.onclick = ()=>{ localStorage.removeItem(LS_ACTIVE); location.reload(); };
+    // "My trips" buttons (header + floating): return to the picker to switch,
+    // create, delete trips or sign out.
+    const backToTrips = ()=>{ localStorage.removeItem(LS_ACTIVE); location.reload(); };
+    ['tripsBtn','tripsBtnTop'].forEach(id=>{ const el=document.getElementById(id); if(el) el.onclick=backToTrips; });
 
     onAuthStateChanged(auth, async user=>{
       if(!user){ renderLogin(); return; }
