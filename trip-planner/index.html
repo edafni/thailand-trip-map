@@ -1623,8 +1623,12 @@ function updateBookingItem(b){
   refreshBookingsUI();
 }
 function removeBookingItem(id){
+  const gone=bookings.find(b=>b.id===id);
   bookings=bookings.filter(b=>b.id!==id); saveBookings();
-  if(cloud.enabled){ cloud.removeBooking(id).catch(e=>console.error('cloud booking del',e)); }
+  if(cloud.enabled){
+    cloud.removeBooking(id).catch(e=>console.error('cloud booking del',e));
+    if(gone&&gone.storagePath&&cloud.deleteBookingFile) cloud.deleteBookingFile(gone.storagePath);
+  }
   refreshBookingsUI();
 }
 function refreshBookingsUI(){
@@ -1990,7 +1994,7 @@ function openEditBookingModal(id){
     if(b.lat!=null && b.lng!=null) setBkCoords(b.lat, b.lng);
   }
   // keep the existing file unless the user picks a new one
-  if(b.dataUrl){ bkPendingFile={ name:b.name, type:b.type, dataUrl:b.dataUrl }; bkStatus.textContent='✓ קובץ קיים — העלו חדש רק אם רוצים להחליף'; }
+  if(b.url||b.dataUrl){ bkPendingFile={ name:b.name, type:b.type, dataUrl:b.dataUrl, url:b.url, storagePath:b.storagePath }; bkStatus.textContent='✓ קובץ קיים — העלו חדש רק אם רוצים להחליף'; }
   buildBkIconPicker(); updateBookingModalMode();
   bookingModal.classList.add('show');
 }
@@ -2053,6 +2057,21 @@ document.getElementById('bkSave').addEventListener('click',async ()=>{
   const existing = isEdit ? bookings.find(x=>x.id===editingBookingId) : null;
   const id = isEdit ? editingBookingId : ('bk'+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
   const family = normFamily(bkFamily.value);
+  // Prefer Firebase Storage for the file; fall back to inline base64 if Storage isn't enabled.
+  let filePayload;
+  if(bkPendingFile.url && !bkPendingFile.dataUrl){
+    filePayload={ name:bkPendingFile.name, type:bkPendingFile.type, url:bkPendingFile.url, storagePath:bkPendingFile.storagePath||null };
+  } else if(cloud && cloud.enabled && cloud.hasStorage && cloud.hasStorage() && bkPendingFile.dataUrl){
+    bkStatus.textContent='מעלה קובץ…';
+    try{
+      const up=await cloud.uploadBooking(id, dataUrlToBlob(bkPendingFile.dataUrl), bkPendingFile.name);
+      filePayload={ name:bkPendingFile.name, type:bkPendingFile.type, url:up.url, storagePath:up.path };
+      const oldPath=existing&&existing.storagePath;
+      if(oldPath && oldPath!==up.path && cloud.deleteBookingFile) cloud.deleteBookingFile(oldPath);
+    }catch(e){ filePayload={ name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl }; }
+  } else {
+    filePayload={ name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl };
+  }
   let b;
   if(kind==='other'){
     const label=bkLabel.value.trim();
@@ -2066,13 +2085,12 @@ document.getElementById('bkSave').addEventListener('click',async ()=>{
         try{ const res=await nomSearch(q); if(res&&res.length){ setBkCoords(res[0].lat,res[0].lon); bkStatus.textContent=''; } }catch(e){} }
     }
     if(!bkPending){ bkStatus.textContent='⚠ בחרו מיקום: הקלידו שם ולחצו “חפש”, או “בחרו נקודה על המפה”.'; return; }
-    b={ id, kind:'other', family, label, name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl,
+    b={ id, kind:'other', family, label, ...filePayload,
         icon:bkIcon||'📍', date, lat:bkPending.lat, lng:bkPending.lng, region:regionOf(bkPending.lat,bkPending.lng),
         createdAt:(existing&&existing.createdAt)||Date.now() };
   } else {
     if(!refId){ bkStatus.textContent='⚠ בחרו מלון או טיסה'; return; }
-    b={ id, kind, refId, family, label:bkLabel.value.trim()||bkPendingFile.name,
-        name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl,
+    b={ id, kind, refId, family, label:bkLabel.value.trim()||bkPendingFile.name, ...filePayload,
         icon:bkIcon||'', date:entityDate(kind, refId), createdAt:(existing&&existing.createdAt)||Date.now() };
   }
   if(isEdit){ updateBookingItem(b); editingBookingId=null; closeBookingModal(); return; }
@@ -2106,8 +2124,8 @@ function closeFileViewer(){
 function openFileViewer(b){
   if(currentObjUrl){ URL.revokeObjectURL(currentObjUrl); currentObjUrl=null; }
   document.getElementById('fileTitle').textContent=b.label||b.name||'אישור הזמנה';
-  let url=b.dataUrl;
-  try{ currentObjUrl=URL.createObjectURL(dataUrlToBlob(b.dataUrl)); url=currentObjUrl; }catch(e){}
+  let url=b.url||b.dataUrl;
+  if(!b.url && b.dataUrl){ try{ currentObjUrl=URL.createObjectURL(dataUrlToBlob(b.dataUrl)); url=currentObjUrl; }catch(e){} }
   const dl=document.getElementById('fileDownload'); dl.href=url; dl.setAttribute('download', b.name||'booking');
   const openTab=document.getElementById('fileOpenTab'); openTab.href=url;
   fileBody.innerHTML='';
@@ -3338,10 +3356,14 @@ window.TripReady.then(()=>__startApp());
       = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js");
     const { getFirestore, collection, doc, setDoc, deleteDoc, getDoc, getDocs, onSnapshot }
       = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
+    // Firebase Storage is optional — only used if the project has it enabled.
+    let ST=null;
+    try{ ST = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js"); }catch(e){}
 
     const app  = initializeApp(cfg);
     const auth = getAuth(app);
     const db   = getFirestore(app);
+    const storage = ST ? ST.getStorage(app) : null;
     const FREE_LIMIT = window.FREE_TRIP_LIMIT || 1;
 
     const userDoc  = uid => doc(db,'users',uid);
@@ -3381,6 +3403,16 @@ window.TripReady.then(()=>__startApp());
         removeHotel(id){ return deleteDoc(doc(hotelsCol(), String(id))); },
         upsertBooking(b){ return setDoc(doc(bookingsCol(), String(b.id)), b); },
         removeBooking(id){ return deleteDoc(doc(bookingsCol(), String(id))); },
+        hasStorage(){ return !!(storage && ST); },
+        async uploadBooking(id, blob, filename){
+          if(!storage||!ST) throw new Error('no-storage');
+          const path = base.join('/')+'/bookings/'+id+'/'+(filename||'file').replace(/[^\w.\-]/g,'_');
+          const sref = ST.ref(storage, path);
+          await ST.uploadBytes(sref, blob);
+          const url = await ST.getDownloadURL(sref);
+          return {url, path};
+        },
+        deleteBookingFile(path){ if(!storage||!ST||!path) return Promise.resolve(); return ST.deleteObject(ST.ref(storage, path)).catch(()=>{}); },
         getMeta(){ return getDoc(doc(db,...base,'meta','info')).then(s=>s.exists()?s.data():null); },
         setMeta(d){ return setDoc(doc(db,...base,'meta','info'), d, {merge:true}); },
       };
