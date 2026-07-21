@@ -1464,11 +1464,11 @@ function applyLang(l){
   document.querySelectorAll('[data-i18n]').forEach(el=>{ const v=window.t(el.getAttribute('data-i18n')); if(v) el.textContent=v; });
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ const v=window.t(el.getAttribute('data-i18n-ph')); if(v) el.setAttribute('placeholder',v); });
   document.querySelectorAll('[data-i18n-title]').forEach(el=>{ const v=window.t(el.getAttribute('data-i18n-title')); if(v) el.title=v; });
-  const lb=document.getElementById('langBtn'); if(lb) lb.textContent = window.__lang==='he'?'EN':'עב';
+  const lb=document.getElementById('langBtn'); if(lb) lb.textContent = window.__lang==='he'?'EN':'HE';
   if(window.__rerenderGate) try{ window.__rerenderGate(); }catch(e){}
   // Re-render dynamic content that contains translated strings.
   if(window.__appReady) try{
-    buildChips(); buildLocSeg(); buildHotels(); buildRoute(); applyFilters(); updateCountdown(); updateNetStatus();
+    buildChips(); buildLocSeg(); buildHotels(); buildRoute(); buildPoiMarkers(); applyFilters(); updateCountdown(); updateNetStatus();
     const v=document.body.dataset.view;
     if(v==='attractions') renderAttractions();
     else if(v==='destinations') renderDestinations();
@@ -1907,6 +1907,7 @@ let poiMeta=[];
 function buildPoiMarkers(){
   poiMeta.forEach(o=>{ if(map.hasLayer(o.marker)) map.removeLayer(o.marker); });
   poiMeta=[];
+  const en=window.__lang==='en';
   places.forEach(p=>{
     const c=CATEGORIES[p.cat]||CATEGORIES.other;
     const rkey=p.region||regionOf(p.lat,p.lng);
@@ -1914,12 +1915,12 @@ function buildPoiMarkers(){
     m.bindPopup(`
       <div class="pop">
         <h3>${p.star?'⭐ ':''}${c.emoji} ${esc(p.name)}</h3>
-        <div class="r">${esc(c.he)}${REGIONS[rkey]&&REGIONS[rkey].eng?' · '+REGIONS[rkey].eng:''}${p.visited?' · <b style="color:#22c55e">✓ ביקרנו</b>':''}</div>
+        <div class="r">${esc(catLabel(p.cat))}${REGIONS[rkey]&&REGIONS[rkey].eng?' · '+REGIONS[rkey].eng:''}${p.visited?` · <b style="color:#22c55e">✓ ${en?'Visited':'ביקרנו'}</b>`:''}</div>
         ${p.note?`<div class="note">${esc(p.note)}</div>`:''}
         ${instaHtml(p)}
-        <div class="navrow"><a class="wazebtn" href="${wazeLink(p.lat, p.lng)}" target="_blank" rel="noopener">🧭 נווט ב-Waze</a><a href="${gmapsLink(p.name, rkey, p.lat, p.lng)}" target="_blank" rel="noopener">Google Maps ↗</a></div>
-        <div class="hactions"><button class="hbtn${p.star?' starred':''}" onclick="toggleStar('${p.id}')">${p.star?'⭐ מומלץ — הסר':'☆ סמן כמומלץ'}</button></div>
-        ${isAdmin?`<div class="hactions"><button class="hbtn" onclick="toggleVisited('${p.id}')">${p.visited?'↩︎ בטל ביקור':'✓ ביקרנו'}</button><button class="hbtn" onclick="editPlace('${p.id}')">✏️ ערוך</button><button class="delbtn" onclick="deletePlace('${p.id}')">🗑️ מחק</button></div>`:''}
+        <div class="navrow"><a class="wazebtn" href="${wazeLink(p.lat, p.lng)}" target="_blank" rel="noopener">${window.t('nav_waze')}</a><a href="${gmapsLink(p.name, rkey, p.lat, p.lng)}" target="_blank" rel="noopener">Google Maps ↗</a></div>
+        <div class="hactions"><button class="hbtn${p.star?' starred':''}" onclick="toggleStar('${p.id}')">${p.star?(en?'⭐ Must-see — remove':'⭐ מומלץ — הסר'):(en?'☆ Mark must-see':'☆ סמן כמומלץ')}</button></div>
+        ${isAdmin?`<div class="hactions"><button class="hbtn" onclick="toggleVisited('${p.id}')">${p.visited?(en?'↩︎ Unmark visited':'↩︎ בטל ביקור'):(en?'✓ Visited':'✓ ביקרנו')}</button><button class="hbtn" onclick="editPlace('${p.id}')">${en?'✏️ Edit':'✏️ ערוך'}</button><button class="delbtn" onclick="deletePlace('${p.id}')">${en?'🗑️ Delete':'🗑️ מחק'}</button></div>`:''}
       </div>`);
     poiMeta.push({pid:p.id, marker:m, cat:p.cat, region:rkey, latlng:[p.lat,p.lng], name:p.name, note:p.note, star:!!p.star, dist:Infinity});
   });
@@ -2350,9 +2351,9 @@ function renderPoiList(){
     row.className='poi';
     row.innerHTML=`
       <div class="pemoji" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</div>
-      <div class="pinfo"><h4>${esc(p.name)}</h4><small>${esc(c.he)}${normInsta(p.insta)?' · 📸':''}${p.note?' · '+esc(p.note):''}</small></div>
-      ${nearbyOn?`<span class="dist">${o.dist<1?Math.round(o.dist*1000)+' מ׳':o.dist.toFixed(1)+' ק״מ'}</span>`:''}
-      ${isAdmin?`<button class="del" title="מחק" data-del="${p.id}">🗑️</button>`:''}`;
+      <div class="pinfo"><h4>${esc(p.name)}</h4><small>${esc(catLabel(p.cat))}${normInsta(p.insta)?' · 📸':''}${p.note?' · '+esc(p.note):''}</small></div>
+      ${nearbyOn?`<span class="dist">${o.dist<1?Math.round(o.dist*1000)+(window.__lang==='en'?' m':' מ׳'):o.dist.toFixed(1)+(window.__lang==='en'?' km':' ק״מ')}</span>`:''}
+      ${isAdmin?`<button class="del" title="${window.__lang==='en'?'Delete':'מחק'}" data-del="${p.id}">🗑️</button>`:''}`;
     row.addEventListener('click',e=>{ if(e.target.closest('[data-del]')) return; focusLatLng(o.latlng,15,o.marker); });
     poiListEl.appendChild(row);
   });
@@ -2921,6 +2922,24 @@ async function resolveTripCurrency(d){
     if(document.body.dataset.view==='info') renderInfo();
   }catch(e){}
 }
+/* Fill in English names for destinations of trips created before name capture. */
+async function migrateDestNames(){
+  const IT=window.__ITINERARY; if(!IT||!Array.isArray(IT.destinations)) return;
+  let changed=false;
+  for(const d of IT.destinations){
+    if(d.name_en) continue;
+    try{
+      const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&namedetails=1&accept-language=en&lat='+d.lat+'&lon='+d.lng);
+      const j=await r.json(); const a=j.address||{}; const nd=j.namedetails||{};
+      const nm = nd['name:en'] || nd.name || a.city || a.town || a.village || a.state || a.country || (j.display_name?j.display_name.split(',')[0]:'') || '';
+      if(nm){ d.name_en=nm; if(REGIONS[d.key]) REGIONS[d.key].en=nm; changed=true; }
+    }catch(e){}
+  }
+  if(changed){
+    try{ if(cloud&&cloud.enabled&&cloud.updateItinerary) await cloud.updateItinerary(IT); }catch(e){}
+    if(window.__lang==='en'){ buildLocSeg(); buildHotels(); applyFilters(); const v=document.body.dataset.view; if(v==='destinations') renderDestinations(); }
+  }
+}
 
 function fxLoad(code){ try{ const c=JSON.parse(localStorage.getItem('fx_'+code)); if(c&&c.ILS&&c.USD) return c; }catch(e){} return {ILS:0,USD:0,approx:true}; }
 let fxRates=(function(){ const c=fxLoad('THB'); return (c.ILS?c:{ILS:0.105,USD:0.028,approx:true}); })();
@@ -3154,7 +3173,7 @@ function renderAttractions(){
       const u=normInsta(p.insta);
       const row=document.createElement('div'); row.className='poi'+(p.visited?' visited':'');
       row.innerHTML=`<div class="pemoji" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</div>
-        <div class="pinfo"><h4>${p.star?'⭐ ':''}${esc(p.name)}</h4><small>${p.visited?`<span class="vtag">✓ ${en?'Visited':'ביקרנו'}</span> · `:''}${REGIONS[rkey]?esc(REGIONS[rkey].he):''}${p.note?' · '+esc(p.note):''}</small></div>
+        <div class="pinfo"><h4>${p.star?'⭐ ':''}${esc(p.name)}</h4><small>${p.visited?`<span class="vtag">✓ ${en?'Visited':'ביקרנו'}</span> · `:''}${REGIONS[rkey]?esc(regName(rkey)):''}${p.note?' · '+esc(p.note):''}</small></div>
         <button class="starbtn${p.star?' on':''}" title="${p.star?(en?'Remove from must-see':'הסר מהמומלצים'):(en?'Mark as must-see':'סמן כמומלץ')}" onclick="toggleStar('${p.id}')">${p.star?'⭐':'☆'}</button>
         <a class="wazelink iglink" href="${wazeLink(p.lat,p.lng)}" target="_blank" rel="noopener" title="${en?'Navigate with Waze':'נווט ב-Waze'}">🧭</a>
         ${u?`<a class="insta iglink" href="${esc(u)}" target="_blank" rel="noopener" title="Instagram">📸</a>`:''}
@@ -3384,6 +3403,9 @@ async function __startApp(){
     if(window.__TEMPLATE!=='thailand' && IT && !IT.currency && !IT.mainCountry && IT.destinations && IT.destinations[0]){
       resolveTripCurrency(IT.destinations[0]);
     }
+    if(window.__TEMPLATE!=='thailand' && IT && Array.isArray(IT.destinations) && IT.destinations.some(d=>!d.name_en)){
+      migrateDestNames();
+    }
   })();
   await initAdmin();
   loadPlaces();
@@ -3577,6 +3599,7 @@ window.TripReady.then(()=>__startApp());
         deleteBookingFile(path){ if(!storage||!ST||!path) return Promise.resolve(); return ST.deleteObject(ST.ref(storage, path)).catch(()=>{}); },
         getMeta(){ return getDoc(doc(db,...base,'meta','info')).then(s=>s.exists()?s.data():null); },
         setMeta(d){ return setDoc(doc(db,...base,'meta','info'), d, {merge:true}); },
+        updateItinerary(it){ return setDoc(doc(db,'users',uid,'trips',TRIP), {itinerary:it}, {merge:true}); },
       };
     }
 
