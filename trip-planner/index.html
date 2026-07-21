@@ -1464,7 +1464,7 @@ function applyLang(l){
   document.querySelectorAll('[data-i18n]').forEach(el=>{ const v=window.t(el.getAttribute('data-i18n')); if(v) el.textContent=v; });
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ const v=window.t(el.getAttribute('data-i18n-ph')); if(v) el.setAttribute('placeholder',v); });
   document.querySelectorAll('[data-i18n-title]').forEach(el=>{ const v=window.t(el.getAttribute('data-i18n-title')); if(v) el.title=v; });
-  const lb=document.getElementById('langBtn'); if(lb) lb.textContent = window.__lang==='he'?'EN':'HE';
+  const lb=document.getElementById('langBtn'); if(lb) lb.textContent = window.__lang==='he'?'EN':'עב';
   if(window.__rerenderGate) try{ window.__rerenderGate(); }catch(e){}
   // Re-render dynamic content that contains translated strings.
   if(window.__appReady) try{
@@ -1495,6 +1495,8 @@ const CATEGORIES = {
 };
 const catLabel = k => { const c=CATEGORIES[k]||CATEGORIES.other; return (window.__lang==='en'&&c.en)?c.en:c.he; };
 const regName = rk => { const r=REGIONS[rk]; if(!r) return ''; return (window.__lang==='en'&&r.en)?r.en:(r.he||''); };
+/* True if the text contains Hebrew/Greek/Cyrillic/Arabic letters (i.e. not a Latin/English name). */
+const isNonLatin = s => /[\u0590-\u05FF\u0370-\u03FF\u0400-\u04FF\u0600-\u06FF]/.test(String(s||''));
 let REGIONS = {
   all:     {he:'כל היעדים', eng:''},
   samui:   {he:'קוסמוי',    eng:'Koh Samui',  center:[9.512,100.013]},
@@ -2922,22 +2924,42 @@ async function resolveTripCurrency(d){
     if(document.body.dataset.view==='info') renderInfo();
   }catch(e){}
 }
-/* Fill in English names for destinations of trips created before name capture. */
+/* Give each destination a Latin/English name, for trips created before name
+   capture (or where an earlier attempt stored a non-Latin local name). We
+   forward-search the stored name in English (more reliable than reverse
+   geocoding a point, which returns the nearest village), and fall back to the
+   English country name. */
 async function migrateDestNames(){
   const IT=window.__ITINERARY; if(!IT||!Array.isArray(IT.destinations)) return;
+  const good = s => s && !isNonLatin(s);
   let changed=false;
   for(const d of IT.destinations){
-    if(d.name_en) continue;
+    if(good(d.name_en)) continue;                 // already has a Latin name
+    let nm='';
     try{
-      const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&namedetails=1&accept-language=en&lat='+d.lat+'&lon='+d.lng);
-      const j=await r.json(); const a=j.address||{}; const nd=j.namedetails||{};
-      const nm = nd['name:en'] || nd.name || a.city || a.town || a.village || a.state || a.country || (j.display_name?j.display_name.split(',')[0]:'') || '';
-      if(nm){ d.name_en=nm; if(REGIONS[d.key]) REGIONS[d.key].en=nm; changed=true; }
+      const q=d.name||d.name_en||'';
+      if(q){
+        const r=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&accept-language=en&limit=1&q='+encodeURIComponent(q));
+        const j=await r.json();
+        if(j&&j[0]&&j[0].display_name){ const first=j[0].display_name.split(',')[0].trim(); if(good(first)) nm=first; }
+      }
     }catch(e){}
+    if(!nm){
+      try{
+        const r2=await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&accept-language=en&lat='+d.lat+'&lon='+d.lng);
+        const j2=await r2.json(); const a=j2.address||{};
+        nm=[a.city,a.town,a.village,a.state,a.country].find(good) || '';
+      }catch(e){}
+    }
+    if(good(nm)){ d.name_en=nm; d.eng=nm; if(REGIONS[d.key]){ REGIONS[d.key].en=nm; REGIONS[d.key].eng=nm; } changed=true; }
   }
   if(changed){
     try{ if(cloud&&cloud.enabled&&cloud.updateItinerary) await cloud.updateItinerary(IT); }catch(e){}
-    if(window.__lang==='en'){ buildLocSeg(); buildHotels(); applyFilters(); const v=document.body.dataset.view; if(v==='destinations') renderDestinations(); }
+    if(window.__lang==='en'){
+      buildLocSeg(); buildHotels(); applyFilters();
+      const v=document.body.dataset.view;
+      if(v==='destinations') renderDestinations(); else if(v==='about') renderAbout();
+    }
   }
 }
 
@@ -3291,7 +3313,7 @@ function routeAboutHtml(nights){
   }
   const en=window.__lang==='en';
   const IT=window.__ITINERARY||{};
-  const dests=(IT.destinations||[]).map(d=>esc(d.name)).join(' · ');
+  const dests=(IT.destinations||[]).map(d=>esc((REGIONS[d.key]?regName(d.key):'')||d.name_en||d.name)).join(' · ');
   const range=(IT.startDate&&IT.endDate)?(fmtLong(IT.startDate)+' – '+fmtLong(IT.endDate)):'';
   return `<div class="about-card"><h3>${en?'Itinerary 🗺️':'המסלול 🗺️'}</h3>
     <b>${esc(window.__TRIP_NAME||(en?'The trip':'הטיול'))}</b>${range?' · '+range:''}${nights?' · '+nights+' '+(en?'nights':'לילות'):''}
@@ -3403,7 +3425,7 @@ async function __startApp(){
     if(window.__TEMPLATE!=='thailand' && IT && !IT.currency && !IT.mainCountry && IT.destinations && IT.destinations[0]){
       resolveTripCurrency(IT.destinations[0]);
     }
-    if(window.__TEMPLATE!=='thailand' && IT && Array.isArray(IT.destinations) && IT.destinations.some(d=>!d.name_en)){
+    if(window.__TEMPLATE!=='thailand' && IT && Array.isArray(IT.destinations) && IT.destinations.some(d=>!d.name_en || isNonLatin(d.name_en))){
       migrateDestNames();
     }
   })();
