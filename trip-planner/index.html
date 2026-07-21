@@ -1132,7 +1132,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <div id="list"></div>
     <div class="section-title" id="poiTitle" data-i18n="sec_recommended">⭐ מקומות מומלצים</div>
     <div id="poiList"></div>
-    <footer id="footerText"></footer>
+    <footer id="footerText" data-i18n="footer_tip"></footer>
   </div>
 </div>
 
@@ -1398,7 +1398,8 @@ window.I18N = {
     wx_soon:'התחזית תיטען בקרוב…', map_show_all:'✖ הצג הכל',
     bk_family:'משפחה', bk_assign:'שיוך', bk_label:'שם ההזמנה / של מי (לא חובה)', bk_date:'תאריך',
     bk_map_loc:'מיקום במפה', bk_search_ph:'שם מקום / כתובת', bk_pick_map:'🗺️ בחרו נקודה על המפה',
-    bk_icon:'אייקון', bk_icon_ph:"או הדביקו אימוג'י משלכם", bk_file:'קובץ אישור (תמונה או PDF)', bk_save:'שמור הזמנה'
+    bk_icon:'אייקון', bk_icon_ph:"או הדביקו אימוג'י משלכם", bk_file:'קובץ אישור (תמונה או PDF)', bk_save:'שמור הזמנה',
+    footer_tip:'טפו על מקום לראותו במפה · הכפתור 🧭 מציג הכל.'
   },
   en:{
     tab_map:'🗺️ Map', tab_attractions:'⭐ Attractions', tab_bookings:'🧾 Bookings',
@@ -1448,7 +1449,8 @@ window.I18N = {
     wx_soon:'Forecast loading soon…', map_show_all:'✖ Show all',
     bk_family:'Family', bk_assign:'Assignment', bk_label:'Booking name / whose (optional)', bk_date:'Date',
     bk_map_loc:'Map location', bk_search_ph:'Place name / address', bk_pick_map:'🗺️ Pick a point on the map',
-    bk_icon:'Icon', bk_icon_ph:'or paste your own emoji', bk_file:'Booking file (image or PDF)', bk_save:'Save booking'
+    bk_icon:'Icon', bk_icon_ph:'or paste your own emoji', bk_file:'Booking file (image or PDF)', bk_save:'Save booking',
+    footer_tip:'Tap a place to see it on the map · the 🧭 button shows everything.'
   }
 };
 window.__lang = (function(){ try{ return localStorage.getItem('planner_lang')||'he'; }catch(e){ return 'he'; } })();
@@ -1466,7 +1468,7 @@ function applyLang(l){
   if(window.__rerenderGate) try{ window.__rerenderGate(); }catch(e){}
   // Re-render dynamic content that contains translated strings.
   if(window.__appReady) try{
-    buildChips(); buildLocSeg(); buildHotels(); buildRoute(); applyFilters(); updateCountdown();
+    buildChips(); buildLocSeg(); buildHotels(); buildRoute(); applyFilters(); updateCountdown(); updateNetStatus();
     const v=document.body.dataset.view;
     if(v==='attractions') renderAttractions();
     else if(v==='destinations') renderDestinations();
@@ -1492,6 +1494,7 @@ const CATEGORIES = {
   other:      {he:'אחר',      en:'Other',       emoji:'📍', color:'#94a3b8'},
 };
 const catLabel = k => { const c=CATEGORIES[k]||CATEGORIES.other; return (window.__lang==='en'&&c.en)?c.en:c.he; };
+const regName = rk => { const r=REGIONS[rk]; if(!r) return ''; return (window.__lang==='en'&&r.en)?r.en:(r.he||''); };
 let REGIONS = {
   all:     {he:'כל היעדים', eng:''},
   samui:   {he:'קוסמוי',    eng:'Koh Samui',  center:[9.512,100.013]},
@@ -1814,7 +1817,7 @@ function hotelPopupHtml(h, rkey){
   return `
     <div class="pop">
       <h3>🏨 ${h._num||h.id}. ${esc(h.name)}</h3>
-      <div class="r">${esc(h.region||'')}</div>
+      <div class="r">${esc((h.regionKey&&REGIONS[h.regionKey])?regName(h.regionKey):(h.region||''))}</div>
       <table>
         <tr><td>${window.t('h_checkin')}</td><td><b>${fmtLong(h.from)} ${yr}</b></td></tr>
         <tr><td>${window.t('h_checkout')}</td><td><b>${fmtLong(h.to)} ${yr}</b></td></tr>
@@ -1838,7 +1841,7 @@ function hotelCardHtml(h){
   return `
     <div class="idx">${h._num||h.id}</div>
     <h3>${esc(h.name)}</h3>
-    <div class="region">${esc(h.region||'')}</div>
+    <div class="region">${esc((h.regionKey&&REGIONS[h.regionKey])?regName(h.regionKey):(h.region||''))}</div>
     <div class="dates"><span class="pill">${fmtLong(h.from)}</span><span>${window.__lang==='en'?'→':'←'}</span><span class="pill">${fmtLong(h.to)}</span></div>
     <div class="meta"><span>🌙 ${h.nights} ${window.t('h_nights')}</span>${h.thb?`<span>${TRIP_CUR.sym} ${(+h.thb).toLocaleString()}</span>`:''}</div>
     <div class="hbadges">${badge}${doc}</div>`;
@@ -2306,7 +2309,7 @@ function buildLocSeg(){
   Object.entries(REGIONS).forEach(([k,r])=>{
     const b=document.createElement('div');
     b.className='sbtn'+(k===locFilter?' on':'');
-    b.textContent=(k==='all')?window.t('reg_all'):r.he;
+    b.textContent=(k==='all')?window.t('reg_all'):regName(k);
     b.addEventListener('click',()=>{
       locFilter=k;
       if(nearbyOn){ nearbyOn=false; toggleNearUI(false); }
@@ -2521,7 +2524,7 @@ function switchPane(name){
 
 /* search via Nominatim */
 async function nomSearch(q){
-  const url='https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&accept-language=he&q='+encodeURIComponent(q);
+  const url='https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&namedetails=1&limit=6&accept-language='+(window.__lang||'he')+'&q='+encodeURIComponent(q);
   const r=await fetch(url,{headers:{'Accept':'application/json'}}); return await r.json();
 }
 /* Expose the geocoder so the create funnel can offer free-text destination search. */
@@ -2731,7 +2734,7 @@ sheet.addEventListener('touchend',e=>{ if(startY===null)return; const dy=e.chang
   if(dy>40) sheet.classList.add('collapsed'); else if(dy<-40) sheet.classList.remove('collapsed'); startY=null; });
 document.getElementById('fitBtn').addEventListener('click',()=>{ locFilter='all'; buildLocSeg(); if(nearbyOn){nearbyOn=false;toggleNearUI(false);if(nearCircle){map.removeLayer(nearCircle);nearCircle=null;}} applyFilters(); fitAll(); map.closePopup(); if(isMobile()) sheet.classList.add('collapsed'); });
 
-document.getElementById('footerText').innerHTML = 'טפו על מקום לראותו במפה · הכפתור 🧭 מציג הכל.';
+document.getElementById('footerText').textContent = window.t('footer_tip');
 
 /* ================= Theme ================= */
 const langBtn=document.getElementById('langBtn');
@@ -2753,8 +2756,9 @@ function updateNetStatus(){
   const el=document.getElementById('netStatus'); if(!el) return;
   const online=navigator.onLine;
   el.classList.toggle('off', !online);
-  el.title = online ? 'מחובר לאינטרנט' : 'לא מקוון';
-  const txt=el.querySelector('.nettext'); if(txt) txt.textContent = online ? 'מקוון' : 'לא מקוון';
+  const en=window.__lang==='en';
+  el.title = online ? (en?'Connected':'מחובר לאינטרנט') : (en?'Offline':'לא מקוון');
+  const txt=el.querySelector('.nettext'); if(txt) txt.textContent = online ? (en?'Online':'מקוון') : (en?'Offline':'לא מקוון');
 }
 window.addEventListener('online', updateNetStatus);
 window.addEventListener('offline', updateNetStatus);
@@ -3022,8 +3026,8 @@ function renderInfo(){
       <h3>${window.t('cc_title')}</h3>
       <div class="cc-grid">
         <label>${esc(TRIP_CUR.code)} ${esc(TRIP_CUR.sym)}<input id="ccBASE" type="number" inputmode="decimal" value="100" /></label>
-        <label>שקל ₪<input id="ccILS" type="number" inputmode="decimal" /></label>
-        <label>דולר $<input id="ccUSD" type="number" inputmode="decimal" /></label>
+        <label>${window.__lang==='en'?'ILS':'שקל'} ₪<input id="ccILS" type="number" inputmode="decimal" /></label>
+        <label>${window.__lang==='en'?'USD':'דולר'} $<input id="ccUSD" type="number" inputmode="decimal" /></label>
       </div>
       <div class="cc-note" id="ccNote">${ccNoteHtml()}</div>
     </div>`;
@@ -3094,6 +3098,7 @@ function wxSunEmoji(code){ return (code<=1)?'☀️':'⛅'; }
 
 /* ---- 5-day forecast strips for the Destinations cards ---- */
 const WX_DOW=['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
+const WX_DOW_EN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 let wxForecast=(function(){ try{ return JSON.parse(localStorage.getItem('thai_wx5v3'))||{}; }catch(e){ return {}; } })();
 function regionStripHtml(key){
   const days=wxForecast[key];
@@ -3101,7 +3106,7 @@ function regionStripHtml(key){
     const cells=days.slice(0,5).map(d=>{
       const dt=new Date(d.date+'T00:00:00');
       const pop=(d.pop!=null)?`<span class="wxp">💧${d.pop}%</span>`:'';
-      return `<div class="wxday"><span class="wxd">${WX_DOW[dt.getDay()]}</span><span class="wxe">${wxSunEmoji(d.code)}</span><span class="wxt">${d.hi}°<small>${d.lo}°</small></span>${pop}</div>`;
+      return `<div class="wxday"><span class="wxd">${(window.__lang==='en'?WX_DOW_EN:WX_DOW)[dt.getDay()]}</span><span class="wxe">${wxSunEmoji(d.code)}</span><span class="wxt">${d.hi}°<small>${d.lo}°</small></span>${pop}</div>`;
     }).join('');
     return `<div class="wxstrip-inner">${cells}</div>`;
   }
@@ -3240,7 +3245,7 @@ function renderDestinations(){
     const hotelsHtml=hs.map(h=>`<div class="dest-hotel"><span>🏨 ${esc(h.name)}</span><span>${fmtLong(h.from)}–${fmtLong(h.to)}</span></div>`).join('');
     const card=document.createElement('div'); card.className='dest-card '+(areaKey[rk]||'');
     card.innerHTML=`
-      <h3>${esc(r.he)}</h3>
+      <h3>${esc(regName(rk))}</h3>
       <div class="eng">${esc(r.eng)}${dr?' · '+dr:''} · ${ps.length} ${en?'places':'מקומות'}</div>
       ${hotelsHtml}
       <div class="wxstrip" data-wxstrip="${rk}">${regionStripHtml(rk)}</div>
@@ -3331,8 +3336,8 @@ function applyItinerary(IT){
   hotels=[]; flights=[]; segs=[]; areaToRegion={};
   buildHotels();   // clears the built-in Thailand cards + markers
   buildRoute();    // clears the built-in route
-  const R={ all:{he:'כל היעדים',eng:''} };
-  dests.forEach(d=>{ R[d.key]={he:d.name, eng:d.eng||'', center:[d.lat,d.lng]}; });
+  const R={ all:{he:'כל היעדים',en:'All destinations',eng:''} };
+  dests.forEach(d=>{ R[d.key]={he:d.name, en:d.name_en||d.eng||d.name, eng:d.name_en||d.eng||'', center:[d.lat,d.lng]}; });
   REGIONS=R;
   regionOf=function(lat,lng){
     let best='other', bd=1e9;
@@ -3701,7 +3706,8 @@ window.TripReady.then(()=>__startApp());
           opt.type='button'; opt.className='g-res';
           opt.innerHTML=`<b>${esc(main)}</b><small>${esc(r.display_name||'')}</small>`;
           opt.onclick=()=>{
-            funnelDests.push({key:slug(main), name:main, eng:main, lat:+r.lat, lng:+r.lon, country:(r.address&&r.address.country_code)||''});
+            const nameEn=(r.namedetails&&(r.namedetails['name:en']||r.namedetails.name))||'';
+            funnelDests.push({key:slug(nameEn||main), name:main, name_en:nameEn, eng:nameEn, lat:+r.lat, lng:+r.lon, country:(r.address&&r.address.country_code)||''});
             inp.value=''; rz.innerHTML=''; renderDestList(); refreshCreate();
           };
           rz.appendChild(opt);
