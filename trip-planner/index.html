@@ -1084,6 +1084,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     </div>
     <span class="tb-spacer"></span>
     <span class="netstat" id="netStatus" title=""><span class="netdot"></span><span class="nettext"></span></span>
+    <button id="tripsBtnTop" class="iconbtn" title="הטיולים שלי / My trips">🧳</button>
     <button id="langBtn" class="iconbtn" title="Language / שפה">EN</button>
     <button id="themeBtn" class="iconbtn" title="מצב כהה / בהיר">🌙</button>
   </div>
@@ -3782,9 +3783,10 @@ window.TripReady.then(()=>__startApp());
       };
     }
 
-    // "My trips" button (shown after boot): switch trips by returning to the picker.
-    const tb=document.getElementById('tripsBtn');
-    if(tb) tb.onclick = ()=>{ localStorage.removeItem(LS_ACTIVE); location.reload(); };
+    // "My trips" buttons (header + floating): return to the picker to switch,
+    // create, delete trips or sign out.
+    const backToTrips = ()=>{ localStorage.removeItem(LS_ACTIVE); location.reload(); };
+    ['tripsBtn','tripsBtnTop'].forEach(id=>{ const el=document.getElementById(id); if(el) el.onclick=backToTrips; });
 
     onAuthStateChanged(auth, async user=>{
       if(!user){ renderLogin(); return; }
