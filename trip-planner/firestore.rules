@@ -21,9 +21,15 @@ service cloud.firestore {
 
       allow delete: if request.auth != null && request.auth.uid == uid;
 
-      // A user has full access to everything under their own trips.
-      match /trips/{tripId}/{document=**} {
+      // A user has full access to their own trips — the trip document itself
+      // AND everything under it. (The trip doc must be matched explicitly; a
+      // single `trips/{tripId}/{document=**}` rule does NOT cover the trip doc,
+      // only its subcollections — which silently blocks creating a trip.)
+      match /trips/{tripId} {
         allow read, write: if request.auth != null && request.auth.uid == uid;
+        match /{document=**} {
+          allow read, write: if request.auth != null && request.auth.uid == uid;
+        }
       }
     }
 

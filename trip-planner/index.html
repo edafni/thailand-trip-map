@@ -3766,20 +3766,28 @@ window.TripReady.then(()=>__startApp());
         const name=$('gName').value.trim();
         const startDate=$('gStart').value, endDate=$('gEnd').value;
         const btn=$('gCreate'); btn.disabled=true; btn.textContent=T('gate_creating');
-        const mainCountry=(funnelDests[0]&&funnelDests[0].country)||'';
-        const itinerary = { startDate, endDate, destinations: funnelDests.map(d=>({...d, date:startDate})) };
-        if(mainCountry){ itinerary.mainCountry=mainCountry; itinerary.currency=window.__currencyForCountry(mainCountry); }
-        const id=await createTrip(user.uid, name, 'custom', itinerary);
-        localStorage.setItem(LS_ACTIVE, id);
-        bootTrip(user.uid, {id, name, template:'custom', itinerary});
+        try{
+          const mainCountry=(funnelDests[0]&&funnelDests[0].country)||'';
+          const itinerary = { startDate, endDate, destinations: funnelDests.map(d=>({...d, date:startDate})) };
+          if(mainCountry){ itinerary.mainCountry=mainCountry; itinerary.currency=window.__currencyForCountry(mainCountry); }
+          const id=await createTrip(user.uid, name, 'custom', itinerary);
+          localStorage.setItem(LS_ACTIVE, id);
+          bootTrip(user.uid, {id, name, template:'custom', itinerary});
+        }catch(e){
+          btn.disabled=false; btn.textContent=T('gate_create');
+          alert((window.__lang==='en'?'Could not create the trip: ':'לא ניתן ליצור את הטיול: ')+(e&&e.message||e)+
+            (String(e&&e.code||e).includes('permission')?(window.__lang==='en'?'\n\nCheck that the Firestore rules are published.':'\n\nודאו שכללי ה-Firestore פורסמו.'):''));
+        }
       };
 
       $('gSample').onclick = async()=>{
         const btn=$('gSample'); btn.disabled=true; btn.textContent=T('gate_creating');
-        const nm='תאילנד 2026 (לדוגמה)';
-        const id=await createTrip(user.uid, nm, 'thailand');
-        localStorage.setItem(LS_ACTIVE, id);
-        bootTrip(user.uid, {id, name:nm, template:'thailand'});
+        try{
+          const nm='תאילנד 2026 (לדוגמה)';
+          const id=await createTrip(user.uid, nm, 'thailand');
+          localStorage.setItem(LS_ACTIVE, id);
+          bootTrip(user.uid, {id, name:nm, template:'thailand'});
+        }catch(e){ btn.disabled=false; btn.textContent=T('gate_sample'); alert((window.__lang==='en'?'Could not create: ':'שגיאה: ')+(e&&e.message||e)); }
       };
     }
 
