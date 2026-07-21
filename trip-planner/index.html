@@ -1031,6 +1031,15 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .g-card{background:rgba(17,28,44,.92);border:1px solid #26364e;border-radius:18px;
     padding:26px 24px;max-width:420px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.5);text-align:center}
   .g-card.wide{max-width:520px;text-align:start}
+  .trips-menu{position:fixed;z-index:4500;min-width:220px;max-width:300px;background:#111c2c;border:1px solid #26364e;border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.5);padding:6px;color:#e5edf5;font-family:inherit}
+  .trips-menu .tm-head{font-size:12px;color:#9fb0c6;padding:6px 10px}
+  .trips-menu .tm-list{max-height:50vh;overflow:auto;display:flex;flex-direction:column;gap:2px}
+  .trips-menu .tm-item{display:block;width:100%;text-align:start;background:none;border:0;color:#e5edf5;padding:9px 11px;border-radius:8px;font-size:14px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .trips-menu .tm-item:hover{background:#1b2942}
+  .trips-menu .tm-item.on{color:#7bb0ff;font-weight:600}
+  .trips-menu .tm-empty{color:#8698b0;font-size:13px;padding:8px 10px}
+  .trips-menu .tm-new{color:#8fd0ff;margin-top:4px;border-top:1px solid #22314a}
+  .trips-menu .tm-loading{padding:12px;color:#9fb0c6}
   .g-logo{font-size:44px;margin-bottom:6px}
   .g-card h2{margin:0 0 8px;font-size:22px}
   .g-card p{margin:0 0 18px;color:#a9b8cc;font-size:14px;line-height:1.6}
@@ -1070,7 +1079,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   #tripsBtn{position:fixed;bottom:14px;inset-inline-start:14px;z-index:900;display:none;
     background:rgba(17,28,44,.9);color:#dbe6f2;border:1px solid #2a3a55;border-radius:999px;
     padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35)}
-  body.booted #tripsBtn{display:block}
+  #tripsBtn{display:none !important}  /* replaced by the header 🧳 dropdown */
 </style>
 
 <div id="map"></div>
@@ -3796,13 +3805,40 @@ window.TripReady.then(()=>__startApp());
       };
     }
 
-    // "My trips" buttons (header + floating): return to the picker to switch,
-    // create, delete trips or sign out.
-    const backToTrips = ()=>{ localStorage.removeItem(LS_ACTIVE); location.reload(); };
-    ['tripsBtn','tripsBtnTop'].forEach(id=>{ const el=document.getElementById(id); if(el) el.onclick=backToTrips; });
+    // ---- Trips dropdown (quick switch + create) from the header 🧳 button ----
+    let currentUser=null, tripsMenuEl=null;
+    function closeTripsMenu(){ if(tripsMenuEl){ tripsMenuEl.remove(); tripsMenuEl=null; document.removeEventListener('click', onDocClickMenu, true); } }
+    function onDocClickMenu(e){ if(tripsMenuEl && !tripsMenuEl.contains(e.target) && !e.target.closest('#tripsBtnTop') && !e.target.closest('#tripsBtn')) closeTripsMenu(); }
+    async function toggleTripsMenu(anchor){
+      if(tripsMenuEl){ closeTripsMenu(); return; }
+      if(!currentUser){ localStorage.removeItem(LS_ACTIVE); location.reload(); return; }
+      const en=window.__lang==='en';
+      const menu=document.createElement('div'); menu.id='tripsMenu'; menu.className='trips-menu';
+      menu.style.direction = en?'ltr':'rtl';
+      menu.innerHTML=`<div class="tm-loading">…</div>`;
+      document.body.appendChild(menu); tripsMenuEl=menu;
+      const r=anchor.getBoundingClientRect();
+      menu.style.top=(r.bottom+6)+'px';
+      menu.style.right=Math.max(8,(window.innerWidth-r.right))+'px';
+      setTimeout(()=>document.addEventListener('click', onDocClickMenu, true),0);
+      let trips=[]; try{ trips=await listTrips(currentUser.uid); }catch(e){}
+      if(tripsMenuEl!==menu) return; // closed while loading
+      const active=localStorage.getItem(LS_ACTIVE);
+      const rows=trips.map(t=>`<button class="tm-item${t.id===active?' on':''}" data-open="${t.id}">${t.id===active?'✓ ':''}${esc(t.name)||T('gate_trip')}</button>`).join('') || `<div class="tm-empty">${T('gate_no_trips')}</div>`;
+      menu.innerHTML=`
+        <div class="tm-head">${T('gate_my_trips')}</div>
+        <div class="tm-list">${rows}</div>
+        <button class="tm-item tm-new" data-new>➕ ${en?'New trip':'טיול חדש'}</button>
+        <button class="tm-item tm-out" data-out>${T('gate_logout')}</button>`;
+      menu.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{ const id=b.getAttribute('data-open'); if(id===active){ closeTripsMenu(); return; } localStorage.setItem(LS_ACTIVE,id); location.reload(); });
+      menu.querySelector('[data-new]').onclick=()=>{ localStorage.removeItem(LS_ACTIVE); location.reload(); };
+      menu.querySelector('[data-out]').onclick=()=>{ localStorage.removeItem(LS_ACTIVE); signOut(auth); };
+    }
+    ['tripsBtnTop','tripsBtn'].forEach(id=>{ const el=document.getElementById(id); if(el) el.onclick=e=>{ e.stopPropagation(); toggleTripsMenu(el); }; });
 
     onAuthStateChanged(auth, async user=>{
-      if(!user){ renderLogin(); return; }
+      if(!user){ currentUser=null; renderLogin(); return; }
+      currentUser=user;
       const active = localStorage.getItem(LS_ACTIVE);
       if(active){
         try{ const s=await getDoc(tripDoc(user.uid, active)); if(s.exists()){ bootTrip(user.uid, {id:active, ...s.data()}); return; } }catch(e){}
