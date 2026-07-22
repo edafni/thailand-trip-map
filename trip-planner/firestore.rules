@@ -33,6 +33,15 @@ service cloud.firestore {
       }
     }
 
+    // ---- Legacy personal app (index.html) — shared public trip ----
+    // Only needed while this Firebase project is shared with the original
+    // Thailand app. It makes /trips/{trip}/... readable/writable by anyone
+    // with the URL (that app has no sign-in). Remove this block once the
+    // product has its own dedicated Firebase project.
+    match /trips/{trip}/{document=**} {
+      allow read, write: if true;
+    }
+
     // Everything else is denied by default.
   }
 }
