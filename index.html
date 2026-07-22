@@ -818,8 +818,13 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .hbtn.unpaid{background:#3a2a10;border-color:#7a5a1e;color:#f3d08a}
   .hbtn.view{background:#123e57;border-color:#1d5f83;color:#bfe6ff}
   .hbtn.ghost{background:transparent}
-  .bkrow{display:flex;gap:6px;align-items:center;margin-bottom:5px}
-  .bkrow .hbtn.view{flex:1;text-align:start;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bkrow{display:flex;gap:6px;align-items:center;margin-bottom:5px;flex-wrap:wrap}
+  .bkrow .hbtn.view{flex:1;min-width:0;text-align:start;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bkrow .hbtn.paid,.bkrow .hbtn.unpaid{flex:0 0 auto;font-size:11px;padding:5px 8px}
+  .bkcard .bkbtn.paid{background:#0f3d2e;border-color:#1c6b4f;color:#8ef0c4}
+  .bkcard .bkbtn.unpaid{background:#3a2a10;border-color:#7a5a1e;color:#f3d08a}
+  body.light .bkcard .bkbtn.paid{background:#dcfce7;border-color:#86efac;color:#166534}
+  body.light .bkcard .bkbtn.unpaid{background:#fef3c7;border-color:#fcd34d;color:#92660b}
   .hbadges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
   .paidbadge{font-size:11px;font-weight:700;border-radius:999px;padding:3px 9px;border:1px solid var(--line)}
   .paidbadge.ok{background:#0f3d2e;border-color:#1c6b4f;color:#8ef0c4}
@@ -1426,7 +1431,7 @@ function wazeLink(lat, lng){ return 'https://waze.com/ul?ll='+lat+','+lng+'&navi
 let isAdmin=false;
 let places=[];
 let hotelState={};          /* { [hotelId]: { paid:bool } } */
-let bookings=[];            /* [{ id, kind:'hotel'|'flight', refId, label, name, type, dataUrl, date, createdAt }] */
+let bookings=[];            /* [{ id, kind, refId, family, label, paid?, ... }] */
 let cloud={enabled:false};  /* cloud sync handle (populated in init) */
 let locFilter='all';
 let mapStarOnly=false;   // "⭐ רק מומלצים" filter on the map
@@ -1476,12 +1481,13 @@ function loadBookings(){
       if(!bookings.some(b=>b.id===mid)){
         bookings.push({ id:mid, kind:'hotel', refId:h.id, label:st.booking.label||'הזמנה',
           name:st.booking.name, type:st.booking.type, dataUrl:st.booking.dataUrl,
-          date:h.from, createdAt:Date.now() });
+          date:h.from, paid:!!st.paid, createdAt:Date.now() });
       }
       delete st.booking;
     }
   });
   bookings.forEach(b=>{ b.family=normFamily(b.family); });   // existing reservations default to family 1 (Dafni)
+  ensureBookingPaidDefaults();
   saveHotelState(); saveBookings();
 }
 function saveBookings(){ try{ localStorage.setItem(LS_BOOKINGS, JSON.stringify(bookings)); }catch(e){} }
@@ -1497,6 +1503,39 @@ function entityDate(kind, refId){
 }
 function bookingsFor(kind, refId){
   return bookings.filter(b=>b.kind===kind && String(b.refId)===String(refId));
+}
+function isBookingPaid(b){ return !!(b&&b.paid); }
+function ensureBookingPaidDefaults(){
+  bookings.forEach(b=>{
+    if(b.paid===undefined || b.paid===null){
+      if(b.kind==='hotel'){
+        const hb=bookingsFor('hotel', b.refId);
+        const legacy=!!hs(+b.refId).paid;
+        b.paid=(hb.length===1 && legacy);
+      } else b.paid=false;
+    } else b.paid=!!b.paid;
+  });
+}
+function hotelBookingPaidSummary(hid){
+  const hb=bookingsFor('hotel', hid);
+  if(!hb.length) return null;
+  const paid=hb.filter(isBookingPaid).length;
+  return { paid, total: hb.length, allPaid: paid===hb.length, nonePaid: paid===0 };
+}
+function hotelPaidBadgesHtml(hid){
+  const s=hotelBookingPaidSummary(hid);
+  if(s){
+    if(s.allPaid) return `<span class="paidbadge ok">שולם ✓ · ${s.total}</span>`;
+    if(s.nonePaid) return `<span class="paidbadge no">טרם שולם · ${s.total}</span>`;
+    return `<span class="paidbadge no">${s.paid}/${s.total} שולם</span>`;
+  }
+  return hs(hid).paid ? `<span class="paidbadge ok">שולם ✓</span>` : `<span class="paidbadge no">טרם שולם</span>`;
+}
+function bookingPaidBtnHtml(b, compact){
+  const id=String(b.id).replace(/'/g,"\\'");
+  const cls=isBookingPaid(b)?'paid':'unpaid';
+  const lbl=isBookingPaid(b)?(compact?'✓':'✓ שולם'):(compact?'💳':'💳 סמן כשולם');
+  return `<button type="button" class="hbtn ${cls}" onclick="toggleBookingPaid('${id}')">${lbl}</button>`;
 }
 
 /* ---- Edit operations (local + cloud) ---- */
@@ -1514,10 +1553,19 @@ function updatePlaceOp(updated){
   places[i]=updated; savePlaces();
   if(cloud.enabled){ cloud.upsertPlace(updated).catch(e=>console.error('cloud update',e)); }
 }
-function setHotelPaid(id, paid){
-  hs(id).paid=!!paid; saveHotelState();
-  if(cloud.enabled){ cloud.setHotel(id,{paid:!!paid}).catch(e=>console.error('cloud hotel',e)); }
-  refreshHotels();
+function setBookingPaid(id, paid){
+  const i=bookings.findIndex(x=>x.id===id);
+  if(i<0) return;
+  bookings[i]={...bookings[i], paid:!!paid};
+  saveBookings();
+  if(cloud.enabled){ cloud.upsertBooking(bookings[i]).catch(e=>console.error('cloud booking paid',e)); }
+  if(bookings[i].kind==='hotel'){
+    const s=hotelBookingPaidSummary(+bookings[i].refId);
+    hs(+bookings[i].refId).paid=!!(s&&s.allPaid);
+    saveHotelState();
+  }
+  refreshBookingsUI();
+  if(document.body.dataset.view==='about') renderAbout();
 }
 function addBookingItem(b){
   bookings.push(b); saveBookings();
@@ -1540,6 +1588,7 @@ function refreshBookingsUI(){
   refreshHotels();
   if(typeof buildBookingMarkers==='function'){ buildBookingMarkers(); applyFilters(); }
   if(document.body.dataset.view==='bookings') renderBookings();
+  else if(document.body.dataset.view==='about') renderAbout();
 }
 
 /* ================= Map ================= */
@@ -1562,16 +1611,19 @@ const hotelMeta=[];
 const listEl=document.getElementById('list');
 
 function hotelPopupHtml(h, rkey){
-  const st=hs(h.id);
-  const paidBtn = st.paid
-    ? `<button class="hbtn paid" onclick="toggleHotelPaid(${h.id})">✓ שולם · לחצו לביטול</button>`
-    : `<button class="hbtn unpaid" onclick="toggleHotelPaid(${h.id})">💳 סמן כשולם</button>`;
   const hb=bookingsFor('hotel', h.id);
-  const bookingList = hb.map(b=>
-    `<div class="bkrow">
-       <button class="hbtn view" onclick="viewBooking('${b.id}')">📄 ${esc(b.label||b.name||'הזמנה')}</button>
-       <button class="hbtn ghost" onclick="deleteBooking('${b.id}')">🗑️</button>
-     </div>`).join('');
+  const paySummary=hotelBookingPaidSummary(h.id);
+  const payRow = paySummary
+    ? `<tr><td>תשלום</td><td><b>${paySummary.allPaid?'שולם ✓':paySummary.nonePaid?'טרם שולם':paySummary.paid+'/'+paySummary.total+' שולם'}</b></td></tr>`
+    : (hs(h.id).paid?`<tr><td>תשלום</td><td><b>שולם ✓</b></td></tr>`:'');
+  const bookingList = hb.map(b=>{
+    const bid=String(b.id).replace(/'/g,"\\'");
+    return `<div class="bkrow">
+       <button class="hbtn view" onclick="viewBooking('${bid}')">📄 ${esc(b.label||b.name||'הזמנה')} · ${esc(familyName(normFamily(b.family)))}</button>
+       ${bookingPaidBtnHtml(b,true)}
+       <button class="hbtn ghost" onclick="deleteBooking('${bid}')">🗑️</button>
+     </div>`;
+  }).join('');
   const bookingRow = `${bookingList}
        <button class="hbtn" onclick="addBookingFor('hotel',${h.id})">📎 הוסף אישור הזמנה</button>`;
   return `
@@ -1583,18 +1635,16 @@ function hotelPopupHtml(h, rkey){
         <tr><td>צ'ק אאוט</td><td><b>${fmtLong(h.to)} 2026</b></td></tr>
         <tr><td>לילות</td><td><b>${h.nights}</b></td></tr>
         <tr><td>עלות</td><td><b>฿ ${h.thb.toLocaleString()}</b></td></tr>
-        <tr><td>תשלום</td><td><b>${st.paid?'שולם ✓':'טרם שולם'}</b></td></tr>
+        ${payRow}
       </table>
       <div class="hactions">
-        ${paidBtn}
         ${bookingRow}
       </div>
       <div class="navrow"><a class="wazebtn" href="${wazeLink(h.lat, h.lng)}" target="_blank" rel="noopener">🧭 נווט ב-Waze</a><a href="${gmapsLink(h.name, rkey, h.lat, h.lng)}" target="_blank" rel="noopener">Google Maps ↗</a></div>
     </div>`;
 }
 function hotelCardHtml(h){
-  const st=hs(h.id);
-  const badge = st.paid ? `<span class="paidbadge ok">שולם ✓</span>` : `<span class="paidbadge no">טרם שולם</span>`;
+  const badge = hotelPaidBadgesHtml(h.id);
   const nb=bookingsFor('hotel', h.id).length;
   const doc = nb ? `<span class="paidbadge doc">📄 ${nb} ${nb===1?'אישור':'אישורים'}</span>` : '';
   return `
@@ -1683,8 +1733,10 @@ function buildBookingMarkers(){
       <div class="pop">
         <h3>${em} ${esc(b.label||'הזמנה')}</h3>
         <div class="r">👪 ${esc(familyName(normFamily(b.family)))}${dateTxt?' · '+dateTxt:''}${REGIONS[rkey]&&REGIONS[rkey].eng?' · '+REGIONS[rkey].eng:''}</div>
+        <div class="r">${isBookingPaid(b)?'<b style="color:#8ef0c4">✓ שולם</b>':'<b style="color:#f3d08a">טרם שולם</b>'}</div>
         <div class="hactions">
           <button class="hbtn view" onclick="viewBooking('${b.id}')">📄 הצג אישור</button>
+          ${bookingPaidBtnHtml(b,false)}
           <button class="hbtn" onclick="editBooking('${b.id}')">✏️ ערוך</button>
           <button class="hbtn ghost" onclick="deleteBooking('${b.id}')">🗑️ מחק</button>
         </div>
@@ -1737,8 +1789,7 @@ document.getElementById('confirmCancelBtn').addEventListener('click',closeConfir
 document.getElementById('confirmCode').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); doConfirm(); } });
 document.getElementById('confirmModal').addEventListener('click',e=>{ if(e.target.id==='confirmModal') closeConfirm(); });
 
-/* ---- Hotel paid toggle ---- */
-window.toggleHotelPaid=function(id){ setHotelPaid(id, !hs(id).paid); };
+window.toggleBookingPaid=function(id){ const b=bookings.find(x=>x.id===id); if(b) setBookingPaid(id, !isBookingPaid(b)); };
 
 /* ---- Bookings (multiple per hotel/flight, each with a name/label) ---- */
 window.viewBooking=function(id){
@@ -1955,12 +2006,14 @@ document.getElementById('bkSave').addEventListener('click',async ()=>{
     if(!bkPending){ bkStatus.textContent='⚠ בחרו מיקום: הקלידו שם ולחצו “חפש”, או “בחרו נקודה על המפה”.'; return; }
     b={ id, kind:'other', family, label, name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl,
         icon:bkIcon||'📍', date, lat:bkPending.lat, lng:bkPending.lng, region:regionOf(bkPending.lat,bkPending.lng),
+        paid: existing?!!existing.paid:false,
         createdAt:(existing&&existing.createdAt)||Date.now() };
   } else {
     if(!refId){ bkStatus.textContent='⚠ בחרו מלון או טיסה'; return; }
     b={ id, kind, refId, family, label:bkLabel.value.trim()||bkPendingFile.name,
         name:bkPendingFile.name, type:bkPendingFile.type, dataUrl:bkPendingFile.dataUrl,
-        icon:bkIcon||'', date:entityDate(kind, refId), createdAt:(existing&&existing.createdAt)||Date.now() };
+        icon:bkIcon||'', date:entityDate(kind, refId), paid: existing?!!existing.paid:false,
+        createdAt:(existing&&existing.createdAt)||Date.now() };
   }
   if(isEdit){ updateBookingItem(b); editingBookingId=null; closeBookingModal(); return; }
   addBookingItem(b);
@@ -2732,18 +2785,22 @@ function renderBookings(){
     const dateTxt=b.date?fmtLong(b.date):'';
     const sub=(b.kind==='other') ? ((REGIONS[b.region]&&REGIONS[b.region].he)?('📍 '+REGIONS[b.region].he):'הזמנה כללית') : entityName(b.kind, b.refId);
     const famTxt=familyName(normFamily(b.family));
+    const paidCls=isBookingPaid(b)?'paid':'unpaid';
+    const paidLbl=isBookingPaid(b)?'✓ שולם':'💳 לשלם';
     const row=document.createElement('div'); row.className='bkcard';
     row.innerHTML=`
       <div class="bkic">${ic}</div>
       <div class="bkinfo">
         <h4>${esc(b.label||b.name||'הזמנה')}</h4>
-        <small>👪 ${esc(famTxt)} · ${esc(sub)}${dateTxt?' · '+dateTxt:''}</small>
+        <small>👪 ${esc(famTxt)} · ${esc(sub)}${dateTxt?' · '+dateTxt:''} · ${isBookingPaid(b)?'<span style="color:#8ef0c4">שולם ✓</span>':'<span style="color:#f3d08a">טרם שולם</span>'}</small>
       </div>
+      <button class="bkbtn ${paidCls}" data-paid="${esc(b.id)}">${paidLbl}</button>
       <button class="bkbtn view" data-view="${esc(b.id)}">📄 הצג</button>
       <button class="bkbtn edit" data-edit="${esc(b.id)}">✏️</button>
       <button class="bkbtn del" data-del="${esc(b.id)}">🗑️</button>`;
     host.appendChild(row);
   });
+  host.querySelectorAll('[data-paid]').forEach(x=>x.addEventListener('click',e=>{ e.stopPropagation(); toggleBookingPaid(x.dataset.paid); }));
   host.querySelectorAll('[data-view]').forEach(x=>x.addEventListener('click',()=>viewBooking(x.dataset.view)));
   host.querySelectorAll('[data-edit]').forEach(x=>x.addEventListener('click',()=>editBooking(x.dataset.edit)));
   host.querySelectorAll('[data-del]').forEach(x=>x.addEventListener('click',()=>deleteBooking(x.dataset.del)));
@@ -2796,14 +2853,15 @@ function renderDestinations(){
 function renderAbout(){
   const host=document.getElementById('view-about');
   const nights=hotels.reduce((s,h)=>s+h.nights,0);
-  const paidCount=hotels.filter(h=>hs(h.id).paid).length;
+  const paidCount=bookings.filter(isBookingPaid).length;
+  const bkTotal=bookings.length;
   host.innerHTML=`
     <h2>ℹ️ אודות הטיול</h2>
     <div class="stat-grid">
       <div class="stat-box"><div class="n">${hotels.length}</div><div class="l">מלונות</div></div>
       <div class="stat-box"><div class="n">${nights}</div><div class="l">לילות</div></div>
       <div class="stat-box"><div class="n">${places.length}</div><div class="l">מקומות</div></div>
-      <div class="stat-box"><div class="n">${paidCount}/${hotels.length}</div><div class="l">שולמו</div></div>
+      <div class="stat-box"><div class="n">${paidCount}/${bkTotal||0}</div><div class="l">הזמנות שולמו</div></div>
     </div>
     <div class="about-card">
       <h3>🎨 צבע האפליקציה</h3>
@@ -2902,7 +2960,7 @@ function renderAbout(){
           if(!bookings.some(b=>b.id===mid)){
             const b={ id:mid, kind:'hotel', refId:+id, label:d.booking.label||'הזמנה',
               name:d.booking.name, type:d.booking.type, dataUrl:d.booking.dataUrl,
-              date:(byId(+id)||{}).from||'', createdAt:Date.now() };
+              date:(byId(+id)||{}).from||'', paid:!!d.paid, createdAt:Date.now() };
             bookings.push(b); saveBookings();
             cloud.upsertBooking(b).catch(()=>{});
           }
@@ -2914,6 +2972,7 @@ function renderAbout(){
     });
     cloud.onBookings(list=>{
       bookings = list.map(b=>({...b, family:normFamily(b.family)}));
+      ensureBookingPaidDefaults();
       saveBookings(); refreshHotels();
       buildBookingMarkers(); applyFilters();
       const v=document.body.dataset.view;
