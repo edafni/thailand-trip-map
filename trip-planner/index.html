@@ -1030,7 +1030,16 @@ svg.leaflet-image-layer.leaflet-interactive path {
   #gate.on{display:flex}
   .g-card{background:rgba(17,28,44,.92);border:1px solid #26364e;border-radius:18px;
     padding:26px 24px;max-width:420px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.5);text-align:center}
-  .g-card.wide{max-width:520px;text-align:right}
+  .g-card.wide{max-width:520px;text-align:start}
+  .trips-menu{position:fixed;z-index:4500;min-width:220px;max-width:300px;background:#111c2c;border:1px solid #26364e;border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.5);padding:6px;color:#e5edf5;font-family:inherit}
+  .trips-menu .tm-head{font-size:12px;color:#9fb0c6;padding:6px 10px}
+  .trips-menu .tm-list{max-height:50vh;overflow:auto;display:flex;flex-direction:column;gap:2px}
+  .trips-menu .tm-item{display:block;width:100%;text-align:start;background:none;border:0;color:#e5edf5;padding:9px 11px;border-radius:8px;font-size:14px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .trips-menu .tm-item:hover{background:#1b2942}
+  .trips-menu .tm-item.on{color:#7bb0ff;font-weight:600}
+  .trips-menu .tm-empty{color:#8698b0;font-size:13px;padding:8px 10px}
+  .trips-menu .tm-new{color:#8fd0ff;margin-top:4px;border-top:1px solid #22314a}
+  .trips-menu .tm-loading{padding:12px;color:#9fb0c6}
   .g-logo{font-size:44px;margin-bottom:6px}
   .g-card h2{margin:0 0 8px;font-size:22px}
   .g-card p{margin:0 0 18px;color:#a9b8cc;font-size:14px;line-height:1.6}
@@ -1070,7 +1079,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   #tripsBtn{position:fixed;bottom:14px;inset-inline-start:14px;z-index:900;display:none;
     background:rgba(17,28,44,.9);color:#dbe6f2;border:1px solid #2a3a55;border-radius:999px;
     padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35)}
-  body.booted #tripsBtn{display:block}
+  #tripsBtn{display:none !important}  /* replaced by the header 🧳 dropdown */
 </style>
 
 <div id="map"></div>
@@ -1147,13 +1156,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
 </div>
 <div class="view" id="view-bookings">
   <h2 data-i18n="v_book_title">🧾 ההזמנות שלי</h2>
-  <div class="lead" data-i18n="v_book_lead">כל אישורי ההזמנה, מסודרים לפי תאריך ומחולקים לפי משפחה. בחרו משפחה בלשוניות למטה.</div>
+  <div class="lead" data-i18n="v_book_lead">כל אישורי ההזמנה, מסודרים לפי תאריך.</div>
   <button class="btn primary" id="bkAddBtn" style="margin-bottom:12px" data-i18n="v_book_add">➕ הוסף הזמנה</button>
-  <div class="subtabs" id="bkFamilyTabs" style="margin-bottom:8px">
-    <div class="subtab on" data-fam="all" data-i18n="v_all">הכל</div>
-    <div class="subtab" data-fam="f1">משפחת דפני</div>
-    <div class="subtab" data-fam="f2">משפחת בן חמו</div>
-  </div>
   <div class="subtabs" id="bkTypeTabs" style="margin-bottom:12px">
     <div class="subtab on" data-type="all" data-i18n="v_all">הכל</div>
     <div class="subtab" data-type="hotel" data-i18n="v_hotels">🏨 מלונות</div>
@@ -1234,7 +1238,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
 <div id="bookingModal">
   <div class="modal-card">
     <h3 id="bkModalTitle">🧾 הוספת אישור הזמנה</h3>
-    <div class="field"><label data-i18n="bk_family">משפחה</label><select id="bkFamily"></select></div>
     <div class="field"><label data-i18n="bk_assign">שיוך</label><select id="bkEntity"></select></div>
     <div class="field"><label id="bkLabelLbl" data-i18n="bk_label">שם ההזמנה / של מי (לא חובה)</label><input id="bkLabel" type="text" /></div>
 
@@ -1393,7 +1396,7 @@ window.I18N = {
     m_stay_name:'שם המלון / הלינה', m_stay_name_ph:'לדוגמה: Park Hyatt Tokyo', m_dest:'יעד',
     m_exact:'מיקום מדויק (לא חובה)', m_hlink_ph:'קישור Google Maps של המלון', m_save:'שמור',
     v_attr_title:'⭐ אטרקציות ומקומות', v_attr_lead:'כל המקומות השמורים, מקובצים לפי סוג. טפו על מקום כדי לראותו במפה.', v_attr_search_ph:'🔎 חיפוש לפי שם...',
-    v_book_title:'🧾 ההזמנות שלי', v_book_lead:'כל אישורי ההזמנה, מסודרים לפי תאריך ומחולקים לפי משפחה.', v_book_add:'➕ הוסף הזמנה',
+    v_book_title:'🧾 ההזמנות שלי', v_book_lead:'כל אישורי ההזמנה, מסודרים לפי תאריך.', v_book_add:'➕ הוסף הזמנה',
     v_all:'הכל', v_hotels:'🏨 מלונות', v_flights:'✈️ טיסות', v_other:'🚗 אחר',
     v_dest_title:'📍 יעדים', v_dest_lead:'היעדים בטיול. טפו על "הצג במפה" כדי למקד את המפה על היעד.',
     wx_soon:'התחזית תיטען בקרוב…', map_show_all:'✖ הצג הכל',
@@ -1444,7 +1447,7 @@ window.I18N = {
     m_stay_name:'Hotel / stay name', m_stay_name_ph:'e.g. Park Hyatt Tokyo', m_dest:'Destination',
     m_exact:'Exact location (optional)', m_hlink_ph:'Google Maps link of the hotel', m_save:'Save',
     v_attr_title:'⭐ Attractions & places', v_attr_lead:'All saved places, grouped by type. Tap a place to see it on the map.', v_attr_search_ph:'🔎 Search by name…',
-    v_book_title:'🧾 My bookings', v_book_lead:'All booking files, sorted by date and grouped by family.', v_book_add:'➕ Add booking',
+    v_book_title:'🧾 My bookings', v_book_lead:'All booking files, sorted by date.', v_book_add:'➕ Add booking',
     v_all:'All', v_hotels:'🏨 Hotels', v_flights:'✈️ Flights', v_other:'🚗 Other',
     v_dest_title:'📍 Destinations', v_dest_lead:'The destinations in your trip. Tap "Show on map" to focus the map.',
     wx_soon:'Forecast loading soon…', map_show_all:'✖ Show all',
@@ -1456,6 +1459,9 @@ window.I18N = {
 };
 window.__lang = (function(){ try{ return localStorage.getItem('planner_lang')||'he'; }catch(e){ return 'he'; } })();
 window.t = function(k){ const L=window.__lang; return (window.I18N[L]&&window.I18N[L][k]) || window.I18N.he[k] || k; };
+/* Quick inline picker for one-off strings not in the dictionary.
+   NB: named LT (not L) — L is Leaflet's global. */
+window.LT = (en_,he_)=> window.__lang==='en' ? en_ : he_;
 function applyLang(l){
   window.__lang = (l==='en')?'en':'he';
   try{ localStorage.setItem('planner_lang', window.__lang); }catch(e){}
@@ -1757,6 +1763,7 @@ function setHotelPaid(id, paid){
 function addBookingItem(b){
   bookings.push(b); saveBookings();
   if(cloud.enabled){ cloud.upsertBooking(b).catch(e=>console.error('cloud booking',e)); }
+  window.__logEvent&&window.__logEvent('booking_added',{kind:b.kind||'hotel', hasFile:!!(b.url||b.dataUrl)});
   refreshBookingsUI();
 }
 function updateBookingItem(b){
@@ -1943,10 +1950,10 @@ function buildBookingMarkers(){
     const dateTxt=b.date?fmtLong(b.date):'';
     m.bindPopup(`
       <div class="pop">
-        <h3>${em} ${esc(b.label||'הזמנה')}</h3>
-        <div class="r">👪 ${esc(familyName(normFamily(b.family)))}${dateTxt?' · '+dateTxt:''}${REGIONS[rkey]&&REGIONS[rkey].eng?' · '+REGIONS[rkey].eng:''}</div>
+        <h3>${em} ${esc(b.label||(window.__lang==='en'?'Booking':'הזמנה'))}</h3>
+        <div class="r">${[dateTxt, (REGIONS[rkey]&&REGIONS[rkey].eng)||''].filter(Boolean).join(' · ')}</div>
         <div class="hactions">
-          <button class="hbtn view" onclick="viewBooking('${b.id}')">📄 הצג אישור</button>
+          <button class="hbtn view" onclick="viewBooking('${b.id}')">📄 ${window.__lang==='en'?'View file':'הצג אישור'}</button>
           <button class="hbtn" onclick="editBooking('${b.id}')">✏️ ערוך</button>
           <button class="hbtn ghost" onclick="deleteBooking('${b.id}')">🗑️ מחק</button>
         </div>
@@ -2066,6 +2073,7 @@ const BK_ICONS=['🚗','🚐','⛴️','🚕','🚌','🚆','🏨','✈️','�
 let bkIcon='🏨';
 
 function fillFamilySelect(){
+  if(!bkFamily) return;
   bkFamily.innerHTML='';
   FAMILIES.forEach(f=>{ const o=document.createElement('option'); o.value=f.id; o.textContent=f.name; bkFamily.appendChild(o); });
 }
@@ -2111,7 +2119,7 @@ function openBookingModal(kind, refId){
   document.getElementById('bkSave').textContent='שמור הזמנה';
   fillEntitySelect(); fillFamilySelect();
   if(kind&&refId!=null) bkEntity.value=kind+':'+refId;
-  bkFamily.value = (bkFamilyFilter==='f1'||bkFamilyFilter==='f2') ? bkFamilyFilter : 'f1';
+  if(bkFamily) bkFamily.value = (bkFamilyFilter==='f1'||bkFamilyFilter==='f2') ? bkFamilyFilter : 'f1';
   bkLabel.value=''; bkFile.value=''; bkPendingFile=null; bkStatus.textContent='';
   bkPending=null;
   document.getElementById('bkDate').value='';
@@ -2130,7 +2138,7 @@ function openEditBookingModal(id){
   document.getElementById('bkModalTitle').textContent=window.__lang==='en'?'✏️ Edit booking':'✏️ עריכת הזמנה';
   document.getElementById('bkSave').textContent='שמור שינויים';
   bkEntity.value = b.kind==='other' ? 'other:new' : (b.kind+':'+b.refId);
-  bkFamily.value = normFamily(b.family);
+  if(bkFamily) bkFamily.value = normFamily(b.family);
   bkLabel.value = b.label||'';
   bkIcon = b.icon || bkIcon;
   document.getElementById('bkIconCustom').value='';
@@ -2201,7 +2209,7 @@ document.getElementById('bkSave').addEventListener('click',async ()=>{
   const isEdit=!!editingBookingId;
   const existing = isEdit ? bookings.find(x=>x.id===editingBookingId) : null;
   const id = isEdit ? editingBookingId : ('bk'+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
-  const family = normFamily(bkFamily.value);
+  const family = normFamily(bkFamily?bkFamily.value:'f1');
   // Prefer Firebase Storage for the file; fall back to inline base64 if Storage isn't enabled.
   let filePayload;
   if(bkPendingFile.url && !bkPendingFile.dataUrl){
@@ -2459,7 +2467,7 @@ function openHotelModal(id){
 function closeHotelModal(){ if(hotelModal) hotelModal.classList.remove('show'); }
 window.editHotel=id=>openHotelModal(id);
 window.deleteHotel=async id=>{
-  if(!confirm('למחוק את הלינה?'))return;
+  if(!confirm(LT('Delete this stay?','למחוק את הלינה?')))return;
   if(cloud&&cloud.enabled&&cloud.removeHotel){ try{ await cloud.removeHotel(id); }catch(e){} }
   else { hotels=hotels.filter(h=>h.id!==id); delete hotelState[id]; rebuildCustomHotels(); }
   map.closePopup();
@@ -2478,8 +2486,8 @@ if(document.getElementById('hSave')) document.getElementById('hSave').addEventLi
   const from=document.getElementById('hFrom').value, to=document.getElementById('hTo').value;
   const regionKey=document.getElementById('hDest').value;
   const thb=+document.getElementById('hThb').value||0;
-  if(!name||!from||!to){ alert('נא למלא שם, צ׳ק אין וצ׳ק אאוט'); return; }
-  if(to<from){ alert('צ׳ק אאוט חייב להיות אחרי צ׳ק אין'); return; }
+  if(!name||!from||!to){ alert(LT('Please fill in a name, check-in and check-out.','נא למלא שם, צ׳ק אין וצ׳ק אאוט')); return; }
+  if(to<from){ alert(LT('Check-out must be after check-in.','צ׳ק אאוט חייב להיות אחרי צ׳ק אין')); return; }
   let coords=hCoords;
   if(!coords){ const r=REGIONS[regionKey]; coords=(r&&r.center)?{lat:r.center[0],lng:r.center[1]}:{lat:0,lng:0}; }
   const id=hotelEditId||('h_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
@@ -2487,10 +2495,11 @@ if(document.getElementById('hSave')) document.getElementById('hSave').addEventLi
   const def={ id, name, from, to, lat:coords.lat, lng:coords.lng, regionKey,
     region:(REGIONS[regionKey]||{}).he||'', nights, thb };
   const paid=hotelState[id]?!!hotelState[id].paid:false;
-  const btn=document.getElementById('hSave'); btn.disabled=true; btn.textContent='שומר…';
-  if(cloud&&cloud.enabled){ try{ await cloud.setHotel(id,{...def,paid}); }catch(e){ alert('שמירה נכשלה'); } }
+  const btn=document.getElementById('hSave'); btn.disabled=true; btn.textContent=LT('Saving…','שומר…');
+  if(cloud&&cloud.enabled){ try{ await cloud.setHotel(id,{...def,paid}); }catch(e){ alert(LT('Save failed','שמירה נכשלה')); } }
   else { const i=hotels.findIndex(x=>x.id===id); if(i>=0) hotels[i]={...hotels[i],...def}; else hotels.push(def); hotelState[id]={paid}; rebuildCustomHotels(); }
-  btn.disabled=false; btn.textContent='שמור';
+  window.__logEvent&&window.__logEvent(hotelEditId?'stay_edited':'stay_added',{});
+  btn.disabled=false; btn.textContent=window.t('m_save');
   closeHotelModal();
 });
 const addHotelBtn=document.getElementById('addHotelBtn');
@@ -2665,8 +2674,8 @@ map.on('click',e=>{
 /* save */
 document.getElementById('fSave').addEventListener('click',()=>{
   const name=document.getElementById('fName').value.trim();
-  if(!name){ alert('הזינו שם למקום'); document.getElementById('fName').focus(); return; }
-  if(!pending){ alert('בחרו מיקום (חיפוש / קישור / מפה)'); return; }
+  if(!name){ alert(LT('Enter a place name','הזינו שם למקום')); document.getElementById('fName').focus(); return; }
+  if(!pending){ alert(LT('Choose a location (search / link / map)','בחרו מיקום (חיפוש / קישור / מפה)')); return; }
   const insta=normInsta(document.getElementById('fInsta').value);
   const note=document.getElementById('fNote').value.trim();
   if(editingPlaceId){
@@ -2682,6 +2691,7 @@ document.getElementById('fSave').addEventListener('click',()=>{
   const place={ id:'u'+Date.now().toString(36), name, cat:fCat.value,
     note, insta:insta||'', lat:pending.lat, lng:pending.lng, region:regionOf(pending.lat,pending.lng) };
   addPlace(place); closeModal();
+  window.__logEvent&&window.__logEvent('place_added',{category:place.cat});
   buildPoiMarkers(); applyFilters();
   setTimeout(()=>{ const o=poiMeta.find(x=>x.pid===place.id); focusLatLng([place.lat,place.lng],15,o&&o.marker); },100);
 });
@@ -3241,13 +3251,12 @@ function renderBookings(){
     const ic=b.icon||defIc;
     const dateTxt=b.date?fmtLong(b.date):'';
     const sub=(b.kind==='other') ? ((REGIONS[b.region]&&REGIONS[b.region].he)?('📍 '+REGIONS[b.region].he):(en?'General booking':'הזמנה כללית')) : entityName(b.kind, b.refId);
-    const famTxt=familyName(normFamily(b.family));
     const row=document.createElement('div'); row.className='bkcard';
     row.innerHTML=`
       <div class="bkic">${ic}</div>
       <div class="bkinfo">
         <h4>${esc(b.label||b.name||(en?'Booking':'הזמנה'))}</h4>
-        <small>👪 ${esc(famTxt)} · ${esc(sub)}${dateTxt?' · '+dateTxt:''}</small>
+        <small>${esc(sub)}${dateTxt?' · '+dateTxt:''}</small>
       </div>
       <button class="bkbtn view" data-view="${esc(b.id)}">📄 ${en?'View':'הצג'}</button>
       <button class="bkbtn edit" data-edit="${esc(b.id)}">✏️</button>
@@ -3548,7 +3557,7 @@ window.TripReady.then(()=>__startApp());
 
   const gate = document.getElementById('gate');
   const gateBody = document.getElementById('gateBody');
-  const showGate = ()=> gate && gate.classList.add('on');
+  const showGate = ()=>{ if(gate){ gate.style.direction = (window.__lang==='en')?'ltr':'rtl'; gate.classList.add('on'); } };
   const hideGate = ()=> gate && gate.classList.remove('on');
   const LS_ACTIVE = 'planner_active_trip';
 
@@ -3571,6 +3580,11 @@ window.TripReady.then(()=>__startApp());
     const auth = getAuth(app);
     const db   = getFirestore(app);
     const storage = ST ? ST.getStorage(app) : null;
+    // Google Analytics (GA4) — automatic engagement/retention + custom events.
+    let AN=null, analytics=null;
+    try{ AN = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js");
+      if(!AN.isSupported || await AN.isSupported()) analytics = AN.getAnalytics(app); }catch(e){}
+    window.__logEvent = (name, params)=>{ try{ if(AN&&analytics) AN.logEvent(analytics, name, params||{}); }catch(e){} };
     const FREE_LIMIT = window.FREE_TRIP_LIMIT || 1;
 
     const userDoc  = uid => doc(db,'users',uid);
@@ -3657,7 +3671,9 @@ window.TripReady.then(()=>__startApp());
           <button class="g-btn primary" id="gGoogle">${T('gate_login_google')}</button>
         </div>`;
       document.getElementById('gGoogle').onclick = ()=>
-        signInWithPopup(auth, new GoogleAuthProvider()).catch(e=>alert(T('gate_login_fail')+e.message));
+        signInWithPopup(auth, new GoogleAuthProvider())
+          .then(()=>window.__logEvent&&window.__logEvent('login',{method:'google'}))
+          .catch(e=>alert(T('gate_login_fail')+e.message));
     }
 
     async function renderTrips(user){
@@ -3705,15 +3721,15 @@ window.TripReady.then(()=>__startApp());
           ${atLimit ? `<div class="g-paywall">
               <p>${T('gate_paywall')}</p>
               ${window.STRIPE_PAYMENT_LINK
-                 ? `<a class="g-btn pro" href="${window.STRIPE_PAYMENT_LINK}" target="_blank" rel="noopener">${T('gate_upgrade')}</a>`
+                 ? `<a class="g-btn pro" href="${window.STRIPE_PAYMENT_LINK}" target="_blank" rel="noopener" onclick="window.__logEvent&&window.__logEvent('upgrade_clicked')">${T('gate_upgrade')}</a>`
                  : `<button class="g-btn pro" disabled>${T('gate_upgrade_cfg')}</button>`}
             </div>` : ''}
         </div>`;
 
       document.getElementById('gOut').onclick = ()=>{ localStorage.removeItem(LS_ACTIVE); signOut(auth); };
       gateBody.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>{
-        const id=el.getAttribute('data-open'), t=trips.find(x=>x.id===id);
-        if(t){ localStorage.setItem(LS_ACTIVE, id); bootTrip(user.uid, t); }
+        const id=el.getAttribute('data-open');
+        localStorage.setItem(LS_ACTIVE, id); location.reload();  // open via the reliable auto-open-on-load path
       });
       gateBody.querySelectorAll('[data-del]').forEach(el=>el.onclick=async ev=>{
         ev.stopPropagation();
@@ -3762,34 +3778,76 @@ window.TripReady.then(()=>__startApp());
       $('gDestSearchBtn').onclick = runDestSearch;
       $('gDestSearch').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); runDestSearch(); } });
 
+      // Keep check-out on/after check-in.
+      $('gStart').addEventListener('change', ()=>{ const s=$('gStart').value; if(s){ $('gEnd').min=s; if($('gEnd').value && $('gEnd').value < s) $('gEnd').value=s; } refreshCreate(); });
+
       $('gCreate').onclick = async()=>{
         const name=$('gName').value.trim();
         const startDate=$('gStart').value, endDate=$('gEnd').value;
+        if(startDate && endDate && endDate < startDate){
+          alert(window.__lang==='en'?'The end date can’t be before the start date.':'תאריך הסיום לא יכול להיות לפני תאריך ההתחלה.');
+          return;
+        }
         const btn=$('gCreate'); btn.disabled=true; btn.textContent=T('gate_creating');
-        const mainCountry=(funnelDests[0]&&funnelDests[0].country)||'';
-        const itinerary = { startDate, endDate, destinations: funnelDests.map(d=>({...d, date:startDate})) };
-        if(mainCountry){ itinerary.mainCountry=mainCountry; itinerary.currency=window.__currencyForCountry(mainCountry); }
-        const id=await createTrip(user.uid, name, 'custom', itinerary);
-        localStorage.setItem(LS_ACTIVE, id);
-        bootTrip(user.uid, {id, name, template:'custom', itinerary});
+        try{
+          const mainCountry=(funnelDests[0]&&funnelDests[0].country)||'';
+          const itinerary = { startDate, endDate, destinations: funnelDests.map(d=>({...d, date:startDate})) };
+          if(mainCountry){ itinerary.mainCountry=mainCountry; itinerary.currency=window.__currencyForCountry(mainCountry); }
+          const id=await createTrip(user.uid, name, 'custom', itinerary);
+          window.__logEvent&&window.__logEvent('trip_created',{template:'custom',destinations:funnelDests.length});
+          localStorage.setItem(LS_ACTIVE, id); location.reload();   // open the new trip via auto-open-on-load
+        }catch(e){
+          btn.disabled=false; btn.textContent=T('gate_create');
+          alert((window.__lang==='en'?'Could not create the trip: ':'לא ניתן ליצור את הטיול: ')+(e&&e.message||e)+
+            (String(e&&e.code||e).includes('permission')?(window.__lang==='en'?'\n\nCheck that the Firestore rules are published.':'\n\nודאו שכללי ה-Firestore פורסמו.'):''));
+        }
       };
 
       $('gSample').onclick = async()=>{
         const btn=$('gSample'); btn.disabled=true; btn.textContent=T('gate_creating');
-        const nm='תאילנד 2026 (לדוגמה)';
-        const id=await createTrip(user.uid, nm, 'thailand');
-        localStorage.setItem(LS_ACTIVE, id);
-        bootTrip(user.uid, {id, name:nm, template:'thailand'});
+        try{
+          const nm='תאילנד 2026 (לדוגמה)';
+          const id=await createTrip(user.uid, nm, 'thailand');
+          window.__logEvent&&window.__logEvent('trip_created',{template:'thailand'});
+          localStorage.setItem(LS_ACTIVE, id); location.reload();
+        }catch(e){ btn.disabled=false; btn.textContent=T('gate_sample'); alert((window.__lang==='en'?'Could not create: ':'שגיאה: ')+(e&&e.message||e)); }
       };
     }
 
-    // "My trips" buttons (header + floating): return to the picker to switch,
-    // create, delete trips or sign out.
-    const backToTrips = ()=>{ localStorage.removeItem(LS_ACTIVE); location.reload(); };
-    ['tripsBtn','tripsBtnTop'].forEach(id=>{ const el=document.getElementById(id); if(el) el.onclick=backToTrips; });
+    // ---- Trips dropdown (quick switch + create) from the header 🧳 button ----
+    let currentUser=null, tripsMenuEl=null;
+    function closeTripsMenu(){ if(tripsMenuEl){ tripsMenuEl.remove(); tripsMenuEl=null; document.removeEventListener('click', onDocClickMenu, true); } }
+    function onDocClickMenu(e){ if(tripsMenuEl && !tripsMenuEl.contains(e.target) && !e.target.closest('#tripsBtnTop') && !e.target.closest('#tripsBtn')) closeTripsMenu(); }
+    async function toggleTripsMenu(anchor){
+      if(tripsMenuEl){ closeTripsMenu(); return; }
+      if(!currentUser){ localStorage.removeItem(LS_ACTIVE); location.reload(); return; }
+      const en=window.__lang==='en';
+      const menu=document.createElement('div'); menu.id='tripsMenu'; menu.className='trips-menu';
+      menu.style.direction = en?'ltr':'rtl';
+      menu.innerHTML=`<div class="tm-loading">…</div>`;
+      document.body.appendChild(menu); tripsMenuEl=menu;
+      const r=anchor.getBoundingClientRect();
+      menu.style.top=(r.bottom+6)+'px';
+      menu.style.right=Math.max(8,(window.innerWidth-r.right))+'px';
+      setTimeout(()=>document.addEventListener('click', onDocClickMenu, true),0);
+      let trips=[]; try{ trips=await listTrips(currentUser.uid); }catch(e){}
+      if(tripsMenuEl!==menu) return; // closed while loading
+      const active=localStorage.getItem(LS_ACTIVE);
+      const rows=trips.map(t=>`<button class="tm-item${t.id===active?' on':''}" data-open="${t.id}">${t.id===active?'✓ ':''}${esc(t.name)||T('gate_trip')}</button>`).join('') || `<div class="tm-empty">${T('gate_no_trips')}</div>`;
+      menu.innerHTML=`
+        <div class="tm-head">${T('gate_my_trips')}</div>
+        <div class="tm-list">${rows}</div>
+        <button class="tm-item tm-new" data-new>➕ ${en?'New trip':'טיול חדש'}</button>
+        <button class="tm-item tm-out" data-out>${T('gate_logout')}</button>`;
+      menu.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{ const id=b.getAttribute('data-open'); if(id===active){ closeTripsMenu(); return; } localStorage.setItem(LS_ACTIVE,id); location.reload(); });
+      menu.querySelector('[data-new]').onclick=()=>{ localStorage.removeItem(LS_ACTIVE); location.reload(); };
+      menu.querySelector('[data-out]').onclick=()=>{ localStorage.removeItem(LS_ACTIVE); signOut(auth); };
+    }
+    ['tripsBtnTop','tripsBtn'].forEach(id=>{ const el=document.getElementById(id); if(el) el.onclick=e=>{ e.stopPropagation(); toggleTripsMenu(el); }; });
 
     onAuthStateChanged(auth, async user=>{
-      if(!user){ renderLogin(); return; }
+      if(!user){ currentUser=null; renderLogin(); return; }
+      currentUser=user;
       const active = localStorage.getItem(LS_ACTIVE);
       if(active){
         try{ const s=await getDoc(tripDoc(user.uid, active)); if(s.exists()){ bootTrip(user.uid, {id:active, ...s.data()}); return; } }catch(e){}
