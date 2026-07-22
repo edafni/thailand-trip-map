@@ -1766,6 +1766,7 @@ function setHotelPaid(id, paid){
 function addBookingItem(b){
   bookings.push(b); saveBookings();
   if(cloud.enabled){ cloud.upsertBooking(b).catch(e=>console.error('cloud booking',e)); }
+  window.__logEvent&&window.__logEvent('booking_added',{kind:b.kind||'hotel', hasFile:!!(b.url||b.dataUrl)});
   refreshBookingsUI();
 }
 function updateBookingItem(b){
@@ -2499,6 +2500,7 @@ if(document.getElementById('hSave')) document.getElementById('hSave').addEventLi
   const btn=document.getElementById('hSave'); btn.disabled=true; btn.textContent='שומר…';
   if(cloud&&cloud.enabled){ try{ await cloud.setHotel(id,{...def,paid}); }catch(e){ alert('שמירה נכשלה'); } }
   else { const i=hotels.findIndex(x=>x.id===id); if(i>=0) hotels[i]={...hotels[i],...def}; else hotels.push(def); hotelState[id]={paid}; rebuildCustomHotels(); }
+  window.__logEvent&&window.__logEvent(hotelEditId?'stay_edited':'stay_added',{});
   btn.disabled=false; btn.textContent='שמור';
   closeHotelModal();
 });
@@ -2691,6 +2693,7 @@ document.getElementById('fSave').addEventListener('click',()=>{
   const place={ id:'u'+Date.now().toString(36), name, cat:fCat.value,
     note, insta:insta||'', lat:pending.lat, lng:pending.lng, region:regionOf(pending.lat,pending.lng) };
   addPlace(place); closeModal();
+  window.__logEvent&&window.__logEvent('place_added',{category:place.cat});
   buildPoiMarkers(); applyFilters();
   setTimeout(()=>{ const o=poiMeta.find(x=>x.pid===place.id); focusLatLng([place.lat,place.lng],15,o&&o.marker); },100);
 });
@@ -3580,6 +3583,11 @@ window.TripReady.then(()=>__startApp());
     const auth = getAuth(app);
     const db   = getFirestore(app);
     const storage = ST ? ST.getStorage(app) : null;
+    // Google Analytics (GA4) — automatic engagement/retention + custom events.
+    let AN=null, analytics=null;
+    try{ AN = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js");
+      if(!AN.isSupported || await AN.isSupported()) analytics = AN.getAnalytics(app); }catch(e){}
+    window.__logEvent = (name, params)=>{ try{ if(AN&&analytics) AN.logEvent(analytics, name, params||{}); }catch(e){} };
     const FREE_LIMIT = window.FREE_TRIP_LIMIT || 1;
 
     const userDoc  = uid => doc(db,'users',uid);
@@ -3666,7 +3674,9 @@ window.TripReady.then(()=>__startApp());
           <button class="g-btn primary" id="gGoogle">${T('gate_login_google')}</button>
         </div>`;
       document.getElementById('gGoogle').onclick = ()=>
-        signInWithPopup(auth, new GoogleAuthProvider()).catch(e=>alert(T('gate_login_fail')+e.message));
+        signInWithPopup(auth, new GoogleAuthProvider())
+          .then(()=>window.__logEvent&&window.__logEvent('login',{method:'google'}))
+          .catch(e=>alert(T('gate_login_fail')+e.message));
     }
 
     async function renderTrips(user){
@@ -3714,7 +3724,7 @@ window.TripReady.then(()=>__startApp());
           ${atLimit ? `<div class="g-paywall">
               <p>${T('gate_paywall')}</p>
               ${window.STRIPE_PAYMENT_LINK
-                 ? `<a class="g-btn pro" href="${window.STRIPE_PAYMENT_LINK}" target="_blank" rel="noopener">${T('gate_upgrade')}</a>`
+                 ? `<a class="g-btn pro" href="${window.STRIPE_PAYMENT_LINK}" target="_blank" rel="noopener" onclick="window.__logEvent&&window.__logEvent('upgrade_clicked')">${T('gate_upgrade')}</a>`
                  : `<button class="g-btn pro" disabled>${T('gate_upgrade_cfg')}</button>`}
             </div>` : ''}
         </div>`;
@@ -3787,6 +3797,7 @@ window.TripReady.then(()=>__startApp());
           const itinerary = { startDate, endDate, destinations: funnelDests.map(d=>({...d, date:startDate})) };
           if(mainCountry){ itinerary.mainCountry=mainCountry; itinerary.currency=window.__currencyForCountry(mainCountry); }
           const id=await createTrip(user.uid, name, 'custom', itinerary);
+          window.__logEvent&&window.__logEvent('trip_created',{template:'custom',destinations:funnelDests.length});
           localStorage.setItem(LS_ACTIVE, id); location.reload();   // open the new trip via auto-open-on-load
         }catch(e){
           btn.disabled=false; btn.textContent=T('gate_create');
@@ -3800,6 +3811,7 @@ window.TripReady.then(()=>__startApp());
         try{
           const nm='תאילנד 2026 (לדוגמה)';
           const id=await createTrip(user.uid, nm, 'thailand');
+          window.__logEvent&&window.__logEvent('trip_created',{template:'thailand'});
           localStorage.setItem(LS_ACTIVE, id); location.reload();
         }catch(e){ btn.disabled=false; btn.textContent=T('gate_sample'); alert((window.__lang==='en'?'Could not create: ':'שגיאה: ')+(e&&e.message||e)); }
       };
