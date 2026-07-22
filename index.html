@@ -993,11 +993,15 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .catcounts{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
   .catcount{display:flex;align-items:center;gap:5px;font-size:12px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px 9px}
   .dest-card .btn{margin-top:4px}
-  .bkcard{display:flex;align-items:center;gap:11px;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:11px 13px;margin-bottom:10px}
-  .bkcard .bkic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto;background:var(--panel2);border:1px solid var(--line)}
-  .bkcard .bkinfo{flex:1;min-width:0}
-  .bkcard .bkinfo h4{margin:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .bkcard .bkinfo small{color:var(--muted);font-size:11.5px}
+  .bkcard{display:grid;grid-template-columns:38px 1fr;grid-template-areas:"ic info" "act act" "pay pay";gap:8px 11px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:12px 13px;margin-bottom:10px}
+  .bkcard .bkic{grid-area:ic;width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--panel2);border:1px solid var(--line)}
+  .bkcard .bkinfo{grid-area:info;min-width:0}
+  .bkcard .bkinfo h4{margin:0 0 4px;font-size:14px;line-height:1.35;font-weight:700}
+  .bkcard .bkinfo small{display:block;color:var(--muted);font-size:11.5px;line-height:1.45}
+  .bkcard .bkactions{grid-area:act;display:flex;gap:8px;align-items:center;width:100%}
+  .bkcard .bkactions .bkbtn.view{flex:1;min-width:0;text-align:center}
+  .bkcard .bkpay{grid-area:pay;width:100%}
+  .bkcard .bkpay .bkbtn{width:100%;text-align:center;padding:10px 12px;font-size:13px;font-weight:700;border-radius:10px}
   .bkbtn{flex:0 0 auto;background:#123e57;border:1px solid #1d5f83;color:#bfe6ff;border-radius:9px;padding:7px 10px;font-size:12.5px;cursor:pointer;font-family:inherit}
   .bkbtn.del{background:#3a1620;border-color:#7f2233;color:#ffb4c0;padding:7px 9px}
   body.light .bkbtn{background:#e0f2fe;border-color:#7dd3fc;color:#0b3a52}
@@ -2786,18 +2790,22 @@ function renderBookings(){
     const sub=(b.kind==='other') ? ((REGIONS[b.region]&&REGIONS[b.region].he)?('📍 '+REGIONS[b.region].he):'הזמנה כללית') : entityName(b.kind, b.refId);
     const famTxt=familyName(normFamily(b.family));
     const paidCls=isBookingPaid(b)?'paid':'unpaid';
-    const paidLbl=isBookingPaid(b)?'✓ שולם':'💳 לשלם';
+    const paidLbl=isBookingPaid(b)?'✓ שולם · לחצו לביטול':'💳 סמן כשולם';
     const row=document.createElement('div'); row.className='bkcard';
     row.innerHTML=`
       <div class="bkic">${ic}</div>
       <div class="bkinfo">
         <h4>${esc(b.label||b.name||'הזמנה')}</h4>
-        <small>👪 ${esc(famTxt)} · ${esc(sub)}${dateTxt?' · '+dateTxt:''} · ${isBookingPaid(b)?'<span style="color:#8ef0c4">שולם ✓</span>':'<span style="color:#f3d08a">טרם שולם</span>'}</small>
+        <small>👪 ${esc(famTxt)} · ${esc(sub)}${dateTxt?' · '+dateTxt:''}</small>
       </div>
-      <button class="bkbtn ${paidCls}" data-paid="${esc(b.id)}">${paidLbl}</button>
-      <button class="bkbtn view" data-view="${esc(b.id)}">📄 הצג</button>
-      <button class="bkbtn edit" data-edit="${esc(b.id)}">✏️</button>
-      <button class="bkbtn del" data-del="${esc(b.id)}">🗑️</button>`;
+      <div class="bkactions">
+        <button type="button" class="bkbtn view" data-view="${esc(b.id)}">📄 הצג</button>
+        <button type="button" class="bkbtn edit" data-edit="${esc(b.id)}" title="ערוך">✏️</button>
+        <button type="button" class="bkbtn del" data-del="${esc(b.id)}" title="מחק">🗑️</button>
+      </div>
+      <div class="bkpay">
+        <button type="button" class="bkbtn ${paidCls}" data-paid="${esc(b.id)}">${paidLbl}</button>
+      </div>`;
     host.appendChild(row);
   });
   host.querySelectorAll('[data-paid]').forEach(x=>x.addEventListener('click',e=>{ e.stopPropagation(); toggleBookingPaid(x.dataset.paid); }));
