@@ -1092,7 +1092,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 <div class="view" id="view-attractions">
   <h2>⭐ אטרקציות ומקומות</h2>
   <div class="lead">כל המקומות השמורים, מקובצים לפי סוג. טפו על מקום כדי לראותו במפה.</div>
-  <input id="attrSearch" class="vsearch" placeholder="🔎 חיפוש לפי שם..." />
+  <input id="attrSearch" class="vsearch" placeholder="🔎 חיפוש לפי שם, הערה או סוג מטבח..." />
   <button class="btn small" id="attrStarBtn" style="margin:2px 2px 10px">⭐ רק מומלצים</button>
   <div id="attrList"></div>
 </div>
@@ -1127,6 +1127,17 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <h3 id="modalTitle">הוספת מקום</h3>
     <div class="field"><label>שם המקום</label><input id="fName" type="text" placeholder="לדוגמה: מסעדת פיש מרקט" /></div>
     <div class="field"><label>קטגוריה</label><select id="fCat"></select></div>
+    <div class="field" id="fCuisineField" style="display:none">
+      <label>🍽️ סוג מטבח (לא חובה)</label>
+      <input id="fCuisine" type="text" list="cuisineList" placeholder="לדוגמה: תאילנדי, איטלקי, יפני" />
+      <datalist id="cuisineList">
+        <option value="תאילנדי"></option><option value="איטלקי"></option><option value="יפני"></option>
+        <option value="סיני"></option><option value="הודי"></option><option value="צרפתי"></option>
+        <option value="ים תיכוני"></option><option value="פירות ים"></option><option value="סטריט פוד"></option>
+        <option value="קוריאני"></option><option value="מקסיקני"></option><option value="גריל / ברביקיו"></option>
+        <option value="טבעוני"></option><option value="בית קפה"></option>
+      </datalist>
+    </div>
     <div class="field"><label>הערה (לא חובה)</label><textarea id="fNote" placeholder="שעות פתיחה, המלצה, מחיר..."></textarea></div>
     <div class="field"><label>📸 קישור אינסטגרם (לא חובה)</label><input id="fInsta" type="url" inputmode="url" placeholder="https://www.instagram.com/p/..." /></div>
 
@@ -1711,7 +1722,7 @@ function buildPoiMarkers(){
     m.bindPopup(`
       <div class="pop">
         <h3>${p.star?'⭐ ':''}${c.emoji} ${esc(p.name)}</h3>
-        <div class="r">${esc(c.he)}${REGIONS[rkey]&&REGIONS[rkey].eng?' · '+REGIONS[rkey].eng:''}${p.visited?' · <b style="color:#22c55e">✓ ביקרנו</b>':''}</div>
+        <div class="r">${esc(c.he)}${p.cuisine?' · 🍽️ '+esc(p.cuisine):''}${REGIONS[rkey]&&REGIONS[rkey].eng?' · '+REGIONS[rkey].eng:''}${p.visited?' · <b style="color:#22c55e">✓ ביקרנו</b>':''}</div>
         ${p.note?`<div class="note">${esc(p.note)}</div>`:''}
         ${instaHtml(p)}
         <div class="navrow"><a class="wazebtn" href="${wazeLink(p.lat, p.lng)}" target="_blank" rel="noopener">🧭 נווט ב-Waze</a><a href="${gmapsLink(p.name, rkey, p.lat, p.lng)}" target="_blank" rel="noopener">Google Maps ↗</a></div>
@@ -2136,7 +2147,7 @@ function renderPoiList(){
     row.className='poi';
     row.innerHTML=`
       <div class="pemoji" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</div>
-      <div class="pinfo"><h4>${esc(p.name)}</h4><small>${esc(c.he)}${normInsta(p.insta)?' · 📸':''}${p.note?' · '+esc(p.note):''}</small></div>
+      <div class="pinfo"><h4>${esc(p.name)}</h4><small>${esc(c.he)}${p.cuisine?' · 🍽️ '+esc(p.cuisine):''}${normInsta(p.insta)?' · 📸':''}${p.note?' · '+esc(p.note):''}</small></div>
       ${nearbyOn?`<span class="dist">${o.dist<1?Math.round(o.dist*1000)+' מ׳':o.dist.toFixed(1)+' ק״מ'}</span>`:''}
       ${isAdmin?`<button class="del" title="מחק" data-del="${p.id}">🗑️</button>`:''}`;
     row.addEventListener('click',e=>{ if(e.target.closest('[data-del]')) return; focusLatLng(o.latlng,15,o.marker); });
@@ -2207,7 +2218,10 @@ let editingPlaceId=null; // set while editing an existing place
 function openModal(){ modal.classList.add('show'); }
 function closeModal(){ modal.classList.remove('show'); }
 function setCoords(lat,lng){ pending={lat:+(+lat).toFixed(6),lng:+(+lng).toFixed(6)}; document.getElementById('fCoords').textContent=`📍 נבחר: ${pending.lat}, ${pending.lng}`; }
-function resetForm(){ editingPlaceId=null; pending=null; document.getElementById('fName').value=''; document.getElementById('fNote').value=''; document.getElementById('fInsta').value=''; fCat.value='restaurant';
+function updateCuisineField(){ document.getElementById('fCuisineField').style.display = (fCat.value==='restaurant') ? '' : 'none'; }
+fCat.addEventListener('change', updateCuisineField);
+function resetForm(){ editingPlaceId=null; pending=null; document.getElementById('fName').value=''; document.getElementById('fNote').value=''; document.getElementById('fInsta').value=''; document.getElementById('fCuisine').value=''; fCat.value='restaurant';
+  updateCuisineField();
   document.getElementById('modalTitle').textContent='הוספת מקום';
   document.getElementById('fSave').textContent='שמור מקום';
   document.getElementById('fSearch').value=''; document.getElementById('fResults').innerHTML=''; document.getElementById('fLink').value=''; document.getElementById('fLinkStatus').textContent=''; document.getElementById('fCoords').textContent=''; switchPane('search'); }
@@ -2219,6 +2233,8 @@ function openEditModal(id){
   document.getElementById('fSave').textContent='שמור שינויים';
   document.getElementById('fName').value=p.name||'';
   fCat.value=p.cat||'other';
+  document.getElementById('fCuisine').value=p.cuisine||'';
+  updateCuisineField();
   document.getElementById('fNote').value=p.note||'';
   document.getElementById('fInsta').value=p.insta||'';
   setCoords(p.lat,p.lng);   // pre-fill location so it's preserved unless changed
@@ -2375,9 +2391,10 @@ document.getElementById('fSave').addEventListener('click',()=>{
   if(!pending){ alert('בחרו מיקום (חיפוש / קישור / מפה)'); return; }
   const insta=normInsta(document.getElementById('fInsta').value);
   const note=document.getElementById('fNote').value.trim();
+  const cuisine = fCat.value==='restaurant' ? document.getElementById('fCuisine').value.trim() : '';
   if(editingPlaceId){
     const prev=places.find(p=>p.id===editingPlaceId)||{};
-    const place={ ...prev, id:editingPlaceId, name, cat:fCat.value, note, insta:insta||'',
+    const place={ ...prev, id:editingPlaceId, name, cat:fCat.value, cuisine, note, insta:insta||'',
       lat:pending.lat, lng:pending.lng, region:regionOf(pending.lat,pending.lng) };
     updatePlaceOp(place); closeModal(); editingPlaceId=null;
     buildPoiMarkers(); applyFilters();
@@ -2385,7 +2402,7 @@ document.getElementById('fSave').addEventListener('click',()=>{
     setTimeout(()=>{ const o=poiMeta.find(x=>x.pid===place.id); focusLatLng([place.lat,place.lng],15,o&&o.marker); },100);
     return;
   }
-  const place={ id:'u'+Date.now().toString(36), name, cat:fCat.value,
+  const place={ id:'u'+Date.now().toString(36), name, cat:fCat.value, cuisine,
     note, insta:insta||'', lat:pending.lat, lng:pending.lng, region:regionOf(pending.lat,pending.lng) };
   addPlace(place); closeModal();
   buildPoiMarkers(); applyFilters();
@@ -2743,7 +2760,7 @@ function renderAttractions(){
   let total=0;
   Object.keys(CATEGORIES).filter(k=>k!=='hotel').forEach(k=>{
     const c=CATEGORIES[k];
-    const items=places.filter(p=>p.cat===k && (!q || p.name.toLowerCase().includes(q)) && (!attrStarOnly || p.star));
+    const items=places.filter(p=>p.cat===k && (!q || p.name.toLowerCase().includes(q) || (p.note||'').toLowerCase().includes(q) || (p.cuisine||'').toLowerCase().includes(q)) && (!attrStarOnly || p.star));
     if(!items.length) return;
     const h=document.createElement('div'); h.className='attr-h';
     h.innerHTML=`<span class="cdot" style="background:${c.color}"></span>${c.emoji} ${c.he} · ${items.length}`;
@@ -2754,7 +2771,7 @@ function renderAttractions(){
       const u=normInsta(p.insta);
       const row=document.createElement('div'); row.className='poi'+(p.visited?' visited':'');
       row.innerHTML=`<div class="pemoji" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</div>
-        <div class="pinfo"><h4>${p.star?'⭐ ':''}${esc(p.name)}</h4><small>${p.visited?'<span class="vtag">✓ ביקרנו</span> · ':''}${REGIONS[rkey]?esc(REGIONS[rkey].he):''}${p.note?' · '+esc(p.note):''}</small></div>
+        <div class="pinfo"><h4>${p.star?'⭐ ':''}${esc(p.name)}</h4><small>${p.visited?'<span class="vtag">✓ ביקרנו</span> · ':''}${REGIONS[rkey]?esc(REGIONS[rkey].he):''}${p.cuisine?' · 🍽️ '+esc(p.cuisine):''}${p.note?' · '+esc(p.note):''}</small></div>
         <button class="starbtn${p.star?' on':''}" title="${p.star?'הסר מהמומלצים':'סמן כמומלץ'}" onclick="toggleStar('${p.id}')">${p.star?'⭐':'☆'}</button>
         <a class="wazelink iglink" href="${wazeLink(p.lat,p.lng)}" target="_blank" rel="noopener" title="נווט ב-Waze">🧭</a>
         ${u?`<a class="insta iglink" href="${esc(u)}" target="_blank" rel="noopener" title="אינסטגרם">📸</a>`:''}
