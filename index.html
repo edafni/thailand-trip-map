@@ -794,6 +794,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .clitem .cltext{flex:1;min-width:0;word-break:break-word}
   .clitem.done .cltext{text-decoration:line-through;color:var(--muted)}
   .clitem .cldel{background:transparent;border:none;color:#8892ab;font-size:15px;cursor:pointer;flex:0 0 auto;padding:4px}
+  .clitem .clmv{background:transparent;border:none;color:#8892ab;font-size:13px;cursor:pointer;flex:0 0 auto;padding:4px 3px}
+  .clitem .clmv:disabled{opacity:.25;cursor:default}
   .cladd{flex:1;background:#0b1428;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 11px;font-size:14px;font-family:inherit}
   body.light .cladd{background:#f4f7fb}
   .inforow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
@@ -986,8 +988,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .netstat .netdot{width:9px;height:9px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px #22c55e33}
   .netstat.off .netdot{background:#ef4444;box-shadow:0 0 0 3px #ef444433}
   .netstat.off{color:#ef4444}
-  /* edit-mode gate: hide the add buttons unless editing is unlocked */
-  body:not(.editing) #addBtn, body:not(.editing) #bkAddBtn{display:none}
   .adminBadge{margin-inline-start:0 !important}
   .iconbtn{pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:var(--text);
     width:38px;height:38px;border-radius:10px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
@@ -1060,7 +1060,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     </div>
     <span class="tb-spacer"></span>
     <span class="netstat" id="netStatus" title=""><span class="netdot"></span><span class="nettext"></span></span>
-    <button id="editLockBtn" class="iconbtn" title="מצב עריכה">🔒</button>
     <button id="themeBtn" class="iconbtn" title="מצב כהה / בהיר">🌙</button>
   </div>
   <div class="tabs" id="tabs">
@@ -1547,8 +1546,39 @@ function saveChecklist(){ try{ localStorage.setItem(LS_CHECKLIST, JSON.stringify
 function addChecklistItem(it){ checklist.push(it); saveChecklist(); if(cloud.enabled&&cloud.upsertChecklist){ cloud.upsertChecklist(it).catch(e=>console.error('cloud checklist',e)); } if(document.body.dataset.view==='checklists') renderChecklists(); }
 function updateChecklistItem(it){ const i=checklist.findIndex(x=>x.id===it.id); if(i<0) return; checklist[i]=it; saveChecklist(); if(cloud.enabled&&cloud.upsertChecklist){ cloud.upsertChecklist(it).catch(e=>console.error('cloud checklist',e)); } if(document.body.dataset.view==='checklists') renderChecklists(); }
 function removeChecklistItem(id){ checklist=checklist.filter(x=>x.id!==id); saveChecklist(); if(cloud.enabled&&cloud.removeChecklist){ cloud.removeChecklist(id).catch(e=>console.error('cloud checklist del',e)); } if(document.body.dataset.view==='checklists') renderChecklists(); }
+function checklistSorted(family, kind){
+  return checklist.filter(c=>normFamily(c.family)===family && c.kind===kind)
+    .sort((a,b)=>((a.order??a.createdAt??0)-(b.order??b.createdAt??0)));
+}
 window.toggleChecklistItem=function(id){ const it=checklist.find(x=>x.id===id); if(it) updateChecklistItem({...it, done:!it.done}); };
-window.deleteChecklistItem=function(id){ removeChecklistItem(id); };
+window.deleteChecklistItem=function(id){
+  const it=checklist.find(x=>x.id===id); if(!it) return;
+  openConfirm({ title:'🗑️ מחיקת פריט', okLabel:'מחק', danger:true,
+    msgHtml:'למחיקת <b>"'+esc(it.text)+'"</b> הקלידו <b>123</b> ואשרו.',
+    onOk:()=>removeChecklistItem(id) });
+};
+/* reorder within a list */
+window.moveChecklistItem=function(id, dir){
+  const it=checklist.find(x=>x.id===id); if(!it) return;
+  const arr=checklistSorted(normFamily(it.family), it.kind);
+  const i=arr.findIndex(x=>x.id===id), j=i+dir;
+  if(j<0||j>=arr.length) return;
+  const a=arr[i], b=arr[j];
+  const ao=(a.order??a.createdAt??0), bo=(b.order??b.createdAt??0);
+  updateChecklistItem({...a, order:bo}); updateChecklistItem({...b, order:ao});
+};
+/* move an item to the other list (לפני הנסיעה ↔ אריזה) */
+window.moveChecklistKind=function(id){
+  const it=checklist.find(x=>x.id===id); if(!it) return;
+  updateChecklistItem({...it, kind: it.kind==='pretrip'?'packing':'pretrip', order:Date.now()});
+};
+/* copy the other family's items into this (empty) list */
+window.copyChecklistFromOtherFamily=function(kind){
+  const other = checklistFamily==='f1'?'f2':'f1';
+  const src=checklistSorted(other, kind); if(!src.length) return;
+  src.forEach((s,idx)=>addChecklistItem({ id:'cl'+Date.now().toString(36)+Math.random().toString(36).slice(2,5)+idx,
+    family:checklistFamily, kind, text:s.text, done:false, order:Date.now()+idx, createdAt:Date.now()+idx }));
+};
 
 /* entity helpers (a booking belongs to a hotel or a flight) */
 function entityName(kind, refId){
@@ -1678,12 +1708,12 @@ function hotelPopupHtml(h, rkey){
     const bid=String(b.id).replace(/'/g,"\\'");
     return `<div class="bkrow">
        <button class="hbtn view" onclick="viewBooking('${bid}')">📄 ${esc(b.label||b.name||'הזמנה')} · ${esc(familyName(normFamily(b.family)))}</button>
-       ${isAdmin?bookingPaidBtnHtml(b,true):''}
-       ${isAdmin?`<button class="hbtn ghost" onclick="deleteBooking('${bid}')">🗑️</button>`:''}
+       ${bookingPaidBtnHtml(b,true)}
+       <button class="hbtn ghost" onclick="deleteBooking('${bid}')">🗑️</button>
      </div>`;
   }).join('');
   const bookingRow = `${bookingList}
-       ${isAdmin?`<button class="hbtn" onclick="addBookingFor('hotel',${h.id})">📎 הוסף אישור הזמנה</button>`:''}`;
+       <button class="hbtn" onclick="addBookingFor('hotel',${h.id})">📎 הוסף אישור הזמנה</button>`;
   return `
     <div class="pop">
       <h3>🏨 ${h.id}. ${esc(h.name)}</h3>
@@ -1794,9 +1824,9 @@ function buildBookingMarkers(){
         <div class="r">${isBookingPaid(b)?'<b style="color:#8ef0c4">✓ שולם</b>':'<b style="color:#f3d08a">טרם שולם</b>'}</div>
         <div class="hactions">
           <button class="hbtn view" onclick="viewBooking('${b.id}')">📄 הצג אישור</button>
-          ${isAdmin?bookingPaidBtnHtml(b,false):''}
-          ${isAdmin?`<button class="hbtn" onclick="editBooking('${b.id}')">✏️ ערוך</button>`:''}
-          ${isAdmin?`<button class="hbtn ghost" onclick="deleteBooking('${b.id}')">🗑️ מחק</button>`:''}
+          ${bookingPaidBtnHtml(b,false)}
+          <button class="hbtn" onclick="editBooking('${b.id}')">✏️ ערוך</button>
+          <button class="hbtn ghost" onclick="deleteBooking('${b.id}')">🗑️ מחק</button>
         </div>
         <div class="navrow"><a class="wazebtn" href="${wazeLink(b.lat, b.lng)}" target="_blank" rel="noopener">🧭 נווט ב-Waze</a><a href="${gmapsLink(b.label||'', rkey, b.lat, b.lng)}" target="_blank" rel="noopener">Google Maps ↗</a></div>
       </div>`);
@@ -1806,10 +1836,8 @@ function buildBookingMarkers(){
 /* In-app confirmation (reliable on mobile / standalone, unlike window.prompt). */
 /* Generic 123-gated confirmation, reused for delete and edit-unlock */
 let pendingConfirm=null;   // function to run when the correct code is typed
-let pendingConfirmCode='123';
-function openConfirm({title, msgHtml, okLabel, danger, onOk, code}){
+function openConfirm({title, msgHtml, okLabel, danger, onOk}){
   pendingConfirm=onOk||null;
-  pendingConfirmCode = code||'123';
   document.getElementById('confirmTitle').textContent=title||'אישור';
   document.getElementById('confirmMsg').innerHTML=msgHtml||'';
   const ok=document.getElementById('confirmDelBtn');
@@ -1822,22 +1850,27 @@ function openConfirm({title, msgHtml, okLabel, danger, onOk, code}){
 }
 function doConfirm(){
   const inp=document.getElementById('confirmCode');
-  if(inp.value.trim()!==pendingConfirmCode){ inp.style.borderColor='#ef4444'; inp.focus(); return; }
+  if(inp.value.trim()!=='123'){ inp.style.borderColor='#ef4444'; inp.focus(); return; }
   const fn=pendingConfirm; pendingConfirm=null;
   closeConfirm();
   if(typeof fn==='function') fn();
 }
 function closeConfirm(){ pendingConfirm=null; document.getElementById('confirmModal').classList.remove('show'); }
-/* Editing is gated by edit mode (PIN unlock); these act directly once unlocked. */
 window.deletePlace=function(id){
   const p=places.find(x=>x.id===id);
-  if(!confirm('למחוק את "'+(p?p.name:'')+'"? המחיקה תתבצע אצל כולם.')) return;
-  removePlaceOp(id); map.closePopup(); buildPoiMarkers(); applyFilters();
-  if(document.body.dataset.view==='attractions') renderAttractions();
+  openConfirm({
+    title:'🗑️ מחיקת מקום', okLabel:'מחק', danger:true,
+    msgHtml:'למחיקת <b>"'+esc(p?p.name:'')+'"</b> הקלידו <b>123</b> ואשרו.<br>המחיקה תתבצע אצל כל מי שמשתמש בקישור.',
+    onOk:()=>{ removePlaceOp(id); map.closePopup(); buildPoiMarkers(); applyFilters(); if(document.body.dataset.view==='attractions') renderAttractions(); }
+  });
 };
 window.editPlace=function(id){
   const p=places.find(x=>x.id===id); if(!p) return;
-  openEditModal(id);
+  openConfirm({
+    title:'✏️ עריכת מקום', okLabel:'המשך', danger:false,
+    msgHtml:'לעריכת <b>"'+esc(p.name)+'"</b> הקלידו <b>123</b> ואשרו.',
+    onOk:()=>openEditModal(id)
+  });
 };
 document.getElementById('confirmDelBtn').addEventListener('click',doConfirm);
 document.getElementById('confirmCancelBtn').addEventListener('click',closeConfirm);
@@ -1857,7 +1890,11 @@ window.deleteBooking=function(id){
 };
 window.editBooking=function(id){
   const b=bookings.find(x=>x.id===id); if(!b) return;
-  openEditBookingModal(id);
+  openConfirm({
+    title:'✏️ עריכת הזמנה', okLabel:'המשך', danger:false,
+    msgHtml:'לעריכת <b>"'+esc(b.label||b.name||'')+'"</b> הקלידו <b>123</b> ואשרו.',
+    onOk:()=>openEditBookingModal(id)
+  });
 };
 window.addBookingFor=function(kind, refId){ openBookingModal(kind, String(refId)); };
 
@@ -2464,39 +2501,29 @@ document.getElementById('shareBtn').addEventListener('click',async()=>{
   }catch(e){ prompt('העתיקו את הקישור לשיתוף:',url); }
 });
 
-/* ================= Edit mode (light PIN gate) ================= */
-const EDIT_PIN='12345';
-const LS_EDIT='thai_edit_unlocked';
-const lockBtn=document.getElementById('lockBtn'); if(lockBtn) lockBtn.style.display='none';
-function applyEditMode(){
-  document.body.classList.add('admin');            // toolbar (share) always available
-  document.body.classList.toggle('editing', isAdmin);
-  const b=document.getElementById('editLockBtn');
-  if(b){ b.textContent = isAdmin?'🔓':'🔒'; b.title = isAdmin?'מצב עריכה פעיל — הקישו לנעילה':'צפייה בלבד — הקישו לפתיחת עריכה'; }
-}
-function rerenderEditable(){
-  buildPoiMarkers(); if(typeof buildBookingMarkers==='function') buildBookingMarkers();
-  if(typeof refreshHotels==='function') refreshHotels(); applyFilters();
-  const v=document.body.dataset.view;
-  if(v==='attractions') renderAttractions(); else if(v==='bookings') renderBookings(); else if(v==='destinations') renderDestinations();
-}
-function setEditMode(on){
-  isAdmin=!!on;
-  try{ on?localStorage.setItem(LS_EDIT,'1'):localStorage.removeItem(LS_EDIT); }catch(e){}
-  applyEditMode(); rerenderEditable();
-}
-document.getElementById('editLockBtn').addEventListener('click',()=>{
-  if(isAdmin){ setEditMode(false); return; }
-  openConfirm({ title:'🔒 פתיחת עריכה', okLabel:'פתח', danger:false, code:EDIT_PIN,
-    msgHtml:'הזינו את קוד העריכה כדי לאפשר הוספה, עריכה ומחיקה במכשיר זה.',
-    onOk:()=>setEditMode(true) });
+/* ================= Admin ================= */
+const lockBtn=document.getElementById('lockBtn');
+lockBtn.addEventListener('click',()=>{
+  if(confirm('לצאת ממצב מנהל במכשיר זה?')){ localStorage.removeItem(LS_ADMIN); location.reload(); }
 });
 async function initAdmin(){
   const hp=getHashParams();
-  if(hp.admin){ const keep=hp.places?('#places='+hp.places):''; history.replaceState(null,'',location.pathname+location.search+keep); }
-  isAdmin = false; try{ isAdmin = localStorage.getItem(LS_EDIT)==='1'; }catch(e){}
-  applyEditMode();
+  if(hp.admin){
+    // legacy admin param no longer needed — editing is open to everyone. Strip it.
+    const keep=hp.places?('#places='+hp.places):'';
+    history.replaceState(null,'',location.pathname+location.search+keep);
+  }
+  isAdmin = true;                       // editing is available to everyone with the link
+  document.body.classList.add('admin'); // show the add/share toolbar
+  const lb=document.getElementById('lockBtn'); if(lb) lb.style.display='none';
 }
+async function tryUnlockFromHash(){
+  if(localStorage.getItem(LS_ADMIN)==='1') return;
+  const hp=getHashParams();
+  if(hp.admin){ try{ const h=await sha256hex(decodeURIComponent(hp.admin)); if(h===ADMIN_HASH){ localStorage.setItem(LS_ADMIN,'1'); location.reload(); } }catch(e){} }
+}
+window.addEventListener('load',tryUnlockFromHash);
+window.addEventListener('hashchange',tryUnlockFromHash);
 
 /* ================= Sheet interactions ================= */
 document.getElementById('handle').addEventListener('click',()=>sheet.classList.toggle('collapsed'));
@@ -2637,11 +2664,15 @@ function updateTdacReminder(){
 document.getElementById('tdacGo').addEventListener('click',()=>{ window.open(TDAC_URL,'_blank','noopener'); });
 document.getElementById('tdacDone').addEventListener('click',()=>{ try{ localStorage.setItem('tdac_done','1'); }catch(e){} updateTdacReminder(); });
 
-/* ================= Visited toggle (edit mode) ================= */
+/* ================= Visited toggle (123-gated) ================= */
 window.toggleVisited=function(id){
   const p=places.find(x=>x.id===id); if(!p) return;
-  updatePlaceOp({...p, visited:!p.visited}); map.closePopup(); buildPoiMarkers(); applyFilters();
-  if(document.body.dataset.view==='attractions') renderAttractions();
+  openConfirm({
+    title:p.visited?'↩︎ ביטול סימון ביקור':'✓ סימון כמקום שביקרנו', okLabel:'המשך', danger:false,
+    msgHtml:(p.visited?'לביטול הסימון של ':'לסימון ')+'<b>"'+esc(p.name)+'"</b>'+(p.visited?'':' כמקום שביקרתם')+' הקלידו <b>123</b> ואשרו.',
+    onOk:()=>{ updatePlaceOp({...p, visited:!p.visited}); map.closePopup(); buildPoiMarkers(); applyFilters();
+      if(document.body.dataset.view==='attractions') renderAttractions(); }
+  });
 };
 
 /* Shared "must-see" star — a quick toggle for everyone (no password), synced */
@@ -2783,19 +2814,29 @@ const CHECKLIST_KINDS=[{key:'pretrip',he:'✅ לפני הנסיעה'},{key:'pack
 function renderChecklists(){
   const host=document.getElementById('view-checklists');
   const famTabs=FAMILIES.map(f=>`<div class="subtab${f.id===checklistFamily?' on':''}" data-cfam="${f.id}">${esc(f.name)}</div>`).join('');
+  const otherFamily = checklistFamily==='f1'?'f2':'f1';
   const sections=CHECKLIST_KINDS.map(k=>{
-    const items=checklist.filter(c=>normFamily(c.family)===checklistFamily && c.kind===k.key)
-      .sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+    const items=checklistSorted(checklistFamily, k.key);
     const done=items.filter(i=>i.done).length;
-    const rows=items.map(it=>`
+    const rows=items.map((it,idx)=>`
       <div class="clitem${it.done?' done':''}">
         <input type="checkbox" ${it.done?'checked':''} onchange="toggleChecklistItem('${it.id}')" />
         <span class="cltext">${esc(it.text)}</span>
+        <button class="clmv" title="למעלה" ${idx===0?'disabled':''} onclick="moveChecklistItem('${it.id}',-1)">▲</button>
+        <button class="clmv" title="למטה" ${idx===items.length-1?'disabled':''} onclick="moveChecklistItem('${it.id}',1)">▼</button>
+        <button class="clmv" title="העבר ל${k.key==='pretrip'?'אריזה':'לפני הנסיעה'}" onclick="moveChecklistKind('${it.id}')">↔</button>
         <button class="cldel" title="מחק" onclick="deleteChecklistItem('${it.id}')">🗑️</button>
-      </div>`).join('') || '<div class="empty" style="padding:8px">אין עדיין פריטים.</div>';
+      </div>`).join('');
+    let body;
+    if(items.length){ body=rows; }
+    else {
+      const otherHas=checklistSorted(otherFamily, k.key).length;
+      body='<div class="empty" style="padding:8px">אין עדיין פריטים.</div>'
+        + (otherHas?`<button class="btn small" style="margin-top:6px" onclick="copyChecklistFromOtherFamily('${k.key}')">📋 העתק מ${esc(familyName(otherFamily))} (${otherHas})</button>`:'');
+    }
     return `<div class="about-card">
       <h3>${k.he}${items.length?` <span style="color:var(--muted);font-size:12px;font-weight:400">${done}/${items.length}</span>`:''}</h3>
-      ${rows}
+      ${body}
       <div class="row" style="margin-top:8px"><input class="cladd" type="text" data-kind="${k.key}" placeholder="הוסיפו פריט…" /><button class="btn small primary claddbtn" data-kind="${k.key}">הוסף</button></div>
     </div>`;
   }).join('');
@@ -2806,7 +2847,7 @@ function renderChecklists(){
     ${sections}`;
   host.querySelectorAll('#clFamilyTabs .subtab').forEach(t=>t.addEventListener('click',()=>{ checklistFamily=t.dataset.cfam; renderChecklists(); }));
   const addFrom=(kind, inp)=>{ const text=(inp.value||'').trim(); if(!text) return;
-    addChecklistItem({ id:'cl'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), family:checklistFamily, kind, text, done:false, createdAt:Date.now() }); };
+    addChecklistItem({ id:'cl'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), family:checklistFamily, kind, text, done:false, order:Date.now(), createdAt:Date.now() }); };
   host.querySelectorAll('.claddbtn').forEach(b=>b.addEventListener('click',()=>{ const inp=host.querySelector('.cladd[data-kind="'+b.dataset.kind+'"]'); addFrom(b.dataset.kind, inp); }));
   host.querySelectorAll('.cladd').forEach(inp=>inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); addFrom(inp.dataset.kind, inp); } }));
 }
@@ -2936,11 +2977,11 @@ function renderBookings(){
       </div>
       <div class="bkactions">
         <button type="button" class="bkbtn view" data-view="${esc(b.id)}">📄 הצג</button>
-        ${isAdmin?`<button type="button" class="bkbtn edit" data-edit="${esc(b.id)}" title="ערוך">✏️</button>`:''}
-        ${isAdmin?`<button type="button" class="bkbtn del" data-del="${esc(b.id)}" title="מחק">🗑️</button>`:''}
+        <button type="button" class="bkbtn edit" data-edit="${esc(b.id)}" title="ערוך">✏️</button>
+        <button type="button" class="bkbtn del" data-del="${esc(b.id)}" title="מחק">🗑️</button>
       </div>
       <div class="bkpay">
-        ${isAdmin?`<button type="button" class="bkbtn ${paidCls}" data-paid="${esc(b.id)}">${paidLbl}</button>`:`<span class="bkbtn ${paidCls}" style="cursor:default">${paidLbl}</span>`}
+        <button type="button" class="bkbtn ${paidCls}" data-paid="${esc(b.id)}">${paidLbl}</button>
       </div>`;
     host.appendChild(row);
   });
