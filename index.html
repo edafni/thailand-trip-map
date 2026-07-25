@@ -794,6 +794,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .clitem .cltext{flex:1;min-width:0;word-break:break-word}
   .clitem.done .cltext{text-decoration:line-through;color:var(--muted)}
   .clitem .cldel{background:transparent;border:none;color:#8892ab;font-size:15px;cursor:pointer;flex:0 0 auto;padding:4px}
+  .clitem .clmv{background:transparent;border:none;color:#8892ab;font-size:13px;cursor:pointer;flex:0 0 auto;padding:4px 3px}
+  .clitem .clmv:disabled{opacity:.25;cursor:default}
   .cladd{flex:1;background:#0b1428;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 11px;font-size:14px;font-family:inherit}
   body.light .cladd{background:#f4f7fb}
   .inforow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
@@ -1544,8 +1546,39 @@ function saveChecklist(){ try{ localStorage.setItem(LS_CHECKLIST, JSON.stringify
 function addChecklistItem(it){ checklist.push(it); saveChecklist(); if(cloud.enabled&&cloud.upsertChecklist){ cloud.upsertChecklist(it).catch(e=>console.error('cloud checklist',e)); } if(document.body.dataset.view==='checklists') renderChecklists(); }
 function updateChecklistItem(it){ const i=checklist.findIndex(x=>x.id===it.id); if(i<0) return; checklist[i]=it; saveChecklist(); if(cloud.enabled&&cloud.upsertChecklist){ cloud.upsertChecklist(it).catch(e=>console.error('cloud checklist',e)); } if(document.body.dataset.view==='checklists') renderChecklists(); }
 function removeChecklistItem(id){ checklist=checklist.filter(x=>x.id!==id); saveChecklist(); if(cloud.enabled&&cloud.removeChecklist){ cloud.removeChecklist(id).catch(e=>console.error('cloud checklist del',e)); } if(document.body.dataset.view==='checklists') renderChecklists(); }
+function checklistSorted(family, kind){
+  return checklist.filter(c=>normFamily(c.family)===family && c.kind===kind)
+    .sort((a,b)=>((a.order??a.createdAt??0)-(b.order??b.createdAt??0)));
+}
 window.toggleChecklistItem=function(id){ const it=checklist.find(x=>x.id===id); if(it) updateChecklistItem({...it, done:!it.done}); };
-window.deleteChecklistItem=function(id){ removeChecklistItem(id); };
+window.deleteChecklistItem=function(id){
+  const it=checklist.find(x=>x.id===id); if(!it) return;
+  openConfirm({ title:'🗑️ מחיקת פריט', okLabel:'מחק', danger:true,
+    msgHtml:'למחיקת <b>"'+esc(it.text)+'"</b> הקלידו <b>123</b> ואשרו.',
+    onOk:()=>removeChecklistItem(id) });
+};
+/* reorder within a list */
+window.moveChecklistItem=function(id, dir){
+  const it=checklist.find(x=>x.id===id); if(!it) return;
+  const arr=checklistSorted(normFamily(it.family), it.kind);
+  const i=arr.findIndex(x=>x.id===id), j=i+dir;
+  if(j<0||j>=arr.length) return;
+  const a=arr[i], b=arr[j];
+  const ao=(a.order??a.createdAt??0), bo=(b.order??b.createdAt??0);
+  updateChecklistItem({...a, order:bo}); updateChecklistItem({...b, order:ao});
+};
+/* move an item to the other list (לפני הנסיעה ↔ אריזה) */
+window.moveChecklistKind=function(id){
+  const it=checklist.find(x=>x.id===id); if(!it) return;
+  updateChecklistItem({...it, kind: it.kind==='pretrip'?'packing':'pretrip', order:Date.now()});
+};
+/* copy the other family's items into this (empty) list */
+window.copyChecklistFromOtherFamily=function(kind){
+  const other = checklistFamily==='f1'?'f2':'f1';
+  const src=checklistSorted(other, kind); if(!src.length) return;
+  src.forEach((s,idx)=>addChecklistItem({ id:'cl'+Date.now().toString(36)+Math.random().toString(36).slice(2,5)+idx,
+    family:checklistFamily, kind, text:s.text, done:false, order:Date.now()+idx, createdAt:Date.now()+idx }));
+};
 
 /* entity helpers (a booking belongs to a hotel or a flight) */
 function entityName(kind, refId){
@@ -2781,19 +2814,29 @@ const CHECKLIST_KINDS=[{key:'pretrip',he:'✅ לפני הנסיעה'},{key:'pack
 function renderChecklists(){
   const host=document.getElementById('view-checklists');
   const famTabs=FAMILIES.map(f=>`<div class="subtab${f.id===checklistFamily?' on':''}" data-cfam="${f.id}">${esc(f.name)}</div>`).join('');
+  const otherFamily = checklistFamily==='f1'?'f2':'f1';
   const sections=CHECKLIST_KINDS.map(k=>{
-    const items=checklist.filter(c=>normFamily(c.family)===checklistFamily && c.kind===k.key)
-      .sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+    const items=checklistSorted(checklistFamily, k.key);
     const done=items.filter(i=>i.done).length;
-    const rows=items.map(it=>`
+    const rows=items.map((it,idx)=>`
       <div class="clitem${it.done?' done':''}">
         <input type="checkbox" ${it.done?'checked':''} onchange="toggleChecklistItem('${it.id}')" />
         <span class="cltext">${esc(it.text)}</span>
+        <button class="clmv" title="למעלה" ${idx===0?'disabled':''} onclick="moveChecklistItem('${it.id}',-1)">▲</button>
+        <button class="clmv" title="למטה" ${idx===items.length-1?'disabled':''} onclick="moveChecklistItem('${it.id}',1)">▼</button>
+        <button class="clmv" title="העבר ל${k.key==='pretrip'?'אריזה':'לפני הנסיעה'}" onclick="moveChecklistKind('${it.id}')">↔</button>
         <button class="cldel" title="מחק" onclick="deleteChecklistItem('${it.id}')">🗑️</button>
-      </div>`).join('') || '<div class="empty" style="padding:8px">אין עדיין פריטים.</div>';
+      </div>`).join('');
+    let body;
+    if(items.length){ body=rows; }
+    else {
+      const otherHas=checklistSorted(otherFamily, k.key).length;
+      body='<div class="empty" style="padding:8px">אין עדיין פריטים.</div>'
+        + (otherHas?`<button class="btn small" style="margin-top:6px" onclick="copyChecklistFromOtherFamily('${k.key}')">📋 העתק מ${esc(familyName(otherFamily))} (${otherHas})</button>`:'');
+    }
     return `<div class="about-card">
       <h3>${k.he}${items.length?` <span style="color:var(--muted);font-size:12px;font-weight:400">${done}/${items.length}</span>`:''}</h3>
-      ${rows}
+      ${body}
       <div class="row" style="margin-top:8px"><input class="cladd" type="text" data-kind="${k.key}" placeholder="הוסיפו פריט…" /><button class="btn small primary claddbtn" data-kind="${k.key}">הוסף</button></div>
     </div>`;
   }).join('');
@@ -2804,7 +2847,7 @@ function renderChecklists(){
     ${sections}`;
   host.querySelectorAll('#clFamilyTabs .subtab').forEach(t=>t.addEventListener('click',()=>{ checklistFamily=t.dataset.cfam; renderChecklists(); }));
   const addFrom=(kind, inp)=>{ const text=(inp.value||'').trim(); if(!text) return;
-    addChecklistItem({ id:'cl'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), family:checklistFamily, kind, text, done:false, createdAt:Date.now() }); };
+    addChecklistItem({ id:'cl'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), family:checklistFamily, kind, text, done:false, order:Date.now(), createdAt:Date.now() }); };
   host.querySelectorAll('.claddbtn').forEach(b=>b.addEventListener('click',()=>{ const inp=host.querySelector('.cladd[data-kind="'+b.dataset.kind+'"]'); addFrom(b.dataset.kind, inp); }));
   host.querySelectorAll('.cladd').forEach(inp=>inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); addFrom(inp.dataset.kind, inp); } }));
 }
