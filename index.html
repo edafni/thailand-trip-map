@@ -1122,7 +1122,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
   <h2>⭐ אטרקציות ומקומות</h2>
   <div class="lead">כל המקומות השמורים, מקובצים לפי סוג. טפו על מקום כדי לראותו במפה.</div>
   <input id="attrSearch" class="vsearch" placeholder="🔎 חיפוש לפי שם, הערה או סוג מטבח..." />
-  <button class="btn small" id="attrStarBtn" style="margin:2px 2px 10px">⭐ רק מומלצים</button>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:2px 2px 10px">
+    <select id="attrCatFilter" class="vsearch" style="flex:1;min-width:150px;margin:0"></select>
+    <button class="btn small" id="attrStarBtn" style="margin:0">⭐ רק מומלצים</button>
+  </div>
   <div id="attrList"></div>
 </div>
 <div class="view" id="view-bookings">
@@ -1326,7 +1329,7 @@ const CATEGORIES = {
 const REGIONS = {
   all:     {he:'כל היעדים', eng:''},
   samui:   {he:'קוסמוי',    eng:'Koh Samui',  center:[9.512,100.013]},
-  phangan: {he:'קופאנגן',   eng:'Koh Phangan',center:[9.735,100.020]},
+  phangan: {he:'קופנגן',   eng:'Koh Phangan',center:[9.735,100.020]},
   bangkok: {he:'בנגקוק',    eng:'Bangkok',    center:[13.740,100.530]},
 };
 function regionOf(lat,lng){
@@ -1345,15 +1348,15 @@ const hotels = [
   { id:1, name:"Bandara Resort Koh Samui", region:"קוסמוי · Bophut Beach", area:"s",
     from:"2026-08-06", to:"2026-08-11", nights:5, thb:59544, lat:9.56107, lng:100.02343,
     leg:{ic:"✈️", txt:"טיסה מבנגקוק לקוסמוי · תחילת הטיול"} },
-  { id:2, name:"Pahili Villa", region:"קופאנגן · Mae Haad / Chaloklum", area:"p",
+  { id:2, name:"Pahili Villa", region:"קופנגן · Mae Haad / Chaloklum", area:"p",
     from:"2026-08-11", to:"2026-08-17", nights:6, thb:50000, lat:9.7904104, lng:99.9869535,
-    leg:{ic:"⛴️", txt:"מעבורת מקוסמוי לקופאנגן"} },
-  { id:3, name:"SaladHut", region:"קופאנגן · Haad Salad", area:"p",
+    leg:{ic:"⛴️", txt:"מעבורת מקוסמוי לקופנגן"} },
+  { id:3, name:"SaladHut", region:"קופנגן · Haad Salad", area:"p",
     from:"2026-08-17", to:"2026-08-25", nights:8, thb:55200, lat:9.7849, lng:99.97237,
-    leg:{ic:"🚗", txt:"מעבר בתוך קופאנגן"} },
+    leg:{ic:"🚗", txt:"מעבר בתוך קופנגן"} },
   { id:4, name:"Melia Koh Samui", region:"קוסמוי · Choeng Mon Beach", area:"s",
     from:"2026-08-25", to:"2026-08-29", nights:4, thb:38696, lat:9.571256, lng:100.083786,
-    leg:{ic:"⛴️", txt:"מעבורת מקופאנגן לקוסמוי"} },
+    leg:{ic:"⛴️", txt:"מעבורת מקופנגן לקוסמוי"} },
   { id:5, name:"Grande Centre Point Lumphini", region:"בנגקוק · Sathon", area:"b",
     from:"2026-08-29", to:"2026-09-01", nights:3, thb:17465, lat:13.72462, lng:100.54762,
     leg:{ic:"✈️", txt:"טיסה מקוסמוי לבנגקוק"} },
@@ -2639,11 +2642,9 @@ function updateCountdown(){
   const today=new Date(); today.setHours(0,0,0,0);
   const start=new Date(TRIP_START+'T00:00:00'), end=new Date(TRIP_END+'T00:00:00');
   const dayMs=86400000, base='6 באוגוסט – 1 בספטמבר · 26 לילות';
-  let cd;
-  if(today<start){ const d=Math.round((start-today)/dayMs); cd=(d===1?'עוד יום':'עוד '+d+' ימים')+' לתאילנד 🇹🇭'; }
-  else if(today<=end){ const d=Math.round((today-start)/dayMs)+1; cd='יום '+d+' בטיול 🌴'; }
-  else cd='הטיול הסתיים 🎉';
-  el.innerHTML=`${base} · <b class="cd">${cd}</b>`;
+  // Show the countdown only before the trip starts; from Aug 5 onward it disappears.
+  if(today<start){ const d=Math.round((start-today)/dayMs); const cd=(d===1?'עוד יום':'עוד '+d+' ימים')+' לתאילנד 🇹🇭'; el.innerHTML=`${base} · <b class="cd">${cd}</b>`; }
+  else el.innerHTML=base;
 }
 
 /* ================= TDAC reminder (Thailand Digital Arrival Card) ================= */
@@ -2775,7 +2776,7 @@ function renderInfo(){
 
     <div class="about-card">
       <h3>⛴️ תחבורה ומעבר בין מקומות</h3>
-      <div class="infostep"><b>מעבורות בין האיים</b> (קוסמוי↔קופאנגן, ~30–45 דק׳): Lomprayah, Raja Ferry, Seatran. כדאי להזמין מראש בעונה.</div>
+      <div class="infostep"><b>מעבורות בין האיים</b> (קוסמוי↔קופנגן, ~30–45 דק׳): Lomprayah, Raja Ferry, Seatran. כדאי להזמין מראש בעונה.</div>
       <div class="infostep"><b>אפליקציות הסעה:</b> Grab ו-Bolt (כמו Uber) — מחיר קבוע מראש, נוח וזול יחסית. יש גם סונגטאו (טנדרים משותפים) ומוניות (סכמו מחיר או מונה).</div>
       <div class="infostep"><b>משדה התעופה בבנגקוק:</b> Airport Rail Link (זול ומהיר לעיר), Grab, או מונית מהתור הרשמי (מונה + ~50 บาท אגרת שדה + כבישי אגרה).</div>
       <div class="infostep" style="color:var(--muted)">💡 השכרת אופנוע: רק עם רישיון בינלאומי מתאים וקסדה — הביטוח והמשטרה מקפידים.</div>
@@ -2855,7 +2856,7 @@ function renderChecklists(){
 /* ================= Weather ================= */
 const WX_REGIONS=[
   {key:'samui',   he:'קוסמוי',  lat:9.512,  lng:100.013, date:'2026-08-06'},
-  {key:'phangan', he:'קופאנגן', lat:9.735,  lng:100.020, date:'2026-08-11'},
+  {key:'phangan', he:'קופנגן', lat:9.735,  lng:100.020, date:'2026-08-11'},
   {key:'bangkok', he:'בנגקוק',  lat:13.740, lng:100.530, date:'2026-08-29'},
 ];
 const WX_TYPICAL={
@@ -2904,11 +2905,25 @@ async function refreshForecast(){
   }
 }
 
+function populateAttrCatFilter(){
+  const sel=document.getElementById('attrCatFilter'); if(!sel) return;
+  const prev=sel.value||'all';
+  let html='<option value="all">🗂️ כל הסוגים</option>';
+  Object.keys(CATEGORIES).filter(k=>k!=='hotel').forEach(k=>{
+    const n=places.filter(p=>p.cat===k).length; if(!n) return;
+    const c=CATEGORIES[k];
+    html+=`<option value="${k}">${c.emoji} ${c.he} · ${n}</option>`;
+  });
+  sel.innerHTML=html;
+  sel.value=[...sel.options].some(o=>o.value===prev)?prev:'all';
+}
 function renderAttractions(){
+  populateAttrCatFilter();
   const q=(document.getElementById('attrSearch').value||'').trim().toLowerCase();
+  const catFilter=(document.getElementById('attrCatFilter')||{}).value||'all';
   const host=document.getElementById('attrList'); host.innerHTML='';
   let total=0;
-  Object.keys(CATEGORIES).filter(k=>k!=='hotel').forEach(k=>{
+  Object.keys(CATEGORIES).filter(k=>k!=='hotel' && (catFilter==='all'||k===catFilter)).forEach(k=>{
     const c=CATEGORIES[k];
     const items=places.filter(p=>p.cat===k && (!q || p.name.toLowerCase().includes(q) || (p.note||'').toLowerCase().includes(q) || (p.cuisine||'').toLowerCase().includes(q)) && (!attrStarOnly || p.star));
     if(!items.length) return;
@@ -2934,6 +2949,7 @@ function renderAttractions(){
   if(total===0) host.innerHTML='<div class="empty">'+(attrStarOnly?'עדיין אין מקומות מומלצים ⭐. סמנו מקומות בכוכב.':'לא נמצאו מקומות')+'</div>';
 }
 document.getElementById('attrSearch').addEventListener('input',renderAttractions);
+document.getElementById('attrCatFilter').addEventListener('change',renderAttractions);
 let attrStarOnly=false;
 document.getElementById('attrStarBtn').addEventListener('click',()=>{
   attrStarOnly=!attrStarOnly;
@@ -3057,7 +3073,7 @@ function renderAbout(){
     </div>
     <div class="about-card">
       <h3>המסלול 🇹🇭</h3>
-      6 באוגוסט – 1 בספטמבר 2026 · טיול של ${nights} לילות בין קוסמוי, קופאנגן ובנגקוק.
+      6 באוגוסט – 1 בספטמבר 2026 · טיול של ${nights} לילות בין קוסמוי, קופנגן ובנגקוק.
       הגעה בטיסה לקוסמוי, מעבורות בין האיים, וטיסה חזרה לבנגקוק בסוף.
     </div>
     <div class="about-card">
