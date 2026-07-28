@@ -1039,6 +1039,17 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .it-stayhead small{font-weight:500;color:var(--muted)}
   .it-day{display:flex;gap:11px;align-items:stretch;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
   .it-day.travel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+  .it-day.today{border-color:#22c55e;box-shadow:0 0 0 2px #22c55e;background:#12331f}
+  body.light .it-day.today{background:#dcfce7}
+  .it-todaytag{display:block;font-size:9.5px;font-weight:800;color:#fff;background:#22c55e;border-radius:6px;padding:1px 5px;margin-bottom:3px}
+  /* Israel / Thailand clocks */
+  .clock-grid{display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:center}
+  .clock{flex:1;min-width:0}
+  .clock .cflag{font-size:22px;line-height:1}
+  .clock .ctime{font-size:26px;font-weight:800;letter-spacing:.5px;margin-top:2px}
+  .clock .cname{font-size:12px;color:var(--muted)}
+  .clock .cdate{font-size:11px;color:var(--muted)}
+  .clock-diff{flex:0 0 auto;font-size:11px;font-weight:700;color:var(--accent);line-height:1.35;white-space:nowrap}
   .it-date{flex:0 0 52px;text-align:center;display:flex;flex-direction:column;justify-content:center;border-inline-end:1px solid var(--line);padding-inline-end:10px}
   .it-date b{font-size:15px;line-height:1.1} .it-date small{font-size:10.5px;color:var(--muted);margin-top:2px}
   .it-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:5px}
@@ -2769,6 +2780,15 @@ function renderInfo(){
     <div class="lead">כל מה שכדאי שיהיה בהישג יד בטיול.</div>
 
     <div class="about-card">
+      <h3>🕐 שעון — ישראל ותאילנד</h3>
+      <div class="clock-grid">
+        <div class="clock"><div class="cflag">🇮🇱</div><div class="ctime" id="clkIL">--:--</div><div class="cname">ישראל</div><div class="cdate" id="clkILd"></div></div>
+        <div class="clock-diff" id="clkDiff">···</div>
+        <div class="clock"><div class="cflag">🇹🇭</div><div class="ctime" id="clkTH">--:--</div><div class="cname">תאילנד</div><div class="cdate" id="clkTHd"></div></div>
+      </div>
+    </div>
+
+    <div class="about-card">
       <h3>📋 כרטיס כניסה לתאילנד (TDAC)</h3>
       <div class="infostep">כל נוסע <b>חייב</b> למלא את כרטיס הכניסה הדיגיטלי (Thailand Digital Arrival Card) באינטרנט — עד <b>3 ימים לפני ההגעה</b> לתאילנד (כולל יום ההגעה).</div>
       <div class="infostep" style="color:var(--muted)">💡 מלאו לכל בני המשפחה בנפרד ושמרו צילום מסך של אישור ה-QR להצגה בגבול.</div>
@@ -2819,7 +2839,7 @@ function renderInfo(){
       <div class="inforow"><span>מתח</span><b>220V · 50Hz</b></div>
       <div class="inforow"><span>תקעים</span><b>Type A / B / C</b></div>
       <div class="inforow"><span>צד נסיעה</span><b>שמאל 🚗</b></div>
-      <div class="inforow"><span>אזור זמן</span><b>+7 (5 שעות לפני ישראל)</b></div>
+      <div class="inforow"><span>אזור זמן</span><b>+7 (מקדימה את ישראל ב-4 ש׳ בקיץ)</b></div>
       <div style="color:var(--muted);font-size:12px;margin-top:6px">שווה eSIM (AIS / TrueMove) לנתונים.</div>
     </div>
 
@@ -2856,6 +2876,33 @@ function renderInfo(){
     el.addEventListener('input',()=>ccRecalc(id.slice(2)));
   });
   if(fxRates.approx || !fxRates.ts || (Date.now()-fxRates.ts)>12*3600*1000) refreshFx();
+  startWorldClocks();
+}
+
+/* ================= Live clocks: Israel & Thailand ================= */
+function tzOffsetHours(tz){
+  const d=new Date();
+  const utc=new Date(d.toLocaleString('en-US',{timeZone:'UTC'}));
+  const loc=new Date(d.toLocaleString('en-US',{timeZone:tz}));
+  return Math.round((loc-utc)/3600000);
+}
+function updateWorldClocks(){
+  const il=document.getElementById('clkIL'); if(!il) return false; // info tab not mounted
+  const th=document.getElementById('clkTH'), ild=document.getElementById('clkILd'),
+        thd=document.getElementById('clkTHd'), diff=document.getElementById('clkDiff');
+  const now=new Date();
+  const time=tz=>new Intl.DateTimeFormat('he-IL',{timeZone:tz,hour:'2-digit',minute:'2-digit',hour12:false}).format(now);
+  const date=tz=>new Intl.DateTimeFormat('he-IL',{timeZone:tz,weekday:'short',day:'numeric',month:'short'}).format(now);
+  il.textContent=time('Asia/Jerusalem'); th.textContent=time('Asia/Bangkok');
+  if(ild) ild.textContent=date('Asia/Jerusalem'); if(thd) thd.textContent=date('Asia/Bangkok');
+  if(diff){ const h=tzOffsetHours('Asia/Bangkok')-tzOffsetHours('Asia/Jerusalem'); diff.innerHTML=`תאילנד<br>+${h} ש׳`; }
+  return true;
+}
+let worldClockTimer=null;
+function startWorldClocks(){
+  updateWorldClocks();
+  if(worldClockTimer) return;
+  worldClockTimer=setInterval(()=>{ if(!updateWorldClocks()){ clearInterval(worldClockTimer); worldClockTimer=null; } }, 15000);
 }
 
 /* ================= Checklists tab ================= */
@@ -3134,7 +3181,8 @@ function stayHotelOn(iso){ return hotels.find(h=> iso>=h.from && iso<h.to); }
 function renderItinerary(){
   const host=document.getElementById('itinList'); if(!host) return;
   host.innerHTML='';
-  let prevStayId='__start__';
+  const todayISO=isoOf(new Date());
+  let prevStayId='__start__', todayRow=null;
   for(let d=TRIP_START; d<=TRIP_END; d=isoAddDays(d,1)){
     const stay=stayHotelOn(d);
     const arrivals=hotels.filter(h=>h.from===d);
@@ -3160,7 +3208,8 @@ function renderItinerary(){
     departures.forEach(h=> chips+=`<span class="it-chip out">🧳 צ׳ק-אאוט · ${esc(h.name)}</span>`);
     const [yy,mm,dd]=d.split('-');
     const monShort=fmtLong(d).split(' ')[1];
-    const row=document.createElement('div'); row.className='it-day'+(isTravel?' travel':'');
+    const isToday=(d===todayISO);
+    const row=document.createElement('div'); row.className='it-day'+(isTravel?' travel':'')+(isToday?' today':'');
     let body='';
     if(stay){
       const rk=areaRegionKey[stay.area];
@@ -3173,11 +3222,14 @@ function renderItinerary(){
       body += `<div class="it-stay">✈️ יום מעבר</div>`;
       if(chips) body += `<div class="it-chips">${chips}</div>`;
     }
-    row.innerHTML=`<div class="it-date"><b>${+dd} ${monShort}</b><small>${heWeekday(d)}</small></div><div class="it-body">${body}</div>`;
+    row.innerHTML=`<div class="it-date">${isToday?'<span class="it-todaytag">היום</span>':''}<b>${+dd} ${monShort}</b><small>${heWeekday(d)}</small></div><div class="it-body">${body}</div>`;
+    if(isToday) todayRow=row;
     const nb=row.querySelector('.it-near');
     if(nb) nb.addEventListener('click',()=>{ switchView('map'); locFilter=nb.dataset.region; buildLocSeg(); if(nearbyOn){ nearbyOn=false; toggleNearUI(false); if(nearCircle){map.removeLayer(nearCircle);nearCircle=null;} } applyFilters(); setTimeout(()=>map.flyTo(REGIONS[nb.dataset.region].center, nb.dataset.region==='bangkok'?12:11,{duration:.6}),80); if(isMobile()) sheet.classList.add('collapsed'); });
     host.appendChild(row);
   }
+  // Open the itinerary on today's card by default (runs after switchView resets scroll).
+  if(todayRow) setTimeout(()=>{ try{ todayRow.scrollIntoView({block:'center'}); }catch(e){} }, 60);
 }
 
 /* ================= Distance from current hotel (#6) ================= */
