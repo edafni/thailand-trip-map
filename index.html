@@ -1640,6 +1640,15 @@ function loadPlan(){ let s=null; try{ s=JSON.parse(localStorage.getItem(LS_PLAN)
 function savePlan(){ try{ localStorage.setItem(LS_PLAN, JSON.stringify(plan)); }catch(e){} }
 function addPlanItem(it){ plan.push(it); savePlan(); if(cloud.enabled&&cloud.upsertPlan){ cloud.upsertPlan(it).catch(e=>console.error('cloud plan',e)); } if(document.body.dataset.view==='itinerary') renderItinerary(); }
 function removePlanItem(id){ plan=plan.filter(x=>x.id!==id); savePlan(); if(cloud.enabled&&cloud.removePlan){ cloud.removePlan(id).catch(e=>console.error('cloud plan del',e)); } if(document.body.dataset.view==='itinerary') renderItinerary(); }
+/* Removing a planned activity is gated behind the 123 confirm, like other deletes. */
+function confirmRemovePlanItem(id, after){
+  const it=plan.find(x=>x.id===id); if(!it) return;
+  let label=it.text;
+  if(!label){ const p=places.find(x=>String(x.id)===String(it.placeId)); label=p?p.name:'פעילות'; }
+  openConfirm({ title:'🗑️ הסרת פעילות', okLabel:'הסר', danger:true,
+    msgHtml:'להסרת <b>"'+esc(label)+'"</b> מהמסלול הקלידו <b>123</b> ואשרו.',
+    onOk:()=>{ removePlanItem(id); if(typeof after==='function') after(); } });
+}
 
 function checklistSorted(family, kind){
   return checklist.filter(c=>normFamily(c.family)===family && c.kind===kind)
@@ -3261,7 +3270,7 @@ function renderItinerary(){
     if(isToday) todayRow=row;
     const nb=row.querySelector('.it-near');
     if(nb) nb.addEventListener('click',()=>{ switchView('map'); locFilter=nb.dataset.region; buildLocSeg(); if(nearbyOn){ nearbyOn=false; toggleNearUI(false); if(nearCircle){map.removeLayer(nearCircle);nearCircle=null;} } applyFilters(); setTimeout(()=>map.flyTo(REGIONS[nb.dataset.region].center, nb.dataset.region==='bangkok'?12:11,{duration:.6}),80); if(isMobile()) sheet.classList.add('collapsed'); });
-    row.querySelectorAll('.pi-x').forEach(b=> b.addEventListener('click',()=>removePlanItem(b.dataset.rm)) );
+    row.querySelectorAll('.pi-x').forEach(b=> b.addEventListener('click',()=>confirmRemovePlanItem(b.dataset.rm)) );
     row.querySelectorAll('.pi-map').forEach(b=> b.addEventListener('click',()=>{ const o=poiMeta.find(x=>x.pid===b.dataset.pid); switchView('map'); if(o) focusLatLng(o.latlng,15,o.marker); }) );
     const ap=row.querySelector('.it-addplan');
     if(ap) ap.addEventListener('click',()=>openPlanModal(ap.dataset.addplan));
@@ -3331,10 +3340,9 @@ function renderPlanPickList(q){
   }).join('');
   host.querySelectorAll('.plan-pick[data-pid]').forEach(el=> el.addEventListener('click',()=>{
     const pid=el.dataset.pid;
-    if(isAdded(pid)){                                    // tap again to remove it from this day
+    if(isAdded(pid)){                                    // tap again to remove it — gated by 123
       const item=plan.find(pl=>pl.date===planModalDate && String(pl.placeId)===String(pid));
-      if(item) removePlanItem(item.id);
-      el.classList.remove('added'); el.querySelector('.pp-add').textContent='＋';
+      if(item) confirmRemovePlanItem(item.id, ()=>renderPlanPickList(document.getElementById('planSearch').value));
     } else {
       addPlanItem({ id:'pl_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), date:planModalDate, placeId:pid, createdAt:Date.now() });
       el.classList.add('added'); el.querySelector('.pp-add').textContent='✓';
