@@ -1075,6 +1075,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .it-plan{display:flex;flex-direction:column;gap:4px;margin-top:2px}
   .it-planitem{display:flex;align-items:center;gap:7px;font-size:12.5px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
   .it-planitem .pi-name{flex:1;min-width:0}
+  .it-planitem .pi-dist{flex:0 0 auto;font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap}
   .it-planitem .pi-x{flex:0 0 auto;background:none;border:none;color:var(--muted);font-size:15px;line-height:1;cursor:pointer;padding:0 2px;font-family:inherit}
   .it-planitem .pi-map{flex:0 0 auto;background:none;border:none;color:var(--accent);cursor:pointer;font-size:13px;padding:0;font-family:inherit}
   .it-addplan{align-self:flex-start;font-size:12px;font-weight:700;color:var(--accent);background:none;border:1px dashed var(--accent);border-radius:8px;padding:4px 9px;cursor:pointer;font-family:inherit;margin-top:2px}
@@ -3215,7 +3216,8 @@ function renderItinerary(){
   host.innerHTML='';
   const todayISO=isoOf(new Date());
   let prevStayId='__start__', todayRow=null;
-  for(let d=TRIP_START; d<=TRIP_END; d=isoAddDays(d,1)){
+  const ITIN_START='2026-08-06';   // arrival in Thailand — the itinerary starts here (not the Israel departure day)
+  for(let d=ITIN_START; d<=TRIP_END; d=isoAddDays(d,1)){
     const stay=stayHotelOn(d);
     const arrivals=hotels.filter(h=>h.from===d);
     const departures=hotels.filter(h=>h.to===d);
@@ -3272,12 +3274,15 @@ function renderItinerary(){
 /* ---- Per-day plan: render items + the add button for one date ---- */
 function planHtmlForDate(d){
   const items=plan.filter(pl=>pl.date===d);
+  const stay=stayHotelOn(d);
+  const origin=stay?[stay.lat,stay.lng]:null;
   let h='<div class="it-plan">';
   items.forEach(pl=>{
     if(pl.placeId){
       const p=places.find(x=>String(x.id)===String(pl.placeId));
       const c=p?(CATEGORIES[p.cat]||CATEGORIES.other):CATEGORIES.other;
-      h+=`<div class="it-planitem"><span>${p?c.emoji:'📍'}</span><span class="pi-name">${esc(p?p.name:'(מקום שנמחק)')}</span>${p?`<button class="pi-map" data-pid="${esc(String(pl.placeId))}" title="הצג במפה">🗺️</button>`:''}<button class="pi-x" data-rm="${esc(String(pl.id))}" title="הסר">×</button></div>`;
+      const dist=(p&&origin)?`<span class="pi-dist">📏 ${fmtKm(haversineKm(origin,[p.lat,p.lng]))}</span>`:'';
+      h+=`<div class="it-planitem"><span>${p?c.emoji:'📍'}</span><span class="pi-name">${esc(p?p.name:'(מקום שנמחק)')}</span>${dist}${p?`<button class="pi-map" data-pid="${esc(String(pl.placeId))}" title="הצג במפה">🗺️</button>`:''}<button class="pi-x" data-rm="${esc(String(pl.id))}" title="הסר">×</button></div>`;
     } else {
       h+=`<div class="it-planitem"><span>📝</span><span class="pi-name">${esc(pl.text||'')}</span><button class="pi-x" data-rm="${esc(String(pl.id))}" title="הסר">×</button></div>`;
     }
@@ -3287,12 +3292,13 @@ function planHtmlForDate(d){
 }
 
 /* ---- Plan-a-day modal ---- */
-let planModalDate=null, planModalRegion=null;
+let planModalDate=null, planModalRegion=null, planModalHotel=null;
 function openPlanModal(date){
   planModalDate=date;
   // Only offer places on the island where we're staying that night (tonight's hotel).
   const stay=stayHotelOn(date);
   planModalRegion = stay ? areaRegionKey[stay.area] : null;
+  planModalHotel = stay || null;
   const heDate=fmtLong(date)+' · '+heWeekday(date);
   document.getElementById('planModalTitle').textContent='תכנון · '+heDate;
   const regHe = planModalRegion && REGIONS[planModalRegion] ? REGIONS[planModalRegion].he : null;
@@ -3303,20 +3309,25 @@ function openPlanModal(date){
   document.getElementById('planModal').classList.add('show');
   setTimeout(()=>search.focus(),50);
 }
-function closePlanModal(){ document.getElementById('planModal').classList.remove('show'); planModalDate=null; planModalRegion=null; }
+function closePlanModal(){ document.getElementById('planModal').classList.remove('show'); planModalDate=null; planModalRegion=null; planModalHotel=null; }
 function renderPlanPickList(q){
   const host=document.getElementById('planPickList'); if(!host) return;
   q=(q||'').trim().toLowerCase();
-  const list=places.filter(p=>p.cat!=='hotel'
+  let list=places.filter(p=>p.cat!=='hotel'
     && (!planModalRegion || (p.region||regionOf(p.lat,p.lng))===planModalRegion)
     && (!q || p.name.toLowerCase().includes(q) || (p.cuisine||'').toLowerCase().includes(q) || (p.note||'').toLowerCase().includes(q)));
   if(!list.length){ host.innerHTML='<div class="plan-pick"><small>אין מקומות שמורים באי הזה עדיין</small></div>'; return; }
+  // Sort by distance from that day's hotel (nearest first) and show the distance.
+  const origin = planModalHotel ? [planModalHotel.lat, planModalHotel.lng] : null;
+  if(origin){ list=list.map(p=>({p, d:haversineKm(origin,[p.lat,p.lng])})).sort((a,b)=>a.d-b.d); }
+  else { list=list.map(p=>({p, d:null})); }
   const isAdded=pid=>plan.some(pl=>pl.date===planModalDate && String(pl.placeId)===String(pid));
-  host.innerHTML=list.slice(0,80).map(p=>{
+  host.innerHTML=list.slice(0,80).map(({p,d})=>{
     const c=CATEGORIES[p.cat]||CATEGORIES.other;
     const rk=p.region||regionOf(p.lat,p.lng);
     const added=isAdded(p.id);
-    return `<div class="plan-pick${added?' added':''}" data-pid="${esc(String(p.id))}"><span class="pp-em" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</span><span>${esc(p.name)}<br><small>${REGIONS[rk]?esc(REGIONS[rk].he):''}${p.cuisine?' · '+esc(p.cuisine):''}</small></span><span class="pp-add">${added?'✓':'＋'}</span></div>`;
+    const distTxt = d!=null ? `📏 ${fmtKm(d)}` : (REGIONS[rk]?esc(REGIONS[rk].he):'');
+    return `<div class="plan-pick${added?' added':''}" data-pid="${esc(String(p.id))}"><span class="pp-em" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</span><span>${esc(p.name)}<br><small>${distTxt}${p.cuisine?' · '+esc(p.cuisine):''}</small></span><span class="pp-add">${added?'✓':'＋'}</span></div>`;
   }).join('');
   host.querySelectorAll('.plan-pick[data-pid]').forEach(el=> el.addEventListener('click',()=>{
     const pid=el.dataset.pid;
