@@ -911,7 +911,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .plan-pick .pp-em{width:26px;height:26px;flex:0 0 auto;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;border:1px solid var(--line)}
   .plan-pick small{color:var(--muted);font-size:11px}
   .plan-pick .pp-add{margin-inline-start:auto;color:var(--accent);font-weight:800}
-  .plan-pick.added{opacity:.55;cursor:default}
+  .plan-pick.added{opacity:.6}
   .plan-pick.added .pp-add{color:#22c55e}
   body.light #bookingModal{background:#0006}
   .modal-card{background:#0f1b36;border:1px solid var(--line);border-radius:16px;padding:16px;width:100%;max-width:380px;max-height:88vh;overflow-y:auto}
@@ -3319,9 +3319,15 @@ function renderPlanPickList(q){
     return `<div class="plan-pick${added?' added':''}" data-pid="${esc(String(p.id))}"><span class="pp-em" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</span><span>${esc(p.name)}<br><small>${REGIONS[rk]?esc(REGIONS[rk].he):''}${p.cuisine?' · '+esc(p.cuisine):''}</small></span><span class="pp-add">${added?'✓':'＋'}</span></div>`;
   }).join('');
   host.querySelectorAll('.plan-pick[data-pid]').forEach(el=> el.addEventListener('click',()=>{
-    if(isAdded(el.dataset.pid)) return;                 // already on this day — no duplicates
-    addPlanItem({ id:'pl_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), date:planModalDate, placeId:el.dataset.pid, createdAt:Date.now() });
-    el.classList.add('added'); el.querySelector('.pp-add').textContent='✓';
+    const pid=el.dataset.pid;
+    if(isAdded(pid)){                                    // tap again to remove it from this day
+      const item=plan.find(pl=>pl.date===planModalDate && String(pl.placeId)===String(pid));
+      if(item) removePlanItem(item.id);
+      el.classList.remove('added'); el.querySelector('.pp-add').textContent='＋';
+    } else {
+      addPlanItem({ id:'pl_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), date:planModalDate, placeId:pid, createdAt:Date.now() });
+      el.classList.add('added'); el.querySelector('.pp-add').textContent='✓';
+    }
   }));
 }
 document.getElementById('planSearch').addEventListener('input',e=>renderPlanPickList(e.target.value));
