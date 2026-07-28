@@ -2648,6 +2648,8 @@ function updateCountdown(){
 
 /* ================= TDAC reminder (Thailand Digital Arrival Card) ================= */
 const TDAC_URL='https://tdac.immigration.go.th/arrival-card/#/home';
+const THIM_IOS_URL='https://apps.apple.com/us/app/thim-thai-immigration-bureau/id6759272559';
+const THIM_ANDROID_URL='https://play.google.com/store/apps/details?id=th.go.immigration.thim';
 const TDAC_ARRIVAL='2026-08-06';   // arrival in Thailand; TDAC allowed up to 3 days before
 function updateTdacReminder(){
   const bar=document.getElementById('tdacBar'); if(!bar) return;
@@ -2728,6 +2730,11 @@ function renderInfo(){
       <div class="infostep">כל נוסע <b>חייב</b> למלא את כרטיס הכניסה הדיגיטלי (Thailand Digital Arrival Card) באינטרנט — עד <b>3 ימים לפני ההגעה</b> לתאילנד (כולל יום ההגעה).</div>
       <div class="infostep" style="color:var(--muted)">💡 מלאו לכל בני המשפחה בנפרד ושמרו צילום מסך של אישור ה-QR להצגה בגבול.</div>
       <a class="btn primary" href="${TDAC_URL}" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;text-decoration:none">מלא את ה-TDAC ↗</a>
+      <div class="infostep" style="margin-top:10px">📱 אפשר גם למלא דרך האפליקציה הרשמית <b>THIM</b> (Thai Immigration Bureau) של משטרת תאילנד:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
+        <a class="btn" href="${THIM_IOS_URL}" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">App Store ↗</a>
+        <a class="btn" href="${THIM_ANDROID_URL}" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">Google Play ↗</a>
+      </div>
     </div>
 
     <div class="about-card">
