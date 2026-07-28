@@ -1033,6 +1033,32 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .stat-grid{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
   .stat-box{flex:1;min-width:74px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 6px;text-align:center}
   .stat-box .n{font-size:22px;font-weight:800} .stat-box .l{font-size:11px;color:var(--muted);margin-top:2px}
+  /* Day-by-day itinerary */
+  .it-stayhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:700;font-size:13.5px;margin:18px 4px 8px;padding-inline-start:10px;border-inline-start:4px solid var(--line)}
+  .it-stayhead.s{border-inline-start-color:var(--samui)} .it-stayhead.p{border-inline-start-color:var(--phangan)} .it-stayhead.b{border-inline-start-color:var(--bangkok)}
+  .it-stayhead small{font-weight:500;color:var(--muted)}
+  .it-day{display:flex;gap:11px;align-items:stretch;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+  .it-day.travel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+  .it-date{flex:0 0 52px;text-align:center;display:flex;flex-direction:column;justify-content:center;border-inline-end:1px solid var(--line);padding-inline-end:10px}
+  .it-date b{font-size:15px;line-height:1.1} .it-date small{font-size:10.5px;color:var(--muted);margin-top:2px}
+  .it-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:5px}
+  .it-stay{font-size:13px;font-weight:600}
+  .it-rest{font-size:12.5px;color:var(--muted)}
+  .it-chips{display:flex;flex-wrap:wrap;gap:5px}
+  .it-chip{font-size:11.5px;border-radius:999px;padding:3px 9px;background:var(--panel2);border:1px solid var(--line);line-height:1.4}
+  .it-chip.fly{background:#123e57;border-color:#1d5f83;color:#bfe6ff}
+  .it-chip.move{background:#3a2d12;border-color:#7a5a1e;color:#f3d08a}
+  .it-chip.in{background:#12331f;border-color:#1f6b3a;color:#a7f3c6}
+  .it-chip.out{background:#3a1620;border-color:#7f2233;color:#ffb4c0}
+  .it-near{font-size:11.5px;color:var(--accent);background:none;border:none;padding:0;cursor:pointer;font-family:inherit;text-align:start}
+  body.light .it-chip.fly{background:#e0f2fe;border-color:#7dd3fc;color:#0b3a52}
+  body.light .it-chip.move{background:#fef3c7;border-color:#fcd34d;color:#7a5a12}
+  body.light .it-chip.in{background:#dcfce7;border-color:#86efac;color:#166534}
+  body.light .it-chip.out{background:#fee2e2;border-color:#fca5a5;color:#b91c1c}
+  /* Distance badge in attractions */
+  .pdist{flex:0 0 auto;font-size:11px;font-weight:700;color:var(--accent);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:2px 8px;white-space:nowrap;align-self:center}
+  #offlineMapBox .btn{margin-top:6px}
+  #offlineProg{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
   body:not([data-view="map"]) #sheet,
   body:not([data-view="map"]) #fitBtn,
   body:not([data-view="map"]) #banner{display:none !important}
@@ -1064,6 +1090,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   </div>
   <div class="tabs" id="tabs">
     <button class="tab on" data-view="map">🗺️ מפה</button>
+    <button class="tab" data-view="itinerary">🗓️ מסלול</button>
     <button class="tab" data-view="attractions">⭐ אטרקציות</button>
     <button class="tab" data-view="bookings">🧾 הזמנות</button>
     <button class="tab" data-view="destinations">📍 יעדים</button>
@@ -1122,10 +1149,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
   <h2>⭐ אטרקציות ומקומות</h2>
   <div class="lead">כל המקומות השמורים, מקובצים לפי סוג. טפו על מקום כדי לראותו במפה.</div>
   <input id="attrSearch" class="vsearch" placeholder="🔎 חיפוש לפי שם, הערה או סוג מטבח..." />
-  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:2px 2px 10px">
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:2px 2px 8px">
     <select id="attrCatFilter" class="vsearch" style="flex:1;min-width:150px;margin:0"></select>
     <button class="btn small" id="attrStarBtn" style="margin:0">⭐ רק מומלצים</button>
   </div>
+  <select id="attrDistFrom" class="vsearch" style="margin:0 2px 10px" title="מיין לפי מרחק מהמלון"></select>
   <div id="attrList"></div>
 </div>
 <div class="view" id="view-bookings">
@@ -1149,6 +1177,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
   <h2>📍 יעדים</h2>
   <div class="lead">שלושת היעדים בטיול. טפו על "הצג במפה" כדי למקד את המפה על היעד.</div>
   <div id="destList"></div>
+</div>
+<div class="view" id="view-itinerary">
+  <h2>🗓️ מסלול יום-אחר-יום</h2>
+  <div class="lead">כל יום בטיול — היכן ישנים, ומה קורה בימי המעבר (טיסות, מעבורות).</div>
+  <div id="itinList"></div>
 </div>
 <div class="view" id="view-checklists"></div>
 <div class="view" id="view-info"></div>
@@ -2627,6 +2660,7 @@ function switchView(name){
   if(name==='attractions') renderAttractions();
   else if(name==='bookings') renderBookings();
   else if(name==='destinations') renderDestinations();
+  else if(name==='itinerary') renderItinerary();
   else if(name==='about') renderAbout();
   else if(name==='info') renderInfo();
   else if(name==='checklists') renderChecklists();
@@ -2924,39 +2958,60 @@ function populateAttrCatFilter(){
   sel.innerHTML=html;
   sel.value=[...sel.options].some(o=>o.value===prev)?prev:'all';
 }
+function attrPoiRow(p, distKm){
+  const c=CATEGORIES[p.cat]||CATEGORIES.other;
+  const rkey=p.region||regionOf(p.lat,p.lng);
+  const u=normInsta(p.insta);
+  const row=document.createElement('div'); row.className='poi'+(p.visited?' visited':'');
+  row.innerHTML=`<div class="pemoji" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</div>
+    <div class="pinfo"><h4>${p.star?'⭐ ':''}${esc(p.name)}</h4><small>${p.visited?'<span class="vtag">✓ ביקרנו</span> · ':''}${REGIONS[rkey]?esc(REGIONS[rkey].he):''}${p.cuisine?' · 🍽️ '+esc(p.cuisine):''}${p.note?' · '+esc(p.note):''}</small></div>
+    ${distKm!=null?`<span class="pdist">📏 ${fmtKm(distKm)}</span>`:''}
+    <button class="starbtn${p.star?' on':''}" title="${p.star?'הסר מהמומלצים':'סמן כמומלץ'}" onclick="toggleStar('${p.id}')">${p.star?'⭐':'☆'}</button>
+    <a class="wazelink iglink" href="${wazeLink(p.lat,p.lng)}" target="_blank" rel="noopener" title="נווט ב-Waze">🧭</a>
+    ${u?`<a class="insta iglink" href="${esc(u)}" target="_blank" rel="noopener" title="אינסטגרם">📸</a>`:''}
+    ${isAdmin?`<button class="visbtn" title="${p.visited?'בטל ביקור':'סמן שביקרנו'}" onclick="toggleVisited('${p.id}')">${p.visited?'↩︎':'✓'}</button>`:''}
+    ${isAdmin?`<button class="editbtn" title="ערוך" onclick="editPlace('${p.id}')">✏️</button>`:''}`;
+  row.addEventListener('click',e=>{ if(e.target.closest('.iglink')||e.target.closest('.editbtn')||e.target.closest('.visbtn')||e.target.closest('.starbtn')) return; const o=poiMeta.find(x=>x.pid===p.id); switchView('map'); if(o) focusLatLng(o.latlng,15,o.marker); });
+  return row;
+}
 function renderAttractions(){
   populateAttrCatFilter();
+  populateAttrDistFilter();
   const q=(document.getElementById('attrSearch').value||'').trim().toLowerCase();
   const catFilter=(document.getElementById('attrCatFilter')||{}).value||'all';
+  const distFrom=(document.getElementById('attrDistFrom')||{}).value||'off';
   const host=document.getElementById('attrList'); host.innerHTML='';
+  const match=p=>(catFilter==='all'||p.cat===catFilter) && p.cat!=='hotel'
+    && (!q || p.name.toLowerCase().includes(q) || (p.note||'').toLowerCase().includes(q) || (p.cuisine||'').toLowerCase().includes(q))
+    && (!attrStarOnly || p.star);
   let total=0;
-  Object.keys(CATEGORIES).filter(k=>k!=='hotel' && (catFilter==='all'||k===catFilter)).forEach(k=>{
-    const c=CATEGORIES[k];
-    const items=places.filter(p=>p.cat===k && (!q || p.name.toLowerCase().includes(q) || (p.note||'').toLowerCase().includes(q) || (p.cuisine||'').toLowerCase().includes(q)) && (!attrStarOnly || p.star));
-    if(!items.length) return;
-    const h=document.createElement('div'); h.className='attr-h';
-    h.innerHTML=`<span class="cdot" style="background:${c.color}"></span>${c.emoji} ${c.he} · ${items.length}`;
-    host.appendChild(h);
-    items.forEach(p=>{
-      total++;
-      const rkey=p.region||regionOf(p.lat,p.lng);
-      const u=normInsta(p.insta);
-      const row=document.createElement('div'); row.className='poi'+(p.visited?' visited':'');
-      row.innerHTML=`<div class="pemoji" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</div>
-        <div class="pinfo"><h4>${p.star?'⭐ ':''}${esc(p.name)}</h4><small>${p.visited?'<span class="vtag">✓ ביקרנו</span> · ':''}${REGIONS[rkey]?esc(REGIONS[rkey].he):''}${p.cuisine?' · 🍽️ '+esc(p.cuisine):''}${p.note?' · '+esc(p.note):''}</small></div>
-        <button class="starbtn${p.star?' on':''}" title="${p.star?'הסר מהמומלצים':'סמן כמומלץ'}" onclick="toggleStar('${p.id}')">${p.star?'⭐':'☆'}</button>
-        <a class="wazelink iglink" href="${wazeLink(p.lat,p.lng)}" target="_blank" rel="noopener" title="נווט ב-Waze">🧭</a>
-        ${u?`<a class="insta iglink" href="${esc(u)}" target="_blank" rel="noopener" title="אינסטגרם">📸</a>`:''}
-        ${isAdmin?`<button class="visbtn" title="${p.visited?'בטל ביקור':'סמן שביקרנו'}" onclick="toggleVisited('${p.id}')">${p.visited?'↩︎':'✓'}</button>`:''}
-        ${isAdmin?`<button class="editbtn" title="ערוך" onclick="editPlace('${p.id}')">✏️</button>`:''}`;
-      row.addEventListener('click',e=>{ if(e.target.closest('.iglink')||e.target.closest('.editbtn')||e.target.closest('.visbtn')||e.target.closest('.starbtn')) return; const o=poiMeta.find(x=>x.pid===p.id); switchView('map'); if(o) focusLatLng(o.latlng,15,o.marker); });
-      host.appendChild(row);
+  if(distFrom!=='off'){
+    // Flat list sorted by distance from the chosen hotel
+    const hotel=hotels.find(h=>String(h.id)===String(distFrom));
+    if(hotel){
+      const origin=[hotel.lat,hotel.lng];
+      const items=places.filter(match).map(p=>({p, d:haversineKm(origin,[p.lat,p.lng])})).sort((a,b)=>a.d-b.d);
+      const note=document.createElement('div'); note.className='attr-h';
+      note.innerHTML=`📏 מרחק אווירי מ־<b>&nbsp;${esc(hotel.name)}</b>&nbsp;· ${items.length} מקומות`;
+      host.appendChild(note);
+      items.forEach(({p,d})=>{ total++; host.appendChild(attrPoiRow(p,d)); });
+    }
+  } else {
+    Object.keys(CATEGORIES).filter(k=>k!=='hotel' && (catFilter==='all'||k===catFilter)).forEach(k=>{
+      const c=CATEGORIES[k];
+      const items=places.filter(p=>p.cat===k && match(p));
+      if(!items.length) return;
+      const h=document.createElement('div'); h.className='attr-h';
+      h.innerHTML=`<span class="cdot" style="background:${c.color}"></span>${c.emoji} ${c.he} · ${items.length}`;
+      host.appendChild(h);
+      items.forEach(p=>{ total++; host.appendChild(attrPoiRow(p,null)); });
     });
-  });
+  }
   if(total===0) host.innerHTML='<div class="empty">'+(attrStarOnly?'עדיין אין מקומות מומלצים ⭐. סמנו מקומות בכוכב.':'לא נמצאו מקומות')+'</div>';
 }
 document.getElementById('attrSearch').addEventListener('input',renderAttractions);
 document.getElementById('attrCatFilter').addEventListener('change',renderAttractions);
+document.getElementById('attrDistFrom').addEventListener('change',renderAttractions);
 let attrStarOnly=false;
 document.getElementById('attrStarBtn').addEventListener('click',()=>{
   attrStarOnly=!attrStarOnly;
@@ -3058,6 +3113,95 @@ function renderDestinations(){
   if(!wxForecast.ts || (Date.now()-wxForecast.ts)>3*3600*1000) refreshForecast();
 }
 
+/* ================= Day-by-day itinerary (#1) ================= */
+const HE_WEEKDAYS=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+function heWeekday(iso){ return 'יום '+HE_WEEKDAYS[new Date(iso+'T00:00:00').getDay()]; }
+function isoOf(dt){ const y=dt.getFullYear(), m=String(dt.getMonth()+1).padStart(2,'0'), d=String(dt.getDate()).padStart(2,'0'); return `${y}-${m}-${d}`; }
+function isoAddDays(iso,n){ const dt=new Date(iso+'T00:00:00'); dt.setDate(dt.getDate()+n); return isoOf(dt); }
+const areaCls={s:'s',p:'p',b:'b'};
+const areaRegionKey={s:'samui',p:'phangan',b:'bangkok'};
+// The hotel you sleep in on a given date (from <= date < to)
+function stayHotelOn(iso){ return hotels.find(h=> iso>=h.from && iso<h.to); }
+
+function renderItinerary(){
+  const host=document.getElementById('itinList'); if(!host) return;
+  host.innerHTML='';
+  let prevStayId='__start__';
+  for(let d=TRIP_START; d<=TRIP_END; d=isoAddDays(d,1)){
+    const stay=stayHotelOn(d);
+    const arrivals=hotels.filter(h=>h.from===d);
+    const departures=hotels.filter(h=>h.to===d);
+    const fls=flights.filter(f=>f.date===d);
+    const isTravel = fls.length||arrivals.length||departures.length;
+    // Stay-group divider when tonight's hotel changes
+    const stayId=stay?('h'+stay.id):('none@'+d);
+    if(stayId!==prevStayId){
+      prevStayId=stayId;
+      if(stay){
+        const rk=areaRegionKey[stay.area];
+        const lastNight=isoAddDays(stay.to,-1);
+        const hd=document.createElement('div'); hd.className='it-stayhead '+areaCls[stay.area];
+        hd.innerHTML=`🏨 ${esc(stay.name)} <small>· ${esc(REGIONS[rk]?REGIONS[rk].he:'')} · ${fmtLong(stay.from)}–${fmtLong(lastNight)} · ${stay.nights} לילות</small>`;
+        host.appendChild(hd);
+      }
+    }
+    // Event chips
+    let chips='';
+    fls.forEach(f=> chips+=`<span class="it-chip fly">${f.ic} ${esc(f.title)}</span>`);
+    arrivals.forEach(h=>{ if(h.leg) chips+=`<span class="it-chip move">${h.leg.ic} ${esc(h.leg.txt)}</span>`; chips+=`<span class="it-chip in">🏨 צ׳ק-אין · ${esc(h.name)}</span>`; });
+    departures.forEach(h=> chips+=`<span class="it-chip out">🧳 צ׳ק-אאוט · ${esc(h.name)}</span>`);
+    const [yy,mm,dd]=d.split('-');
+    const monShort=fmtLong(d).split(' ')[1];
+    const row=document.createElement('div'); row.className='it-day'+(isTravel?' travel':'');
+    let body='';
+    if(stay){
+      const rk=areaRegionKey[stay.area];
+      const nPlaces=places.filter(p=>(p.region||regionOf(p.lat,p.lng))===rk).length;
+      body += `<div class="it-stay">🏨 ${esc(stay.name)}</div>`;
+      if(chips) body += `<div class="it-chips">${chips}</div>`;
+      else body += `<div class="it-rest">🌴 יום חופשי ב${esc(REGIONS[rk]?REGIONS[rk].he:'')}</div>`;
+      if(nPlaces) body += `<button class="it-near" data-region="${rk}">📍 ${nPlaces} מקומות באזור · הצג במפה</button>`;
+    } else {
+      body += `<div class="it-stay">✈️ יום מעבר</div>`;
+      if(chips) body += `<div class="it-chips">${chips}</div>`;
+    }
+    row.innerHTML=`<div class="it-date"><b>${+dd} ${monShort}</b><small>${heWeekday(d)}</small></div><div class="it-body">${body}</div>`;
+    const nb=row.querySelector('.it-near');
+    if(nb) nb.addEventListener('click',()=>{ switchView('map'); locFilter=nb.dataset.region; buildLocSeg(); if(nearbyOn){ nearbyOn=false; toggleNearUI(false); if(nearCircle){map.removeLayer(nearCircle);nearCircle=null;} } applyFilters(); setTimeout(()=>map.flyTo(REGIONS[nb.dataset.region].center, nb.dataset.region==='bangkok'?12:11,{duration:.6}),80); if(isMobile()) sheet.classList.add('collapsed'); });
+    host.appendChild(row);
+  }
+}
+
+/* ================= Distance from current hotel (#6) ================= */
+function haversineKm(a,b){
+  const R=6371, toR=x=>x*Math.PI/180;
+  const dLat=toR(b[0]-a[0]), dLng=toR(b[1]-a[1]);
+  const s=Math.sin(dLat/2)**2 + Math.cos(toR(a[0]))*Math.cos(toR(b[0]))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(s));
+}
+function fmtKm(km){ return km<1 ? Math.round(km*1000)+' מ׳' : (km<10?km.toFixed(1):Math.round(km))+' ק״מ'; }
+// The hotel to measure "distance from" by today's date: tonight's stay, else nearest upcoming, else last.
+function defaultDistHotelId(){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const iso=isoOf(today);
+  const stay=stayHotelOn(iso); if(stay) return stay.id;
+  const upcoming=hotels.filter(h=>h.from>=iso).sort((a,b)=>a.from<b.from?-1:1)[0];
+  if(upcoming) return upcoming.id;
+  return hotels[hotels.length-1].id;
+}
+function populateAttrDistFilter(){
+  const sel=document.getElementById('attrDistFrom'); if(!sel) return;
+  const prev=sel.value||'off';
+  const curId=defaultDistHotelId();
+  let html='<option value="off">📏 מיון לפי מרחק מהמלון: כבוי</option>';
+  hotels.forEach(h=>{
+    const cur=h.id===curId?' (הנוכחי)':'';
+    html+=`<option value="${h.id}">📏 מרחק מ־${esc(h.name)}${cur}</option>`;
+  });
+  sel.innerHTML=html;
+  sel.value=[...sel.options].some(o=>o.value===prev)?prev:'off';
+}
+
 function renderAbout(){
   const host=document.getElementById('view-about');
   const nights=hotels.reduce((s,h)=>s+h.nights,0);
@@ -3105,10 +3249,78 @@ function renderAbout(){
         ? 'האפליקציה מחוברת לענן. כל השינויים (מקומות, תשלומים, אישורי הזמנה) מסתנכרנים אוטומטית לכל מי שפתח את הקישור.'
         : 'כרגע כל שינוי נשמר במכשיר הזה בלבד, וכפתור השיתוף (🔗) שולח "צילום מצב". כדי שכולם יראו וישנו את אותם הנתונים בזמן אמת, בצעו הגדרה חד-פעמית וחינמית של Firebase והדביקו את פרטי החיבור בקובץ (חפשו FIREBASE_CONFIG בקוד — יש שם הסבר צעד-אחר-צעד).'}
     </div>
+    <div class="about-card" id="offlineMapBox">
+      <h3>🗺️ מפות למצב לא-מקוון</h3>
+      <div style="color:var(--muted);font-size:12.5px;line-height:1.7">שמרו את מפות היעדים (קוסמוי, קופנגן, בנגקוק) מראש, כדי שהמפה תעבוד גם בלי אינטרנט — שימושי באיים עם קליטה חלשה. מומלץ לעשות זאת ב-Wi-Fi (כ-10–20MB).</div>
+      <button class="btn primary" id="offlineDlBtn" style="display:inline-block">⬇️ שמור מפות במכשיר</button>
+      <button class="btn small" id="offlineClearBtn" style="display:inline-block;margin-inline-start:6px">🗑️ נקה</button>
+      <div id="offlineProg"></div>
+    </div>
     <div class="about-card" style="color:var(--muted);font-size:12px">
       המקומות מבוססים על הרשימות השמורות ב-Google Maps. מיקומי המלונות מקורבים לפי כתובת.
     </div>`;
+  wireOfflineMaps();
 }
+
+/* ================= Offline maps (#2) ================= */
+const TILE_CACHE_NAME='thai-tiles-v1';
+const OFFLINE_REGIONS=[
+  {name:'קוסמוי', latMin:9.40, latMax:9.63, lngMin:99.92, lngMax:100.11},
+  {name:'קופנגן', latMin:9.66, latMax:9.83, lngMin:99.93, lngMax:100.08},
+  {name:'בנגקוק', latMin:13.63,latMax:13.83,lngMin:100.44,lngMax:100.66},
+];
+const OFFLINE_ZOOMS=[11,12,13,14,15];
+function lon2tile(lon,z){ return Math.floor((lon+180)/360*Math.pow(2,z)); }
+function lat2tile(lat,z){ return Math.floor((1-Math.log(Math.tan(lat*Math.PI/180)+1/Math.cos(lat*Math.PI/180))/Math.PI)/2*Math.pow(2,z)); }
+function tileUrl(z,x,y){ return TILES_LIGHT.replace('{z}',z).replace('{x}',x).replace('{y}',y); }
+function offlineTileList(){
+  const urls=new Set();
+  OFFLINE_REGIONS.forEach(r=>OFFLINE_ZOOMS.forEach(z=>{
+    const x0=lon2tile(r.lngMin,z), x1=lon2tile(r.lngMax,z);
+    const y0=lat2tile(r.latMax,z), y1=lat2tile(r.latMin,z); // y grows southward
+    for(let x=x0;x<=x1;x++) for(let y=y0;y<=y1;y++) urls.add(tileUrl(z,x,y));
+  }));
+  return [...urls];
+}
+let offlineDownloading=false;
+async function downloadOfflineMaps(){
+  if(offlineDownloading) return;
+  const prog=document.getElementById('offlineProg'), btn=document.getElementById('offlineDlBtn');
+  const urls=offlineTileList(), total=urls.length;
+  offlineDownloading=true; if(btn) btn.disabled=true;
+  let done=0, failed=0, idx=0;
+  const cache=await caches.open(TILE_CACHE_NAME);
+  async function worker(){
+    while(idx<urls.length){
+      const u=urls[idx++];
+      try{
+        const hit=await cache.match(u);
+        if(!hit){ const resp=await fetch(u,{mode:'cors'}); if(resp&&resp.ok) await cache.put(u,resp.clone()); else failed++; }
+      }catch(e){ failed++; }
+      done++;
+      if(done%10===0||done===total){ if(prog) prog.textContent=`מוריד… ${done}/${total}${failed?' · '+failed+' נכשלו':''}`; }
+    }
+  }
+  await Promise.all(Array.from({length:6},worker));
+  offlineDownloading=false; if(btn) btn.disabled=false;
+  if(prog) prog.textContent=`✅ נשמרו ${total-failed} אריחי מפה במכשיר. המפה תעבוד גם בלי אינטרנט.`;
+}
+async function clearOfflineMaps(){
+  try{ await caches.delete(TILE_CACHE_NAME); }catch(e){}
+  const prog=document.getElementById('offlineProg'); if(prog) prog.textContent='🗑️ המפות הלא-מקוונות נמחקו.';
+}
+async function offlineCacheCount(){ try{ const c=await caches.open(TILE_CACHE_NAME); return (await c.keys()).length; }catch(e){ return 0; } }
+function wireOfflineMaps(){
+  const dl=document.getElementById('offlineDlBtn'), cl=document.getElementById('offlineClearBtn'), prog=document.getElementById('offlineProg');
+  if(!dl) return;
+  if(!('caches' in window)){ dl.disabled=true; if(prog) prog.textContent='הדפדפן לא תומך בשמירת מפות לא-מקוונות.'; return; }
+  dl.addEventListener('click',downloadOfflineMaps);
+  if(cl) cl.addEventListener('click',clearOfflineMaps);
+  offlineCacheCount().then(n=>{ if(n>0 && prog) prog.textContent=`✅ שמורים ${n} אריחי מפה במכשיר.`; });
+}
+/* Register the service worker so viewed tiles are cached and served offline.
+   It only intercepts tile requests, never the app shell. */
+if('serviceWorker' in navigator){ window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js').catch(e=>console.warn('SW register failed',e)); }); }
 
 /* ================= Init ================= */
 (async function init(){
