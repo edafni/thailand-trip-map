@@ -3317,8 +3317,10 @@ function planHtmlForDate(d){
 
 /* ---- Plan-a-day modal ---- */
 let planModalDate=null, planModalRegion=null, planModalHotel=null;
+let planSessionAdds=new Set();   // ids added during the current open modal — removable without the 123 gate until the modal is closed ("approved")
 function openPlanModal(date){
   planModalDate=date;
+  planSessionAdds=new Set();
   // Only offer places on the island where we're staying that night (tonight's hotel).
   const stay=stayHotelOn(date);
   planModalRegion = stay ? areaRegionKey[stay.area] : null;
@@ -3333,7 +3335,7 @@ function openPlanModal(date){
   document.getElementById('planModal').classList.add('show');
   setTimeout(()=>search.focus(),50);
 }
-function closePlanModal(){ document.getElementById('planModal').classList.remove('show'); planModalDate=null; planModalRegion=null; planModalHotel=null; }
+function closePlanModal(){ document.getElementById('planModal').classList.remove('show'); planModalDate=null; planModalRegion=null; planModalHotel=null; planSessionAdds=new Set(); }
 function renderPlanPickList(q){
   const host=document.getElementById('planPickList'); if(!host) return;
   q=(q||'').trim().toLowerCase();
@@ -3355,11 +3357,20 @@ function renderPlanPickList(q){
   }).join('');
   host.querySelectorAll('.plan-pick[data-pid]').forEach(el=> el.addEventListener('click',()=>{
     const pid=el.dataset.pid;
-    if(isAdded(pid)){                                    // tap again to remove it — gated by 123
+    if(isAdded(pid)){                                    // tap again to remove it from this day
       const item=plan.find(pl=>pl.date===planModalDate && String(pl.placeId)===String(pid));
-      if(item) confirmRemovePlanItem(item.id, ()=>renderPlanPickList(document.getElementById('planSearch').value));
+      if(!item) return;
+      if(planSessionAdds.has(item.id)){                  // just added in this session — not yet approved → remove freely
+        planSessionAdds.delete(item.id);
+        removePlanItem(item.id);
+        el.classList.remove('added'); el.querySelector('.pp-add').textContent='＋';
+      } else {                                           // added & approved earlier → require 123
+        confirmRemovePlanItem(item.id, ()=>renderPlanPickList(document.getElementById('planSearch').value));
+      }
     } else {
-      addPlanItem({ id:'pl_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), date:planModalDate, placeId:pid, createdAt:Date.now() });
+      const id='pl_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+      addPlanItem({ id, date:planModalDate, placeId:pid, createdAt:Date.now() });
+      planSessionAdds.add(id);
       el.classList.add('added'); el.querySelector('.pp-add').textContent='✓';
     }
   }));
