@@ -901,8 +901,18 @@ svg.leaflet-image-layer.leaflet-interactive path {
   body.light #tdacBar .tdac-go{background:#d99a1c;border-color:#b9800f;color:#fff}
   body.light #tdacBar .tdac-done{color:#92660b;border-color:#fcd34d}
 
-  #modal,#bookingModal{position:fixed;inset:0;z-index:1500;background:#0009;display:none;align-items:center;justify-content:center;padding:16px}
-  #modal.show,#bookingModal.show{display:flex}
+  #modal,#bookingModal,#planModal{position:fixed;inset:0;z-index:1500;background:#0009;display:none;align-items:center;justify-content:center;padding:16px}
+  #modal.show,#bookingModal.show,#planModal.show{display:flex}
+  body.light #planModal{background:#0006}
+  .plan-picklist{max-height:34vh;overflow-y:auto;border:1px solid var(--line);border-radius:10px}
+  .plan-pick{display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px}
+  .plan-pick:last-child{border-bottom:none}
+  .plan-pick:active{background:var(--panel2)}
+  .plan-pick .pp-em{width:26px;height:26px;flex:0 0 auto;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;border:1px solid var(--line)}
+  .plan-pick small{color:var(--muted);font-size:11px}
+  .plan-pick .pp-add{margin-inline-start:auto;color:var(--accent);font-weight:800}
+  .plan-pick.added{opacity:.6}
+  .plan-pick.added .pp-add{color:#22c55e}
   body.light #bookingModal{background:#0006}
   .modal-card{background:#0f1b36;border:1px solid var(--line);border-radius:16px;padding:16px;width:100%;max-width:380px;max-height:88vh;overflow-y:auto}
   .modal-card h3{margin:0 0 12px;font-size:16px}
@@ -1062,6 +1072,13 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .it-chip.in{background:#12331f;border-color:#1f6b3a;color:#a7f3c6}
   .it-chip.out{background:#3a1620;border-color:#7f2233;color:#ffb4c0}
   .it-near{font-size:11.5px;color:var(--accent);background:none;border:none;padding:0;cursor:pointer;font-family:inherit;text-align:start}
+  .it-plan{display:flex;flex-direction:column;gap:4px;margin-top:2px}
+  .it-planitem{display:flex;align-items:center;gap:7px;font-size:12.5px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+  .it-planitem .pi-name{flex:1;min-width:0}
+  .it-planitem .pi-dist{flex:0 0 auto;font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap}
+  .it-planitem .pi-x{flex:0 0 auto;background:none;border:none;color:var(--muted);font-size:15px;line-height:1;cursor:pointer;padding:0 2px;font-family:inherit}
+  .it-planitem .pi-map{flex:0 0 auto;background:none;border:none;color:var(--accent);cursor:pointer;font-size:13px;padding:0;font-family:inherit}
+  .it-addplan{align-self:flex-start;font-size:12px;font-weight:700;color:var(--accent);background:none;border:1px dashed var(--accent);border-radius:8px;padding:4px 9px;cursor:pointer;font-family:inherit;margin-top:2px}
   body.light .it-chip.fly{background:#e0f2fe;border-color:#7dd3fc;color:#0b3a52}
   body.light .it-chip.move{background:#fef3c7;border-color:#fcd34d;color:#7a5a12}
   body.light .it-chip.in{background:#dcfce7;border-color:#86efac;color:#166534}
@@ -1288,6 +1305,28 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <div class="confirm-actions">
       <button class="btn cancel" id="confirmCancelBtn">ביטול</button>
       <button class="btn danger" id="confirmDelBtn">מחק</button>
+    </div>
+  </div>
+</div>
+
+<!-- Plan-a-day modal (add activities/attractions to an itinerary day) -->
+<div id="planModal">
+  <div class="modal-card">
+    <h3 id="planModalTitle">תכנון היום</h3>
+    <div class="field">
+      <label>פעילות חופשית</label>
+      <div style="display:flex;gap:6px">
+        <input id="planText" type="text" placeholder="למשל: יום חוף, ספא, שוק לילה" style="flex:1" />
+        <button class="btn primary" id="planTextAdd" style="flex:0 0 auto">הוסף</button>
+      </div>
+    </div>
+    <div class="field">
+      <label id="planPickLabel">או בחרו מקום</label>
+      <input id="planSearch" class="vsearch" placeholder="🔎 חיפוש מקום..." style="margin:0 0 8px" />
+      <div id="planPickList" class="plan-picklist"></div>
+    </div>
+    <div class="confirm-actions">
+      <button class="btn cancel" id="planCloseBtn">סגור</button>
     </div>
   </div>
 </div>
@@ -1601,6 +1640,24 @@ function saveChecklist(){ try{ localStorage.setItem(LS_CHECKLIST, JSON.stringify
 function addChecklistItem(it){ checklist.push(it); saveChecklist(); if(cloud.enabled&&cloud.upsertChecklist){ cloud.upsertChecklist(it).catch(e=>console.error('cloud checklist',e)); } if(document.body.dataset.view==='checklists') renderChecklists(); }
 function updateChecklistItem(it){ const i=checklist.findIndex(x=>x.id===it.id); if(i<0) return; checklist[i]=it; saveChecklist(); if(cloud.enabled&&cloud.upsertChecklist){ cloud.upsertChecklist(it).catch(e=>console.error('cloud checklist',e)); } if(document.body.dataset.view==='checklists') renderChecklists(); }
 function removeChecklistItem(id){ checklist=checklist.filter(x=>x.id!==id); saveChecklist(); if(cloud.enabled&&cloud.removeChecklist){ cloud.removeChecklist(id).catch(e=>console.error('cloud checklist del',e)); } if(document.body.dataset.view==='checklists') renderChecklists(); }
+
+/* ---- Day plan: activities/attractions assigned to itinerary days ---- */
+const LS_PLAN='thai_plan_v1';
+let plan=[];   /* [{ id, date:'YYYY-MM-DD', placeId?:string, text?:string, createdAt }] */
+function loadPlan(){ let s=null; try{ s=JSON.parse(localStorage.getItem(LS_PLAN)); }catch(e){} plan=Array.isArray(s)?s:[]; }
+function savePlan(){ try{ localStorage.setItem(LS_PLAN, JSON.stringify(plan)); }catch(e){} }
+function addPlanItem(it){ plan.push(it); savePlan(); if(cloud.enabled&&cloud.upsertPlan){ cloud.upsertPlan(it).catch(e=>console.error('cloud plan',e)); } if(document.body.dataset.view==='itinerary') renderItinerary(); }
+function removePlanItem(id){ plan=plan.filter(x=>x.id!==id); savePlan(); if(cloud.enabled&&cloud.removePlan){ cloud.removePlan(id).catch(e=>console.error('cloud plan del',e)); } if(document.body.dataset.view==='itinerary') renderItinerary(); }
+/* Removing a planned activity is gated behind the 123 confirm, like other deletes. */
+function confirmRemovePlanItem(id, after){
+  const it=plan.find(x=>x.id===id); if(!it) return;
+  let label=it.text;
+  if(!label){ const p=places.find(x=>String(x.id)===String(it.placeId)); label=p?p.name:'פעילות'; }
+  openConfirm({ title:'🗑️ הסרת פעילות', okLabel:'הסר', danger:true,
+    msgHtml:'להסרת <b>"'+esc(label)+'"</b> מהמסלול הקלידו <b>123</b> ואשרו.',
+    onOk:()=>{ removePlanItem(id); if(typeof after==='function') after(); } });
+}
+
 function checklistSorted(family, kind){
   return checklist.filter(c=>normFamily(c.family)===family && c.kind===kind)
     .sort((a,b)=>((a.order??a.createdAt??0)-(b.order??b.createdAt??0)));
@@ -3183,7 +3240,8 @@ function renderItinerary(){
   host.innerHTML='';
   const todayISO=isoOf(new Date());
   let prevStayId='__start__', todayRow=null;
-  for(let d=TRIP_START; d<=TRIP_END; d=isoAddDays(d,1)){
+  const ITIN_START='2026-08-06';   // arrival in Thailand — the itinerary starts here (not the Israel departure day)
+  for(let d=ITIN_START; d<=TRIP_END; d=isoAddDays(d,1)){
     const stay=stayHotelOn(d);
     const arrivals=hotels.filter(h=>h.from===d);
     const departures=hotels.filter(h=>h.to===d);
@@ -3222,15 +3280,101 @@ function renderItinerary(){
       body += `<div class="it-stay">✈️ יום מעבר</div>`;
       if(chips) body += `<div class="it-chips">${chips}</div>`;
     }
+    body += planHtmlForDate(d);
     row.innerHTML=`<div class="it-date">${isToday?'<span class="it-todaytag">היום</span>':''}<b>${+dd} ${monShort}</b><small>${heWeekday(d)}</small></div><div class="it-body">${body}</div>`;
     if(isToday) todayRow=row;
     const nb=row.querySelector('.it-near');
     if(nb) nb.addEventListener('click',()=>{ switchView('map'); locFilter=nb.dataset.region; buildLocSeg(); if(nearbyOn){ nearbyOn=false; toggleNearUI(false); if(nearCircle){map.removeLayer(nearCircle);nearCircle=null;} } applyFilters(); setTimeout(()=>map.flyTo(REGIONS[nb.dataset.region].center, nb.dataset.region==='bangkok'?12:11,{duration:.6}),80); if(isMobile()) sheet.classList.add('collapsed'); });
+    row.querySelectorAll('.pi-x').forEach(b=> b.addEventListener('click',()=>confirmRemovePlanItem(b.dataset.rm)) );
+    row.querySelectorAll('.pi-map').forEach(b=> b.addEventListener('click',()=>{ const o=poiMeta.find(x=>x.pid===b.dataset.pid); switchView('map'); if(o) focusLatLng(o.latlng,15,o.marker); }) );
+    const ap=row.querySelector('.it-addplan');
+    if(ap) ap.addEventListener('click',()=>openPlanModal(ap.dataset.addplan));
     host.appendChild(row);
   }
   // Open the itinerary on today's card by default (runs after switchView resets scroll).
   if(todayRow) setTimeout(()=>{ try{ todayRow.scrollIntoView({block:'center'}); }catch(e){} }, 60);
 }
+
+/* ---- Per-day plan: render items + the add button for one date ---- */
+function planHtmlForDate(d){
+  const items=plan.filter(pl=>pl.date===d);
+  const stay=stayHotelOn(d);
+  const origin=stay?[stay.lat,stay.lng]:null;
+  let h='<div class="it-plan">';
+  items.forEach(pl=>{
+    if(pl.placeId){
+      const p=places.find(x=>String(x.id)===String(pl.placeId));
+      const c=p?(CATEGORIES[p.cat]||CATEGORIES.other):CATEGORIES.other;
+      const dist=(p&&origin)?`<span class="pi-dist">📏 ${fmtKm(haversineKm(origin,[p.lat,p.lng]))}</span>`:'';
+      h+=`<div class="it-planitem"><span>${p?c.emoji:'📍'}</span><span class="pi-name">${esc(p?p.name:'(מקום שנמחק)')}</span>${dist}${p?`<button class="pi-map" data-pid="${esc(String(pl.placeId))}" title="הצג במפה">🗺️</button>`:''}<button class="pi-x" data-rm="${esc(String(pl.id))}" title="הסר">×</button></div>`;
+    } else {
+      h+=`<div class="it-planitem"><span>📝</span><span class="pi-name">${esc(pl.text||'')}</span><button class="pi-x" data-rm="${esc(String(pl.id))}" title="הסר">×</button></div>`;
+    }
+  });
+  h+=`<button class="it-addplan" data-addplan="${d}">➕ הוסף פעילות</button></div>`;
+  return h;
+}
+
+/* ---- Plan-a-day modal ---- */
+let planModalDate=null, planModalRegion=null, planModalHotel=null;
+function openPlanModal(date){
+  planModalDate=date;
+  // Only offer places on the island where we're staying that night (tonight's hotel).
+  const stay=stayHotelOn(date);
+  planModalRegion = stay ? areaRegionKey[stay.area] : null;
+  planModalHotel = stay || null;
+  const heDate=fmtLong(date)+' · '+heWeekday(date);
+  document.getElementById('planModalTitle').textContent='תכנון · '+heDate;
+  const regHe = planModalRegion && REGIONS[planModalRegion] ? REGIONS[planModalRegion].he : null;
+  document.getElementById('planPickLabel').textContent = regHe ? ('או בחרו מקום ב'+regHe+' 📍') : 'או בחרו מקום';
+  const ts=document.getElementById('planText'); ts.value='';
+  const search=document.getElementById('planSearch'); search.value='';
+  renderPlanPickList('');
+  document.getElementById('planModal').classList.add('show');
+  setTimeout(()=>search.focus(),50);
+}
+function closePlanModal(){ document.getElementById('planModal').classList.remove('show'); planModalDate=null; planModalRegion=null; planModalHotel=null; }
+function renderPlanPickList(q){
+  const host=document.getElementById('planPickList'); if(!host) return;
+  q=(q||'').trim().toLowerCase();
+  let list=places.filter(p=>p.cat!=='hotel'
+    && (!planModalRegion || (p.region||regionOf(p.lat,p.lng))===planModalRegion)
+    && (!q || p.name.toLowerCase().includes(q) || (p.cuisine||'').toLowerCase().includes(q) || (p.note||'').toLowerCase().includes(q)));
+  if(!list.length){ host.innerHTML='<div class="plan-pick"><small>אין מקומות שמורים באי הזה עדיין</small></div>'; return; }
+  // Sort by distance from that day's hotel (nearest first) and show the distance.
+  const origin = planModalHotel ? [planModalHotel.lat, planModalHotel.lng] : null;
+  if(origin){ list=list.map(p=>({p, d:haversineKm(origin,[p.lat,p.lng])})).sort((a,b)=>a.d-b.d); }
+  else { list=list.map(p=>({p, d:null})); }
+  const isAdded=pid=>plan.some(pl=>pl.date===planModalDate && String(pl.placeId)===String(pid));
+  host.innerHTML=list.slice(0,80).map(({p,d})=>{
+    const c=CATEGORIES[p.cat]||CATEGORIES.other;
+    const rk=p.region||regionOf(p.lat,p.lng);
+    const added=isAdded(p.id);
+    const distTxt = d!=null ? `📏 ${fmtKm(d)}` : (REGIONS[rk]?esc(REGIONS[rk].he):'');
+    return `<div class="plan-pick${added?' added':''}" data-pid="${esc(String(p.id))}"><span class="pp-em" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</span><span>${esc(p.name)}<br><small>${distTxt}${p.cuisine?' · '+esc(p.cuisine):''}</small></span><span class="pp-add">${added?'✓':'＋'}</span></div>`;
+  }).join('');
+  host.querySelectorAll('.plan-pick[data-pid]').forEach(el=> el.addEventListener('click',()=>{
+    const pid=el.dataset.pid;
+    if(isAdded(pid)){                                    // tap again to remove it — gated by 123
+      const item=plan.find(pl=>pl.date===planModalDate && String(pl.placeId)===String(pid));
+      if(item) confirmRemovePlanItem(item.id, ()=>renderPlanPickList(document.getElementById('planSearch').value));
+    } else {
+      addPlanItem({ id:'pl_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), date:planModalDate, placeId:pid, createdAt:Date.now() });
+      el.classList.add('added'); el.querySelector('.pp-add').textContent='✓';
+    }
+  }));
+}
+document.getElementById('planSearch').addEventListener('input',e=>renderPlanPickList(e.target.value));
+document.getElementById('planCloseBtn').addEventListener('click',closePlanModal);
+document.getElementById('planModal').addEventListener('click',e=>{ if(e.target.id==='planModal') closePlanModal(); });
+function addPlanTextFromInput(){
+  const ts=document.getElementById('planText'); const t=(ts.value||'').trim();
+  if(!t||!planModalDate) return;
+  addPlanItem({ id:'pl_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), date:planModalDate, text:t, createdAt:Date.now() });
+  ts.value=''; ts.focus();
+}
+document.getElementById('planTextAdd').addEventListener('click',addPlanTextFromInput);
+document.getElementById('planText').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); addPlanTextFromInput(); } });
 
 /* ================= Distance from current hotel (#6) ================= */
 function haversineKm(a,b){
@@ -3389,6 +3533,7 @@ if('serviceWorker' in navigator){ window.addEventListener('load',()=>{ navigator
   loadHotelState();
   loadBookings();
   loadChecklist();
+  loadPlan();
   buildLocSeg();
   buildChips();
   buildPoiMarkers();
@@ -3465,6 +3610,11 @@ if('serviceWorker' in navigator){ window.addEventListener('load',()=>{ navigator
       saveChecklist();
       if(document.body.dataset.view==='checklists') renderChecklists();
     });
+    if(cloud.onPlan) cloud.onPlan(list=>{
+      plan = Array.isArray(list)?list:[];
+      savePlan();
+      if(document.body.dataset.view==='itinerary') renderItinerary();
+    });
   }
 })();
 </script>
@@ -3496,6 +3646,7 @@ if('serviceWorker' in navigator){ window.addEventListener('load',()=>{ navigator
       const hotelsCol = ()=>collection(db,'trips',TRIP,'hotels');
       const bookingsCol = ()=>collection(db,'trips',TRIP,'bookings');
       const checklistCol = ()=>collection(db,'trips',TRIP,'checklist');
+      const planCol = ()=>collection(db,'trips',TRIP,'plan');
       resolve({
         enabled:true,
         onPlaces(cb){ return onSnapshot(placesCol(), snap=>cb(snap.docs.map(d=>d.data())),
@@ -3513,6 +3664,10 @@ if('serviceWorker' in navigator){ window.addEventListener('load',()=>{ navigator
         removeBooking(id){ return deleteDoc(doc(bookingsCol(), String(id))); },
         upsertChecklist(it){ return setDoc(doc(checklistCol(), String(it.id)), it); },
         removeChecklist(id){ return deleteDoc(doc(checklistCol(), String(id))); },
+        onPlan(cb){ return onSnapshot(planCol(), snap=>cb(snap.docs.map(d=>d.data())),
+          err=>console.error('plan sync',err)); },
+        upsertPlan(it){ return setDoc(doc(planCol(), String(it.id)), it); },
+        removePlan(id){ return deleteDoc(doc(planCol(), String(id))); },
         getMeta(){ return getDoc(doc(db,'trips',TRIP,'meta','info')).then(s=>s.exists()?s.data():null); },
         setMeta(d){ return setDoc(doc(db,'trips',TRIP,'meta','info'), d, {merge:true}); },
       });
