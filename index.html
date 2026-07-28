@@ -1320,19 +1320,27 @@ const FILE_LIMIT=900*1024; /* מגבלת גודל קובץ אישור הזמנה
    2) Add a "Web app" and copy its firebaseConfig object
    3) Paste the values below, replacing every PASTE... value, and save this file
    4) In the console open "Firestore Database" → Create database (production mode)
-   5) In Firestore → Rules, paste the rules below and Publish so everyone with the
-      link can read & write the trip data:
+   5) Authentication → Sign-in method → enable "Anonymous" (the app signs every
+      visitor in silently so the rules below can require an authenticated request).
+   6) In Firestore → Rules, paste the rules below and Publish. They require a
+      (silent, anonymous) sign-in — which blocks random bots — and stop writes
+      after the trip while keeping the trip readable:
 
         rules_version = '2';
         service cloud.firestore {
           match /databases/{database}/documents {
-            match /trips/{trip}/{document=**} { allow read, write: if true; }
+            match /trips/{trip}/{document=**} {
+              allow read:  if request.auth != null;
+              allow write: if request.auth != null
+                           && request.time < timestamp.date(2026, 10, 1);
+            }
           }
         }
 
-   Note: these rules make the trip data public to anyone who knows the URL — fine for
-   sharing a trip with friends. Until the config below is filled in, the app runs fully
-   locally (each device keeps its own copy). */
+   Ordering matters: deploy this app version FIRST, then enable Anonymous auth,
+   and only THEN publish the stricter rules — otherwise already-open browser tabs
+   running the old code (no sign-in) would lose access until refreshed.
+   Until the config below is filled in, the app runs fully locally. */
 window.FIREBASE_CONFIG = window.FIREBASE_CONFIG || {
   apiKey:"AIzaSyAgTgyzKEnrSydqtuH1iZ4wN65k5pfndfk",
   authDomain:"thailand-trip-ad75a.firebaseapp.com",
@@ -3422,7 +3430,14 @@ if('serviceWorker' in navigator){ window.addEventListener('load',()=>{ navigator
       const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js");
       const { getFirestore, collection, doc, setDoc, deleteDoc, getDoc, onSnapshot }
         = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
+      const { getAuth, signInAnonymously } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js");
       const app = initializeApp(cfg);
+      /* Silent anonymous sign-in: lets the Firestore rules require an authenticated
+         request (blocks random bots) with no login UI. We await it so the first
+         reads/writes carry the token. It is non-fatal: if the Anonymous provider
+         isn't enabled in the console yet, the app keeps working under open rules. */
+      try { await signInAnonymously(getAuth(app)); }
+      catch(e){ console.warn('Anonymous sign-in unavailable — enable it in Firebase console to allow tightened rules.', e && (e.code||e.message||e)); }
       const db = getFirestore(app);
       const TRIP = window.TRIP_ID || 'thailand-2026';
       const placesCol = ()=>collection(db,'trips',TRIP,'places');
