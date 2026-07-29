@@ -1882,30 +1882,13 @@ function refreshHotels(){
 }
 
 /* ---- Route segments ---- */
-const transAnims=[];
-segs.forEach((s,i)=>{
+segs.forEach(s=>{
   const a=byId(s.from), b=byId(s.to);
   const pts=[[a.lat,a.lng],[b.lat,b.lng]];
   L.polyline(pts,{color:segColor(s.type),weight:3.2,opacity:.9,dashArray:s.type==="car"?'2 8':'7 9'}).addTo(routeLayer);
   const mid=[(a.lat+b.lat)/2,(a.lng+b.lng)/2];
-  const m=L.marker(mid,{interactive:false,icon:L.divIcon({className:'',html:`<div class="trans-marker">${s.ic}</div>`,iconSize:[20,20],iconAnchor:[10,10]})}).addTo(routeLayer);
-  transAnims.push({m, a:[a.lat,a.lng], b:[b.lat,b.lng], offset:i*0.17});
+  L.marker(mid,{interactive:false,icon:L.divIcon({className:'',html:`<div class="trans-marker">${s.ic}</div>`,iconSize:[20,20],iconAnchor:[10,10]})}).addTo(routeLayer);
 });
-/* Slowly glide each plane/ferry/car back and forth along its route (eased at the
-   ends). Skipped for users who prefer reduced motion, and paused off the map. */
-if(!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)){
-  const TRANS_PERIOD=20000; // ms for a full there-and-back glide — deliberately slow
-  const animTrans=ts=>{
-    requestAnimationFrame(animTrans);
-    if(document.body.dataset.view!=='map' || !map.hasLayer(routeLayer)) return;
-    transAnims.forEach(an=>{
-      const phase=(((ts/TRANS_PERIOD)+an.offset)%1);
-      const frac=(1-Math.cos(phase*2*Math.PI))/2;   // 0→1→0, eased near each endpoint
-      an.m.setLatLng([an.a[0]+(an.b[0]-an.a[0])*frac, an.a[1]+(an.b[1]-an.a[1])*frac]);
-    });
-  };
-  requestAnimationFrame(animTrans);
-}
 
 /* ---- POI markers ---- */
 let poiMeta=[];
