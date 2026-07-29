@@ -747,11 +747,15 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .pill{background:#1e2c4d;border:1px solid var(--line);border-radius:8px;padding:2px 9px;font-size:12px}
   .card .meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
 
-  .poi{display:flex;align-items:center;gap:11px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:9px;cursor:pointer}
+  .poi{display:grid;grid-template-columns:30px 1fr auto;grid-template-areas:"emoji info dist" "actions actions actions";align-items:center;gap:3px 11px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:9px;cursor:pointer}
+  .poi .pemoji{grid-area:emoji}
+  .poi .pinfo{grid-area:info}
+  .poi .pdist{grid-area:dist}
+  .poi .poi-actions{grid-area:actions;display:flex;align-items:center;gap:2px;justify-content:flex-end;margin-top:4px;border-top:1px solid var(--line);padding-top:5px}
   .poi:active{transform:scale(.99)}
   .poi .pemoji{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto;border:1px solid #ffffff22}
   .poi .pinfo{flex:1;min-width:0}
-  .poi .pinfo h4{margin:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .poi .pinfo h4{margin:0;font-size:14px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3}
   .poi .pinfo small{color:var(--muted);font-size:11px}
   .poi .dist{font-size:11px;color:#7dd3fc;font-weight:700;flex:0 0 auto}
   .poi .del{background:transparent;border:none;color:#8892ab;font-size:16px;cursor:pointer;padding:4px}
@@ -3078,11 +3082,13 @@ function attrPoiRow(p, distKm){
   row.innerHTML=`<div class="pemoji" style="background:${c.color}33;border-color:${c.color}66">${c.emoji}</div>
     <div class="pinfo"><h4>${p.star?'⭐ ':''}${esc(p.name)}</h4><small>${p.visited?'<span class="vtag">✓ ביקרנו</span> · ':''}${REGIONS[rkey]?esc(REGIONS[rkey].he):''}${p.cuisine?' · 🍽️ '+esc(p.cuisine):''}${p.note?' · '+esc(p.note):''}</small></div>
     ${distKm!=null?`<span class="pdist">📏 ${fmtKm(distKm)}</span>`:''}
-    <button class="starbtn${p.star?' on':''}" title="${p.star?'הסר מהמומלצים':'סמן כמומלץ'}" onclick="toggleStar('${p.id}')">${p.star?'⭐':'☆'}</button>
-    <a class="wazelink iglink" href="${wazeLink(p.lat,p.lng)}" target="_blank" rel="noopener" title="נווט ב-Waze">🧭</a>
-    ${u?`<a class="insta iglink" href="${esc(u)}" target="_blank" rel="noopener" title="אינסטגרם">📸</a>`:''}
-    ${isAdmin?`<button class="visbtn" title="${p.visited?'בטל ביקור':'סמן שביקרנו'}" onclick="toggleVisited('${p.id}')">${p.visited?'↩︎':'✓'}</button>`:''}
-    ${isAdmin?`<button class="editbtn" title="ערוך" onclick="editPlace('${p.id}')">✏️</button>`:''}`;
+    <div class="poi-actions">
+      <button class="starbtn${p.star?' on':''}" title="${p.star?'הסר מהמומלצים':'סמן כמומלץ'}" onclick="toggleStar('${p.id}')">${p.star?'⭐':'☆'}</button>
+      <a class="wazelink iglink" href="${wazeLink(p.lat,p.lng)}" target="_blank" rel="noopener" title="נווט ב-Waze">🧭</a>
+      ${u?`<a class="insta iglink" href="${esc(u)}" target="_blank" rel="noopener" title="אינסטגרם">📸</a>`:''}
+      ${isAdmin?`<button class="visbtn" title="${p.visited?'בטל ביקור':'סמן שביקרנו'}" onclick="toggleVisited('${p.id}')">${p.visited?'↩︎':'✓'}</button>`:''}
+      ${isAdmin?`<button class="editbtn" title="ערוך" onclick="editPlace('${p.id}')">✏️</button>`:''}
+    </div>`;
   row.addEventListener('click',e=>{ if(e.target.closest('.iglink')||e.target.closest('.editbtn')||e.target.closest('.visbtn')||e.target.closest('.starbtn')) return; const o=poiMeta.find(x=>x.pid===p.id); switchView('map'); if(o) focusLatLng(o.latlng,15,o.marker); });
   return row;
 }
